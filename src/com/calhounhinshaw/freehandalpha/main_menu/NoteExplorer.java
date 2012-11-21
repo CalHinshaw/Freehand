@@ -12,10 +12,15 @@ public class NoteExplorer extends ViewAnimator{
 	
 	public NoteExplorer(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		Log.d("PEN", "CREATED");
 	}
 	
 	public void setRootDirectory (File newRootDirectory) {
+		Log.d("PEN", "new root directory set");
+		
 		rootDirectory = newRootDirectory;
+		rootDirectory.mkdirs();
+		
 		this.addView(new DirectoryView(this.getContext(), rootDirectory, this));
 	}
 	

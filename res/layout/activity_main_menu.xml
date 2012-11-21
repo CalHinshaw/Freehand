@@ -30,7 +30,7 @@
  	</LinearLayout>
 	   
 	    
-	<com.calhounhinshaw.freehandalpha.NoteExplorer
+	<com.calhounhinshaw.freehandalpha.main_menu.NoteExplorer
 	    android:id="@+id/noteExplorer"
 	    android:layout_width="match_parent"
 	    android:layout_height= "0dip"
