@@ -5,6 +5,7 @@ import com.calhounhinshaw.freehandalpha.R;
 import android.os.Bundle;
 import android.os.Environment;
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.Menu;
 
