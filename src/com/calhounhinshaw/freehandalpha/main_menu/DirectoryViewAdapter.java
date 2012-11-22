@@ -1,6 +1,9 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 import com.calhounhinshaw.freehandalpha.R;
@@ -26,10 +29,10 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 
 	public DirectoryViewAdapter(Context context, int layoutResourceId, File[] files, Drawable folderDrawable, Drawable defaultNoteDrawable) {
 		super(context, layoutResourceId, files);
-
+		
 		mContext = context;
 		mLayoutResourceId = layoutResourceId;
-		mFiles = files;
+		mFiles = sortFiles(files);
 		mFolderDrawable = folderDrawable;
 		mDefaultNoteDrawable = defaultNoteDrawable;
 	}
@@ -78,5 +81,38 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 		TextView dateModified;
 		
 		public RowDataHolder() {}
+	}
+	
+	// Sorts the files in the adapter. Directories are at the top in alphabetical order and notes are below them ordered by the date they were last modified on.
+	private File[] sortFiles (File[] unsorted) {
+		ArrayList<File> directories = new ArrayList<File>(unsorted.length);
+		ArrayList<File> notes = new ArrayList<File>(unsorted.length);
+		
+		// Separate directories and notes into their respective ArraLists
+		for (File f : unsorted) {
+			if (f.isDirectory()) {
+				directories.add(f);
+			} else {
+				notes.add(f);
+			}
+		}
+		
+		// Sort Directories alphabetically
+		Collections.sort(directories, new Comparator<File>(){
+			public int compare(File arg0, File arg1) {
+				return arg0.getName().compareTo(arg1.getName());
+			}
+		});
+		
+		// Sort Directories by date modified
+		Collections.sort(notes, new Comparator<File>() {
+			public int compare(File arg0, File arg1) {
+				return Long.valueOf(arg1.lastModified()).compareTo(arg0.lastModified());
+			}
+		});
+		
+		// Concatenate directories and notes (which are now sorted) into an array - kinda messy
+		directories.addAll(notes);
+		return directories.toArray(new File[0]);
 	}
 }
