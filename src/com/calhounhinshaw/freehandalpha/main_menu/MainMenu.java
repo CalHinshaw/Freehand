@@ -16,6 +16,7 @@ public class MainMenu extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
         
+        // Starts NoteExplorer in the app's root directory
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);
         mExplorer.setRootDirectory(Environment.getExternalStoragePublicDirectory("Freehand"));
     }
