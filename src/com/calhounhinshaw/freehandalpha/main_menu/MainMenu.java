@@ -5,8 +5,6 @@ import com.calhounhinshaw.freehandalpha.R;
 import android.os.Bundle;
 import android.os.Environment;
 import android.app.Activity;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.Menu;
 
 public class MainMenu extends Activity {
@@ -28,6 +26,7 @@ public class MainMenu extends Activity {
         return true;
     }
     
+    // This method overrides the back button to let users navigate through folders more easily
     @Override
     public void onBackPressed() {
     	if (mExplorer.isInRootDirectory()) {

@@ -48,20 +48,24 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 		convertView.setTag(mFiles[position]);
 		
 		// Temporarily set holder to convertView's sub-views for easier modification
-		holder.imageView = (ImageView)convertView.findViewById(R.id.DirectoryViewRowThumbnail);
-		holder.textView = (TextView)convertView.findViewById(R.id.DirectoryViewRowName);
-			
+		holder.thumbnail = (ImageView)convertView.findViewById(R.id.DirectoryViewRowThumbnail);
+		holder.name = (TextView)convertView.findViewById(R.id.DirectoryViewRowName);
+		holder.dateModified = (TextView)convertView.findViewById(R.id.DirectoryViewRowDate);
+		
+		// Find last modified date of file
+		Date modDate = new Date(mFiles[position].lastModified());
+		
 		// Set the content of convertView's sub-views. Folders and notes get treated differently
 		if (mFiles[position].isDirectory()) {
-			holder.textView.setText(mFiles[position].getName());
-			holder.imageView.setImageDrawable(mFolderDrawable);
+			holder.name.setText(mFiles[position].getName());
+			holder.thumbnail.setImageDrawable(mFolderDrawable);
+			holder.dateModified.setText(modDate.toString());
 		} else if (mFiles[position].isFile()) {
 			String noteName = mFiles[position].getName().replace(".note", "");
-			holder.textView.setText(noteName);
-			holder.imageView.setImageDrawable(mDefaultNoteDrawable);
+			holder.name.setText(noteName);
+			holder.thumbnail.setImageDrawable(mDefaultNoteDrawable);
+			holder.dateModified.setText(modDate.toString());
 		}
-		
-		Date d = new Date(mFiles[position].lastModified());
 		
 		
 		return convertView;
@@ -69,8 +73,9 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 	
 	// simple class to make getView a bit clearer
 	private static class RowDataHolder {
-		ImageView imageView;
-		TextView textView;
+		ImageView thumbnail;
+		TextView name;
+		TextView dateModified;
 		
 		public RowDataHolder() {}
 	}

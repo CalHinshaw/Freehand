@@ -9,11 +9,20 @@
         android:layout_height="75dip"
         android:layout_marginRight="15dip" />
     
-    
+    <LinearLayout android:layout_width = "fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical" >
+        
+        <TextView android:id="@+id/DirectoryViewRowName"
+        	android:layout_width="fill_parent"
+        	android:layout_height="wrap_content" 
+        	android:textSize="20dip" />
+        
+        <TextView android:id = "@+id/DirectoryViewRowDate"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
     	
-    <TextView android:id="@+id/DirectoryViewRowName"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" 
-        android:textSize="20dip" />
+    
     
 </LinearLayout>
