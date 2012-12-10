@@ -48,7 +48,7 @@ public class DirectoryView extends ListView {
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 	}
 	
-	// Defines behavior of view elements of this ListView when clicked
+	// Open folder or note when clicked.
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
 			File clickedFile = (File) arg1.getTag();	// know arg1's tag is a file because of how it's created in DirectoryViewAdapter.getView
@@ -62,6 +62,8 @@ public class DirectoryView extends ListView {
 			//TODO: implement click on file (opens the note)
 		}
 	};
+	
+	
 	
 	public File getDirectory() {
 		return mDirectory;
