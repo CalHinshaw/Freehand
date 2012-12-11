@@ -100,4 +100,13 @@ public class NoteExplorer extends ViewAnimator{
 		
 		super.addView(child);
 	}
+	
+	public boolean directoryHasSelected () {
+		return ((DirectoryView) this.getCurrentView()).adapterHasSelections();
+	}
+	
+	public void clearDirectorySelections () {
+		((DirectoryView) this.getCurrentView()).clearAdapterSelections();
+		
+	}
 }

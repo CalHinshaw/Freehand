@@ -5,11 +5,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.calhounhinshaw.freehandalpha.R;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,9 +23,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class DirectoryViewAdapter extends ArrayAdapter<File> {
+	private static final int BLUE_HIGHLIGHT = 0x600099CC;
+	
 	private Context mContext;
 	private int mLayoutResourceId;
 	private File mFiles[] = null;
+	private Set<Integer> selectedItems = new TreeSet<Integer>();
 	
 	// Needed in getView
 	private Drawable mFolderDrawable;
@@ -70,6 +77,12 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 			holder.dateModified.setText(modDate.toString());
 		}
 		
+		// Change background color to blue if item is checked
+		if (selectedItems.contains(position)) {
+			convertView.setBackgroundColor(BLUE_HIGHLIGHT);
+		} else {
+			convertView.setBackgroundColor(Color.WHITE);
+		}
 		
 		return convertView;
 	}
@@ -114,5 +127,18 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 		// Concatenate directories and notes (which are now sorted) into an array - kinda messy
 		directories.addAll(notes);
 		return directories.toArray(new File[0]);
+	}
+	
+	public void addSelection (int position) {
+		selectedItems.add(position);
+	}
+	
+	public void clearSelections() {
+		selectedItems.clear();
+		this.notifyDataSetChanged();
+	}
+	
+	public boolean hasSelections() {
+		return !selectedItems.isEmpty();
 	}
 }

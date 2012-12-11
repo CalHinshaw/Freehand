@@ -11,6 +11,8 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 public class DirectoryView extends ListView {
+	private static final int BLUE_HIGHLIGHT = 0x600099CC;
+	
 	private NoteExplorer mExplorer;
 	private DirectoryViewAdapter mAdapter;
 	private File mDirectory;
@@ -23,6 +25,8 @@ public class DirectoryView extends ListView {
 		super(context);
 		mExplorer = newExplorer;
 		mDirectory = newDirectory;
+		
+		//this.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 		
 		folderDrawable = this.getContext().getResources().getDrawable(R.drawable.folder);
 		defaultNoteDrawable = this.getContext().getResources().getDrawable(R.drawable.pencil);
@@ -46,12 +50,14 @@ public class DirectoryView extends ListView {
 		
 		this.setAdapter(mAdapter);
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
+		this.setOnItemLongClickListener(DirectoryViewSelectListener);
 	}
 	
 	// Open folder or note when clicked.
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
-		public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-			File clickedFile = (File) arg1.getTag();	// know arg1's tag is a file because of how it's created in DirectoryViewAdapter.getView
+		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
+			File clickedFile = (File) clickedView.getTag();	// know arg1's tag is a file because of how it's created in DirectoryViewAdapter.getView
+			mAdapter.clearSelections();
 			
 			// Clicking on directory opens it
 			if (clickedFile.isDirectory()) {
@@ -63,10 +69,28 @@ public class DirectoryView extends ListView {
 		}
 	};
 	
+	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
+		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
+			mAdapter.addSelection(position);
+			pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
+			
+			return true;
+		}
+	};
+	
+	
 	
 	
 	public File getDirectory() {
 		return mDirectory;
+	}
+	
+	public boolean adapterHasSelections () {
+		return mAdapter.hasSelections();
+	}
+	
+	public void clearAdapterSelections() {
+		mAdapter.clearSelections();
 	}
 	
 }
