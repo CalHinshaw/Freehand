@@ -30,12 +30,11 @@ public class MainMenu extends Activity {
     // This method overrides the back button to let users navigate through folders more easily
     @Override
     public void onBackPressed() {
-    	
-    	if(mExplorer.directoryHasSelected()) {
+    	if(mExplorer.directoryHasSelected()) {			//first clear selections
     		mExplorer.clearDirectorySelections();
-    	} else if (mExplorer.isInRootDirectory()) {
+    	} else if (mExplorer.isInRootDirectory()) {		// then close folders
     		super.onBackPressed();
-    	} else {
+    	} else {										// finally, close app
     		mExplorer.moveUpDirectory();
     	}
     }
