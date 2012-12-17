@@ -28,7 +28,7 @@ public class DirectoryView extends ListView {
 	// These get passed to DirectoryViewAdapters when they're created
 	private Drawable folderDrawable;
 	private Drawable defaultNoteDrawable;
-	
+
 	// These store the persistent information for dragWatcher
 	private PointF dragStartPoint = null;
 	private boolean watchForDrag = false;
@@ -75,12 +75,8 @@ public class DirectoryView extends ListView {
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> parent, View clickedView,
 				int position, long id) {
-			File clickedFile = (File) clickedView.getTag(); // know
-															// clickedView's tag
-															// is a file because
-															// of how it's
-															// created in
-															// DirectoryViewAdapter.getView
+			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
+			File clickedFile = (File) clickedView.getTag(); 
 			if (mAdapter.hasSelections())
 				mAdapter.clearSelections();
 
@@ -120,25 +116,28 @@ public class DirectoryView extends ListView {
 		mAdapter.clearSelections();
 	}
 
-	
-
-	// This method watches for the drag and drop gesture without interfering with any of the class' other
+	// This method watches for the drag and drop gesture without interfering
+	// with any of the class' other
 	// behaviors.
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		super.onTouchEvent(event);
 		dragWatcher(event);
-		
+
 		return true;
 	}
-	
+
 	// If drag gesture call initDrag
-	private void dragWatcher (MotionEvent event) {
-		if (watchForDrag == true && event.getAction() == MotionEvent.ACTION_MOVE) {
+	private void dragWatcher(MotionEvent event) {
+		if (watchForDrag == true
+				&& event.getAction() == MotionEvent.ACTION_MOVE) {
 			if (dragStartPoint == null) {
 				dragStartPoint = new PointF(event.getX(), event.getY());
 			} else {
-				float draggedDistanceSquared = (dragStartPoint.x - event.getX())*(dragStartPoint.x - event.getX()) + (dragStartPoint.y - event.getY())*(dragStartPoint.y - event.getY());
+				float draggedDistanceSquared = (dragStartPoint.x - event.getX())
+						* (dragStartPoint.x - event.getX())
+						+ (dragStartPoint.y - event.getY())
+						* (dragStartPoint.y - event.getY());
 				if (draggedDistanceSquared > DRAG_RADIUS_SQUARED) {
 					initDrag(event);
 
@@ -147,64 +146,47 @@ public class DirectoryView extends ListView {
 					dragView = null;
 				}
 			}
-		} else if (watchForDrag == true && (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_DOWN)) {
+		} else if (watchForDrag == true
+				&& (event.getAction() == MotionEvent.ACTION_UP
+						|| event.getAction() == MotionEvent.ACTION_CANCEL || event
+						.getAction() == MotionEvent.ACTION_DOWN)) {
 			dragStartPoint = null;
 			watchForDrag = false;
 			dragView = null;
 		}
 	}
-	
-	private void initDrag (MotionEvent event) {
+
+	private void initDrag(MotionEvent event) {
 		Log.d("PEN", "START DRAG EVENT");
-		
+
 		File[] files = mAdapter.getSelections();
-	
+
 		// Cancel drag event because no files selected
 		if (files.length <= 0) {
 			return;
 		}
-		
+
 		String[] mime = new String[1];
 		mime[0] = ClipDescription.MIMETYPE_TEXT_PLAIN;
 		ClipDescription description = new ClipDescription("files", mime);
-		
+
 		// ClipData.Item required for constructor
-		ClipData.Item constructorItem = new ClipData.Item(files[0].getAbsolutePath());
-		
+		ClipData.Item constructorItem = new ClipData.Item(
+				files[0].getAbsolutePath());
+
 		ClipData data = new ClipData(description, constructorItem);
-		
+
 		for (int i = 1; i < files.length; i++) {
 			data.addItem(new ClipData.Item(files[i].getAbsolutePath()));
 		}
-		
+
 		Log.d("PEN", data.getItemAt(0).getText().toString());
-		
+
 		mAdapter.greySelections();
-		this.startDrag(data, new View.DragShadowBuilder(dragView), null, 0);
-		
-		
+
+		DirectoryViewDragShadowBuilder shadowBuilder = new DirectoryViewDragShadowBuilder(
+				files.length, dragView.getWidth() / 3);
+		this.startDrag(data, shadowBuilder, null, 0);
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 }
