@@ -29,6 +29,7 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 	private int mLayoutResourceId;
 	private File mFiles[] = null;
 	private Set<Integer> selectedItems = new TreeSet<Integer>();
+	private boolean selectedItemsGreyed = false;
 	
 	// Needed in getView
 	private Drawable mFolderDrawable;
@@ -77,8 +78,10 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 			holder.dateModified.setText(modDate.toString());
 		}
 		
-		// Change background color to blue if item is checked
-		if (selectedItems.contains(position)) {
+		// Change background color as appropriate
+		if (selectedItems.contains(position) && selectedItemsGreyed) {
+			convertView.setBackgroundColor(Color.LTGRAY);
+		} else if (selectedItems.contains(position)) {
 			convertView.setBackgroundColor(BLUE_HIGHLIGHT);
 		} else {
 			convertView.setBackgroundColor(Color.WHITE);
@@ -140,5 +143,26 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 	
 	public boolean hasSelections() {
 		return !selectedItems.isEmpty();
+	}
+	
+	public File[] getSelections () {
+		Integer[] selected = selectedItems.toArray(new Integer[1]);
+		File[] files = new File[selected.length];
+		
+		for (int i = 0; i < selected.length; i++) {
+			files[i] = mFiles[selected[i]];
+		}
+		
+		return files;
+	}
+	
+	public void greySelections () {
+		selectedItemsGreyed = true;
+		this.notifyDataSetChanged();
+	}
+	
+	public void ungreySelections () {
+		selectedItemsGreyed = false;
+		this.notifyDataSetChanged();
 	}
 }
