@@ -1,7 +1,6 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.io.File;
-import java.net.URI;
 import java.util.LinkedList;
 import com.calhounhinshaw.freehandalpha.R;
 
@@ -10,8 +9,8 @@ import android.content.ClipDescription;
 import android.content.Context;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,8 +18,10 @@ import android.widget.ListView;
 
 public class DirectoryView extends ListView {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
-	private static final float DRAG_RADIUS_SQUARED = 200;
+	private static final float STATIONARY_RADIUS_SQUARED = 300;
+	private static final long DRAG_ACTION_TIMER = 400;
 
+	// Items for various callbacks and core functionality
 	private NoteExplorer mExplorer;
 	private DirectoryViewAdapter mAdapter;
 	private File mDirectory;
@@ -30,20 +31,24 @@ public class DirectoryView extends ListView {
 	private Drawable defaultNoteDrawable;
 
 	// These store the persistent information for dragWatcher
-	private PointF dragStartPoint = null;
 	private boolean watchForDrag = false;
 	private View dragView = null;
 
+	// These store the persistent information for all of the drag gestures
+	private PointF setPoint = null;
+	private long actionTimeMarker = 0;
+
+
 	public DirectoryView(Context context, File newDirectory,
-			NoteExplorer newExplorer) {
+		NoteExplorer newExplorer) {
 		super(context);
 		mExplorer = newExplorer;
 		mDirectory = newDirectory;
 
 		folderDrawable = this.getContext().getResources()
-				.getDrawable(R.drawable.folder);
+			.getDrawable(R.drawable.folder);
 		defaultNoteDrawable = this.getContext().getResources()
-				.getDrawable(R.drawable.pencil);
+			.getDrawable(R.drawable.pencil);
 
 		File filesInDir[] = mDirectory.listFiles();
 		LinkedList<File> validFilesInDir = new LinkedList<File>();
@@ -62,9 +67,9 @@ public class DirectoryView extends ListView {
 		// Create the adapter for this list view using the cleaned list of
 		// files, validFilesInDir
 		mAdapter = new DirectoryViewAdapter(this.getContext(),
-				R.layout.directoryview_row,
-				validFilesInDir.toArray(new File[0]), folderDrawable,
-				defaultNoteDrawable);
+			R.layout.directoryview_row,
+			validFilesInDir.toArray(new File[0]), folderDrawable,
+			defaultNoteDrawable);
 
 		this.setAdapter(mAdapter);
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
@@ -74,16 +79,16 @@ public class DirectoryView extends ListView {
 	// Open folder or note when clicked.
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> parent, View clickedView,
-				int position, long id) {
+			int position, long id) {
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
-			File clickedFile = (File) clickedView.getTag(); 
+			File clickedFile = (File) clickedView.getTag();
 			if (mAdapter.hasSelections())
 				mAdapter.clearSelections();
 
 			// Clicking on directory opens it
 			if (clickedFile.isDirectory()) {
 				mExplorer.addView(new DirectoryView(mExplorer.getContext(),
-						clickedFile, mExplorer));
+					clickedFile, mExplorer));
 				mExplorer.showNext();
 			}
 
@@ -93,7 +98,7 @@ public class DirectoryView extends ListView {
 
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View pressedView,
-				int position, long id) {
+			int position, long id) {
 			mAdapter.addSelection(position);
 			pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
 
@@ -104,17 +109,21 @@ public class DirectoryView extends ListView {
 		}
 	};
 
+
 	public File getDirectory() {
 		return mDirectory;
 	}
+
 
 	public boolean adapterHasSelections() {
 		return mAdapter.hasSelections();
 	}
 
+
 	public void clearAdapterSelections() {
 		mAdapter.clearSelections();
 	}
+
 
 	// This method watches for the drag and drop gesture without interfering
 	// with any of the class' other
@@ -127,38 +136,38 @@ public class DirectoryView extends ListView {
 		return true;
 	}
 
+
 	// If drag gesture call initDrag
 	private void dragWatcher(MotionEvent event) {
 		if (watchForDrag == true
-				&& event.getAction() == MotionEvent.ACTION_MOVE) {
-			if (dragStartPoint == null) {
-				dragStartPoint = new PointF(event.getX(), event.getY());
+			&& event.getAction() == MotionEvent.ACTION_MOVE) {
+			if (setPoint == null) {
+				setPoint = new PointF(event.getX(), event.getY());
 			} else {
-				float draggedDistanceSquared = (dragStartPoint.x - event.getX())
-						* (dragStartPoint.x - event.getX())
-						+ (dragStartPoint.y - event.getY())
-						* (dragStartPoint.y - event.getY());
-				if (draggedDistanceSquared > DRAG_RADIUS_SQUARED) {
+				float draggedDistanceSquared = (setPoint.x - event.getX())
+					* (setPoint.x - event.getX())
+					+ (setPoint.y - event.getY())
+					* (setPoint.y - event.getY());
+				if (draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
 					initDrag(event);
 
-					dragStartPoint = null;
+					setPoint = null;
 					watchForDrag = false;
 					dragView = null;
 				}
 			}
 		} else if (watchForDrag == true
-				&& (event.getAction() == MotionEvent.ACTION_UP
-						|| event.getAction() == MotionEvent.ACTION_CANCEL || event
-						.getAction() == MotionEvent.ACTION_DOWN)) {
-			dragStartPoint = null;
+			&& (event.getAction() == MotionEvent.ACTION_UP
+				|| event.getAction() == MotionEvent.ACTION_CANCEL || event
+				.getAction() == MotionEvent.ACTION_DOWN)) {
+			setPoint = null;
 			watchForDrag = false;
 			dragView = null;
 		}
 	}
 
-	private void initDrag(MotionEvent event) {
-		Log.d("PEN", "START DRAG EVENT");
 
+	private void initDrag(MotionEvent event) {
 		File[] files = mAdapter.getSelections();
 
 		// Cancel drag event because no files selected
@@ -172,7 +181,7 @@ public class DirectoryView extends ListView {
 
 		// ClipData.Item required for constructor
 		ClipData.Item constructorItem = new ClipData.Item(
-				files[0].getAbsolutePath());
+			files[0].getAbsolutePath());
 
 		ClipData data = new ClipData(description, constructorItem);
 
@@ -180,13 +189,77 @@ public class DirectoryView extends ListView {
 			data.addItem(new ClipData.Item(files[i].getAbsolutePath()));
 		}
 
-		Log.d("PEN", data.getItemAt(0).getText().toString());
-
 		mAdapter.greySelections();
 
 		DirectoryViewDragShadowBuilder shadowBuilder = new DirectoryViewDragShadowBuilder(
-				files.length, dragView.getWidth() / 3);
+			files.length, dragView.getWidth() / 3);
 		this.startDrag(data, shadowBuilder, null, 0);
+	}
+
+
+	public boolean onDragEvent(DragEvent event) {
+		final int action = event.getAction();
+
+		switch (action) {
+			case DragEvent.ACTION_DRAG_STARTED:
+			case DragEvent.ACTION_DRAG_LOCATION:
+				dragNavigate(event);
+				break;
+		}
+
+		return true;
+	}
+
+
+	// Handle navigation through NoteExplorer during DragEvent.
+	// If the user stays on the left side of the screen
+	private void dragNavigate(DragEvent event) {
+		
+		// Find the file represented by the view the user's finger is over
+		int positionUnderPointer = this.pointToPosition((int) event.getX(), (int) event.getY());
+		File fileUnderPointer = null;
+		if (positionUnderPointer >= 0) {
+			fileUnderPointer = mAdapter.getItem(positionUnderPointer);
+		}
+
+		// Watch to see if user wants to move up a directory
+		if (event.getX() < this.getWidth() / 4) {
+
+			// Start watching to see if user has been hovering on the left side of the screen for long enough to go up a directory
+			if (actionTimeMarker == 0) {
+				actionTimeMarker = System.currentTimeMillis();
+
+			// If user's been on the left side for long enough go up a directory
+			} else if ((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER && !mExplorer.isInRootDirectory()) {
+				mExplorer.moveUpDirectory();
+			}
+
+		// Watch to see if the user wants to open a folder
+		} else if (fileUnderPointer != null && fileUnderPointer.isDirectory()) {
+
+			// Compute distance of user's finger from setPoint for later
+			float draggedDistanceSquared = STATIONARY_RADIUS_SQUARED + 5;
+			if (setPoint != null) {
+				draggedDistanceSquared = (setPoint.x - event.getX()) * (setPoint.x - event.getX()) + (setPoint.y - event.getY()) * (setPoint.y - event.getY());
+			}
+
+			// Start watching to see if user's finger has been hovering over a folder for long enough to open it
+			if (actionTimeMarker == 0 || draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
+				Log.d("PEN", "reset timer");
+				actionTimeMarker = System.currentTimeMillis();
+				setPoint = new PointF(event.getX(), event.getY());
+
+			// If user has been hovering over folder for long enough open it
+			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
+				mExplorer.addView(new DirectoryView(mExplorer.getContext(), fileUnderPointer, mExplorer));
+				mExplorer.showNext();
+			}
+
+		// No actions are possible, reset timer
+		} else {
+			actionTimeMarker = 0;
+			setPoint = null;
+		}
 	}
 
 }
