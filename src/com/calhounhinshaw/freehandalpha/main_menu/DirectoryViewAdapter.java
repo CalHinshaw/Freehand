@@ -164,6 +164,10 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 
 		return files;
 	}
+	
+	public boolean isSelected (int position) {
+		return selectedItems.contains(position);
+	}
 
 
 	public void greySelections() {

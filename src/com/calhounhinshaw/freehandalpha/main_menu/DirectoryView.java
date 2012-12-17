@@ -203,6 +203,7 @@ public class DirectoryView extends ListView {
 		switch (action) {
 			case DragEvent.ACTION_DRAG_STARTED:
 			case DragEvent.ACTION_DRAG_LOCATION:
+				setDragAccents(event);
 				dragNavigate(event);
 				break;
 		}
@@ -212,7 +213,6 @@ public class DirectoryView extends ListView {
 
 
 	// Handle navigation through NoteExplorer during DragEvent.
-	// If the user stays on the left side of the screen
 	private void dragNavigate(DragEvent event) {
 		
 		// Find the file represented by the view the user's finger is over
@@ -222,10 +222,22 @@ public class DirectoryView extends ListView {
 			fileUnderPointer = mAdapter.getItem(positionUnderPointer);
 		}
 
-		// Watch to see if user wants to move up a directory
-		if (event.getX() < this.getWidth() / 4) {
+		// Watch to see if the user wants to scroll up
+		if (event.getY() < this.getHeight()/10) {
+			if (this.canScrollVertically(-1)) {
+				this.smoothScrollBy(-25, 40);
+			}
+			
+		// Watch to see if user wants to scroll down
+		} else if (event.getY() > this.getHeight() - this.getHeight()/10) {
+			if (this.canScrollVertically(1)) {
+				this.smoothScrollBy(25, 40);	
+			}
+			
+		// Watch to see if user wants to move up a directory	
+		} else if (event.getX() < this.getWidth() / 4) {
 
-			// Start watching to see if user has been hovering on the left side of the screen for long enough to go up a directory
+			// Start keeping track of the amount of time the user has been hovering over the left side of the screen for
 			if (actionTimeMarker == 0) {
 				actionTimeMarker = System.currentTimeMillis();
 
@@ -234,8 +246,8 @@ public class DirectoryView extends ListView {
 				mExplorer.moveUpDirectory();
 			}
 
-		// Watch to see if the user wants to open a folder
-		} else if (fileUnderPointer != null && fileUnderPointer.isDirectory()) {
+		// Watch to see if the user wants to open a valid folder
+		} else if (fileUnderPointer != null && fileUnderPointer.isDirectory() && !mAdapter.isSelected(positionUnderPointer)) {
 
 			// Compute distance of user's finger from setPoint for later
 			float draggedDistanceSquared = STATIONARY_RADIUS_SQUARED + 5;
@@ -262,4 +274,7 @@ public class DirectoryView extends ListView {
 		}
 	}
 
+	private void setDragAccents (DragEvent event) {
+		
+	}
 }
