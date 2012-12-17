@@ -4,7 +4,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.view.View;
 import android.view.View.DragShadowBuilder;
 
 public class DirectoryViewDragShadowBuilder extends DragShadowBuilder {
@@ -30,7 +29,9 @@ public class DirectoryViewDragShadowBuilder extends DragShadowBuilder {
 		canvas.drawARGB(0x90, 0x88, 0x88, 0x88);
 		
 		Paint numberPaint = new Paint();
-		
-		canvas.drawText(numberOfFiles.toString(), 0, 0, numberPaint);
+		numberPaint.setColor(Color.BLACK);
+		numberPaint.setAntiAlias(true);
+		numberPaint.setTextSize((int)(size*.5));
+		canvas.drawText(numberOfFiles.toString(), size/4, size/2, numberPaint);
 	}
 }
