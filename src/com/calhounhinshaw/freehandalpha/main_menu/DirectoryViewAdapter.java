@@ -49,21 +49,22 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		RowDataHolder holder = new RowDataHolder();
+		RowDataHolder holder;
 
 		// If convertView is new initialize it
 		if (convertView == null) {
 			LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
 			convertView = inflater.inflate(mLayoutResourceId, parent, false);
+			
+			// Set holder to convertView's sub-views for easier modification and faster retrieval
+			holder = new RowDataHolder();
+			holder.thumbnail = (ImageView) convertView.findViewById(R.id.DirectoryViewRowThumbnail);
+			holder.name = (TextView) convertView.findViewById(R.id.DirectoryViewRowName);
+			holder.dateModified = (TextView) convertView.findViewById(R.id.DirectoryViewRowDate);
+			convertView.setTag(holder);
+		} else {
+			holder = (RowDataHolder) convertView.getTag();
 		}
-
-		// Set the tag to be the file this view represents so the view can be meaningfully interacted with by other classes
-		convertView.setTag(mFiles[position]);
-
-		// Temporarily set holder to convertView's sub-views for easier modification
-		holder.thumbnail = (ImageView) convertView.findViewById(R.id.DirectoryViewRowThumbnail);
-		holder.name = (TextView) convertView.findViewById(R.id.DirectoryViewRowName);
-		holder.dateModified = (TextView) convertView.findViewById(R.id.DirectoryViewRowDate);
 
 		// Find last modified date of file
 		Date modDate = new Date(mFiles[position].lastModified());
@@ -73,11 +74,13 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 			holder.name.setText(mFiles[position].getName());
 			holder.thumbnail.setImageDrawable(mFolderDrawable);
 			holder.dateModified.setText(modDate.toString());
+			holder.file = mFiles[position];
 		} else if (mFiles[position].isFile()) {
 			String noteName = mFiles[position].getName().replace(".note", "");
 			holder.name.setText(noteName);
 			holder.thumbnail.setImageDrawable(mDefaultNoteDrawable);
 			holder.dateModified.setText(modDate.toString());
+			holder.file = mFiles[position];
 		}
 
 		// Change background color as appropriate
@@ -86,17 +89,18 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 		} else if (selectedItems.contains(position)) {
 			convertView.setBackgroundColor(BLUE_HIGHLIGHT);
 		} else {
-			convertView.setBackgroundColor(Color.WHITE);
+			convertView.setBackgroundColor(0x0000000000);
 		}
 
 		return convertView;
 	}
 
 	// simple class to make getView a bit clearer
-	private static class RowDataHolder {
+	public static class RowDataHolder {
 		ImageView thumbnail;
 		TextView name;
 		TextView dateModified;
+		File file;
 
 
 		public RowDataHolder() {
