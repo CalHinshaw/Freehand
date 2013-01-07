@@ -56,6 +56,7 @@ public class MainMenu extends Activity implements IActionBarListener {
     public void onBackPressed() {
     	if(mExplorer.directoryHasSelected()) {			//first clear selections
     		mExplorer.clearDirectorySelections();
+    		this.setDefaultActionBar();
     	} else if (mExplorer.isInRootDirectory()) {		// then close folders
     		super.onBackPressed();
     	} else {										// finally, close app
