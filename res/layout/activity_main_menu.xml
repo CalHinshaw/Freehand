@@ -45,7 +45,8 @@
         <Button 
 	   		android:id = "@+id/cancelButton"
 	    	android:text = "@string/cancel" 
-    		android:layout_width="wrap_content"
+    		android:layout_width="0dip"
+    		android:layout_weight="1"
     		android:layout_height="fill_parent" />
         
         <Button 
