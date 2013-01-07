@@ -94,8 +94,10 @@ public class NoteExplorer extends ViewAnimator{
 		
 		// Deletes view but makes sure animation runs
 		View toDelete = this.getCurrentView();
+		this.getChildAt(this.getDisplayedChild()-1).setVerticalScrollBarEnabled(false);
 		this.showPrevious();
 		this.removeView(toDelete);
+		this.getCurrentView().setVerticalScrollBarEnabled(true);
 	}
 	
 	@Override
@@ -103,7 +105,9 @@ public class NoteExplorer extends ViewAnimator{
 		this.setInAnimation(inFromRightAnimation);
 		this.setOutAnimation(outToLeftAnimation);
 		
+		child.setVerticalScrollBarEnabled(false);
 		super.addView(child);
+		child.setVerticalScrollBarEnabled(true);
 	}
 	
 	public boolean directoryHasSelected () {
