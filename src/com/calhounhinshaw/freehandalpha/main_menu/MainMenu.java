@@ -10,7 +10,9 @@ import com.calhounhinshaw.freehandalpha.note_orginazion.NoteFileHierarchyItem;
 
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Vibrator;
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -24,9 +26,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 public class MainMenu extends Activity implements IActionBarListener {
-	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
-	private static final int NO_COLOR = 0x00FFFFFF;
+	private static final long VIBRATE_DURATION = 50;
 	
 	private NoteExplorer mExplorer;
 	
@@ -84,6 +85,7 @@ public class MainMenu extends Activity implements IActionBarListener {
 					
 				case DragEvent.ACTION_DRAG_ENTERED:
 					v.getBackground().setColorFilter(new PorterDuffColorFilter(ORANGE_HIGHLIGHT, PorterDuff.Mode.ADD));
+					((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(VIBRATE_DURATION);
 					break;
 					
 				case DragEvent.ACTION_DRAG_EXITED:
