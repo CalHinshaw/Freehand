@@ -12,6 +12,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -387,8 +388,11 @@ public class FolderView extends ListView {
 	}
 	
 	
-	
 	public INoteHierarchyItem getNoteHierarchyItem () {
 		return mFolder;
+	}
+	
+	public void deleteSelectedItems () {
+		Log.d("PEN", "deletion isn't implemented yet, but just you wait!");
 	}
 }

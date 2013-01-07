@@ -11,7 +11,10 @@ import com.calhounhinshaw.freehandalpha.note_orginazion.NoteFileHierarchyItem;
 import android.os.Bundle;
 import android.os.Environment;
 import android.app.Activity;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -21,6 +24,9 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 public class MainMenu extends Activity implements IActionBarListener {
+	private static final int BLUE_HIGHLIGHT = 0x600099CC;
+	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
+	private static final int NO_COLOR = 0x00FFFFFF;
 	
 	private NoteExplorer mExplorer;
 	
@@ -31,26 +37,60 @@ public class MainMenu extends Activity implements IActionBarListener {
 	
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			// TODO implement cancleButtonOnClickListener	
+			mExplorer.clearDirectorySelections();
+			setDefaultActionBar();
 		}
 	};
 	
 	private OnClickListener deleteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			// TODO implement deleteButtonOnClickListener	
+			mExplorer.deleteSelectedItems();
+			mExplorer.clearDirectorySelections();
+			setDefaultActionBar();
 		}
 	};
 	
 	private OnDragListener cancelButtonDragListener = new OnDragListener () {
 		public boolean onDrag(View v, DragEvent event) {
-			// TODO implement cancelButtonDragListener
+			switch(event.getAction()) {
+				case DragEvent.ACTION_DROP:
+					mExplorer.clearDirectorySelections();
+					setDefaultActionBar();
+					v.getBackground().setColorFilter(null);
+					break;
+					
+				case DragEvent.ACTION_DRAG_ENTERED:
+					v.getBackground().setColorFilter(new PorterDuffColorFilter(ORANGE_HIGHLIGHT, PorterDuff.Mode.ADD));
+					break;
+					
+				case DragEvent.ACTION_DRAG_EXITED:
+					v.getBackground().setColorFilter(null);
+					break;
+			}
+			
 			return true;
 		}
 	};
 	
 	private OnDragListener deleteButtonDragListener = new OnDragListener () {
 		public boolean onDrag(View v, DragEvent event) {
-			// TODO implement deleteButtonDragListener
+			switch(event.getAction()) {
+				case DragEvent.ACTION_DROP:
+					mExplorer.deleteSelectedItems();
+					mExplorer.clearDirectorySelections();
+					setDefaultActionBar();
+					v.getBackground().setColorFilter(null);
+					break;
+					
+				case DragEvent.ACTION_DRAG_ENTERED:
+					v.getBackground().setColorFilter(new PorterDuffColorFilter(ORANGE_HIGHLIGHT, PorterDuff.Mode.ADD));
+					break;
+					
+				case DragEvent.ACTION_DRAG_EXITED:
+					v.getBackground().setColorFilter(null);
+					break;
+			}
+			
 			return true;
 		}
 	};

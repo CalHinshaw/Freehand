@@ -115,4 +115,7 @@ public class NoteExplorer extends ViewAnimator{
 		
 	}
 		
+	public void deleteSelectedItems () {
+		((FolderView) this.getCurrentView()).deleteSelectedItems();
+	}
 }
