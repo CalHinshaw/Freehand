@@ -174,9 +174,7 @@ public class FolderView extends ListView {
 
 
 	public boolean onDragEvent(DragEvent event) {
-		final int action = event.getAction();
-
-		switch (action) {
+		switch (event.getAction()) {
 			case DragEvent.ACTION_DRAG_STARTED:
 			case DragEvent.ACTION_DRAG_LOCATION:
 				setDragAccents(event);
