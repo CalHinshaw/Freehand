@@ -1,20 +1,20 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import com.calhounhinshaw.freehandalpha.R;
+import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,28 +22,21 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-public class DirectoryViewAdapter extends ArrayAdapter<File> {
+public class FolderViewAdapter extends ArrayAdapter<INoteHierarchyItem> {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 
 	private Context mContext;
 	private int mLayoutResourceId;
-	private File mFiles[] = null;
+	private INoteHierarchyItem[] mItems;
 	private Set<Integer> selectedItems = new TreeSet<Integer>();
 	private boolean selectedItemsGreyed = false;
 
-	// Needed in getView
-	private Drawable mFolderDrawable;
-	private Drawable mDefaultNoteDrawable;
-
-
-	public DirectoryViewAdapter(Context context, int layoutResourceId, File[] files, Drawable folderDrawable, Drawable defaultNoteDrawable) {
-		super(context, layoutResourceId, files);
+	public FolderViewAdapter(Context context, int layoutResourceId, INoteHierarchyItem[] items) {
+		super(context, layoutResourceId, items);
 
 		mContext = context;
 		mLayoutResourceId = layoutResourceId;
-		mFiles = sortFiles(files);
-		mFolderDrawable = folderDrawable;
-		mDefaultNoteDrawable = defaultNoteDrawable;
+		mItems = sortItems(items);
 	}
 
 
@@ -67,21 +60,13 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 		}
 
 		// Find last modified date of file
-		Date modDate = new Date(mFiles[position].lastModified());
+		Date modDate = new Date(mItems[position].getDateModified());
 
-		// Set the content of convertView's sub-views. Folders and notes get treated differently
-		if (mFiles[position].isDirectory()) {
-			holder.name.setText(mFiles[position].getName());
-			holder.thumbnail.setImageDrawable(mFolderDrawable);
-			holder.dateModified.setText(modDate.toString());
-			holder.file = mFiles[position];
-		} else if (mFiles[position].isFile()) {
-			String noteName = mFiles[position].getName().replace(".note", "");
-			holder.name.setText(noteName);
-			holder.thumbnail.setImageDrawable(mDefaultNoteDrawable);
-			holder.dateModified.setText(modDate.toString());
-			holder.file = mFiles[position];
-		}
+		// Set the content of convertView's sub-views
+		holder.name.setText(mItems[position].getName());
+		holder.thumbnail.setImageDrawable(mItems[position].getThumbnail());
+		holder.dateModified.setText(modDate.toString());
+		holder.noteHierarchyItem = mItems[position];
 
 		// Change background color as appropriate
 		if (selectedItems.contains(position) && selectedItemsGreyed) {
@@ -100,7 +85,7 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 		ImageView thumbnail;
 		TextView name;
 		TextView dateModified;
-		File file;
+		INoteHierarchyItem noteHierarchyItem;
 
 
 		public RowDataHolder() {
@@ -109,36 +94,36 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 
 
 	// Sorts the files in the adapter. Directories are at the top in alphabetical order and notes are below them ordered by the date they were last modified on.
-	private File[] sortFiles(File[] unsorted) {
-		ArrayList<File> directories = new ArrayList<File>(unsorted.length);
-		ArrayList<File> notes = new ArrayList<File>(unsorted.length);
+	private INoteHierarchyItem[] sortItems(INoteHierarchyItem[] unsorted) {
+		ArrayList<INoteHierarchyItem> directories = new ArrayList<INoteHierarchyItem>(unsorted.length);
+		ArrayList<INoteHierarchyItem> notes = new ArrayList<INoteHierarchyItem>(unsorted.length);
 
-		// Separate directories and notes into their respective ArraLists
-		for (File f : unsorted) {
-			if (f.isDirectory()) {
-				directories.add(f);
+		// Separate directories and notes into their respective ArrayLists
+		for (INoteHierarchyItem item : unsorted) {
+			if (item.isFolder()) {
+				directories.add(item);
 			} else {
-				notes.add(f);
+				notes.add(item);
 			}
 		}
 
 		// Sort Directories alphabetically
-		Collections.sort(directories, new Comparator<File>() {
-			public int compare(File arg0, File arg1) {
+		Collections.sort(directories, new Comparator<INoteHierarchyItem>() {
+			public int compare(INoteHierarchyItem arg0, INoteHierarchyItem arg1) {
 				return arg0.getName().compareTo(arg1.getName());
 			}
 		});
 
 		// Sort Directories by date modified
-		Collections.sort(notes, new Comparator<File>() {
-			public int compare(File arg0, File arg1) {
-				return Long.valueOf(arg1.lastModified()).compareTo(arg0.lastModified());
+		Collections.sort(notes, new Comparator<INoteHierarchyItem>() {
+			public int compare(INoteHierarchyItem arg0, INoteHierarchyItem arg1) {
+				return Long.valueOf(arg1.getDateModified()).compareTo(arg0.getDateModified());
 			}
 		});
 
 		// Concatenate directories and notes (which are now sorted) into an array - kinda messy
 		directories.addAll(notes);
-		return directories.toArray(new File[0]);
+		return directories.toArray(new INoteHierarchyItem[0]);
 	}
 
 
@@ -158,15 +143,14 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 	}
 
 
-	public File[] getSelections() {
-		Integer[] selected = selectedItems.toArray(new Integer[1]);
-		File[] files = new File[selected.length];
-
-		for (int i = 0; i < selected.length; i++) {
-			files[i] = mFiles[selected[i]];
+	public List<INoteHierarchyItem> getSelections() {
+		List<INoteHierarchyItem> toReturn = new LinkedList<INoteHierarchyItem>();
+		
+		for (int i : selectedItems) {
+			toReturn.add(mItems[i]);
 		}
 
-		return files;
+		return toReturn;
 	}
 	
 	public boolean isSelected (int position) {
@@ -187,7 +171,7 @@ public class DirectoryViewAdapter extends ArrayAdapter<File> {
 
 
 	@Override
-	public File getItem(int position) {
-		return mFiles[position];
+	public INoteHierarchyItem getItem(int position) {
+		return mItems[position];
 	}
 }

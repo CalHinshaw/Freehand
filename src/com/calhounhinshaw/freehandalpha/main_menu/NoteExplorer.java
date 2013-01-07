@@ -1,11 +1,9 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
-import java.io.File;
+import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.DragEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
@@ -20,7 +18,7 @@ public class NoteExplorer extends ViewAnimator{
 	private Animation outToLeftAnimation;
 	private Animation outToRightAnimation;
 	
-	private File rootDirectory;
+	private INoteHierarchyItem mRootFolder;
 	
 	public NoteExplorer(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -58,21 +56,20 @@ public class NoteExplorer extends ViewAnimator{
 		outToLeftAnimation.setDuration(ANIMATION_DURATION);
 	}
 	
-	public void setRootDirectory (File newRootDirectory) {
-		rootDirectory = newRootDirectory;
-		rootDirectory.mkdirs();
+	public void setRootHierarchyItem (INoteHierarchyItem newFolder) {
+		mRootFolder = newFolder;
 		
-		this.addView(new DirectoryView(this.getContext(), rootDirectory, this));
+		this.addView(new FolderView(this.getContext(), mRootFolder, this));
 	}
 	
-	public void openNewDirectory (File newDirectory) {
-		this.addView(new DirectoryView(this.getContext(), newDirectory, this));
+	public void openNewFolder (INoteHierarchyItem newFolder) {
+		this.addView(new FolderView(this.getContext(), newFolder, this));
 	}
 	
 	public boolean isInRootDirectory() {
-		File currentDirectory = ((DirectoryView) this.getCurrentView()).getDirectory();
+		INoteHierarchyItem currentFolder = ((FolderView) this.getCurrentView()).getNoteHierarchyItem();
 		
-		if (rootDirectory.equals(currentDirectory)) {
+		if (mRootFolder.equals(currentFolder)) {
 			return true;
 		} else {
 			return false;
@@ -103,11 +100,11 @@ public class NoteExplorer extends ViewAnimator{
 	}
 	
 	public boolean directoryHasSelected () {
-		return ((DirectoryView) this.getCurrentView()).adapterHasSelections();
+		return ((FolderView) this.getCurrentView()).adapterHasSelections();
 	}
 	
 	public void clearDirectorySelections () {
-		((DirectoryView) this.getCurrentView()).clearAdapterSelections();
+		((FolderView) this.getCurrentView()).clearAdapterSelections();
 		
 	}
 		

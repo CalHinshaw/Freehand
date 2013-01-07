@@ -4,10 +4,11 @@ import java.util.List;
 
 import android.graphics.drawable.Drawable;
 
-interface INoteHierarchyItem {
+public interface INoteHierarchyItem {
 	public String getName();
 	public long getDateModified();
 	public Drawable getThumbnail();
+	public boolean isFolder();
 	
 	public List<INoteHierarchyItem> getChildren ();
 }

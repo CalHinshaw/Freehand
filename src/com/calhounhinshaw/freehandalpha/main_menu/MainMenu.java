@@ -1,10 +1,17 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import java.io.File;
+
 import com.calhounhinshaw.freehandalpha.R;
+
+import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
+import com.calhounhinshaw.freehandalpha.note_orginazion.NoteFileHierarchyItem;
+
 
 import android.os.Bundle;
 import android.os.Environment;
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.view.Menu;
 
 public class MainMenu extends Activity {
@@ -16,9 +23,16 @@ public class MainMenu extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
         
-        // Starts NoteExplorer in the app's root directory
+        // Gather resources needed to create the NoteFileHierarchyItem that's getting passed to mExplorer
+        File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
+        Drawable defaultNoteDrawable = this.getResources().getDrawable(R.drawable.pencil);
+        Drawable defaultFileDrawable = this.getResources().getDrawable(R.drawable.folder);
+        
+        INoteHierarchyItem rootItem = new NoteFileHierarchyItem(rootDirectory, defaultNoteDrawable, defaultFileDrawable);
+        
+        // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);
-        mExplorer.setRootDirectory(Environment.getExternalStoragePublicDirectory("Freehand"));
+        mExplorer.setRootHierarchyItem(rootItem);
     }
 
     @Override

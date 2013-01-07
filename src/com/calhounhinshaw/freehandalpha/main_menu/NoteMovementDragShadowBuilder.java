@@ -6,11 +6,11 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.view.View.DragShadowBuilder;
 
-public class DirectoryViewDragShadowBuilder extends DragShadowBuilder {
+public class NoteMovementDragShadowBuilder extends DragShadowBuilder {
 	private final Integer numberOfFiles;
 	private final Integer size;
 	
-	public DirectoryViewDragShadowBuilder(int numberOfFiles, int size) {
+	public NoteMovementDragShadowBuilder(int numberOfFiles, int size) {
 		this.numberOfFiles = numberOfFiles;
 		this.size = size;
 	}

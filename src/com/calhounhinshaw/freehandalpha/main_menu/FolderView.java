@@ -1,28 +1,24 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
-import java.io.File;
-import java.util.LinkedList;
-import com.calhounhinshaw.freehandalpha.R;
+import java.util.List;
 
-import android.content.ClipData;
-import android.content.ClipDescription;
+import com.calhounhinshaw.freehandalpha.R;
+import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
+
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Shader;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-public class DirectoryView extends ListView {
+public class FolderView extends ListView {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final int NO_COLOR = 0x00FFFFFF;
@@ -34,14 +30,10 @@ public class DirectoryView extends ListView {
 	private static final int SCROLL_DISTANCE = 40;
 	private static final int SCROLL_DURATION = 60;
 	
-	// Items for various callbacks and core functionality
+	// Items for various callbacks and whatnot
 	private NoteExplorer mExplorer;
-	private DirectoryViewAdapter mAdapter;
-	private File mDirectory;
-
-	// These get passed to DirectoryViewAdapters when they're created
-	private Drawable folderDrawable;
-	private Drawable defaultNoteDrawable;
+	private FolderViewAdapter mAdapter;
+	private INoteHierarchyItem mFolder;
 
 	// These store the persistent information for dragWatcher
 	private boolean watchForDrag = false;
@@ -59,56 +51,33 @@ public class DirectoryView extends ListView {
 	private int dropUnderHighlight = -1;	// the view the drop highlight draws UNDER
 
 
-	public DirectoryView(Context context, File newDirectory,
-		NoteExplorer newExplorer) {
+	public FolderView(Context context, INoteHierarchyItem newFolder, NoteExplorer newExplorer) {
 		super(context);
 		mExplorer = newExplorer;
-		mDirectory = newDirectory;
+		mFolder = newFolder;
 
-		folderDrawable = this.getContext().getResources()
-			.getDrawable(R.drawable.folder);
-		defaultNoteDrawable = this.getContext().getResources()
-			.getDrawable(R.drawable.pencil);
+		List<INoteHierarchyItem> mFolderChildren = mFolder.getChildren();
 
-		File filesInDir[] = mDirectory.listFiles();
-		LinkedList<File> validFilesInDir = new LinkedList<File>();
-
-		// Remove files in the directory that are hidden or aren't .note files
-		for (File f : filesInDir) {
-			if (f.isDirectory() && !f.isHidden()) {
-				validFilesInDir.add(f);
-			} else if (f.isFile() && !f.isHidden()) {
-				if (f.getName().contains(".note")) {
-					validFilesInDir.add(f);
-				}
-			}
-		}
-
-		// Create the adapter for this list view using the cleaned list of
-		// files, validFilesInDir
-		mAdapter = new DirectoryViewAdapter(this.getContext(),
-			R.layout.directoryview_row,
-			validFilesInDir.toArray(new File[0]), folderDrawable,
-			defaultNoteDrawable);
-
+		// Create and set the adapter for this ListView
+		mAdapter = new FolderViewAdapter(this.getContext(), R.layout.directoryview_row, mFolderChildren.toArray(new INoteHierarchyItem[mFolderChildren.size()]));
 		this.setAdapter(mAdapter);
+		
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
 	}
 
 	// Open folder or note when clicked.
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
-		public void onItemClick(AdapterView<?> parent, View clickedView,
-			int position, long id) {
+		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
-			File clickedFile = ((DirectoryViewAdapter.RowDataHolder) clickedView.getTag()).file;
+			INoteHierarchyItem clickedItem = ((FolderViewAdapter.RowDataHolder) clickedView.getTag()).noteHierarchyItem;
 			if (mAdapter.hasSelections())
 				mAdapter.clearSelections();
 
 			// Clicking on directory opens it
-			if (clickedFile.isDirectory()) {
-				mExplorer.addView(new DirectoryView(mExplorer.getContext(),
-					clickedFile, mExplorer));
+			if (clickedItem.isFolder()) {
+				mExplorer.addView(new FolderView(mExplorer.getContext(),
+					clickedItem, mExplorer));
 				mExplorer.showNext();
 			}
 
@@ -128,12 +97,6 @@ public class DirectoryView extends ListView {
 			return true;
 		}
 	};
-
-
-	public File getDirectory() {
-		return mDirectory;
-	}
-
 
 	public boolean adapterHasSelections() {
 		return mAdapter.hasSelections();
@@ -169,7 +132,7 @@ public class DirectoryView extends ListView {
 					+ (setPoint.y - event.getY())
 					* (setPoint.y - event.getY());
 				if (draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
-					initDrag(event);
+					initDrag();
 
 					setPoint = null;
 					watchForDrag = false;
@@ -187,33 +150,21 @@ public class DirectoryView extends ListView {
 	}
 
 
-	private void initDrag(MotionEvent event) {
-		File[] files = mAdapter.getSelections();
+	private void initDrag() {
+		List<INoteHierarchyItem> selectedItems = mAdapter.getSelections();
 
-		// Cancel drag event because no files selected
-		if (files.length <= 0) {
+		// Cancel drag event because no items selected
+		if (selectedItems.size() <= 0) {
 			return;
 		}
-
-		String[] mime = new String[1];
-		mime[0] = ClipDescription.MIMETYPE_TEXT_PLAIN;
-		ClipDescription description = new ClipDescription("files", mime);
-
-		// ClipData.Item required for constructor
-		ClipData.Item constructorItem = new ClipData.Item(
-			files[0].getAbsolutePath());
-
-		ClipData data = new ClipData(description, constructorItem);
-
-		for (int i = 1; i < files.length; i++) {
-			data.addItem(new ClipData.Item(files[i].getAbsolutePath()));
-		}
-
+		
 		mAdapter.greySelections();
 
-		DirectoryViewDragShadowBuilder shadowBuilder = new DirectoryViewDragShadowBuilder(
-			files.length, dragView.getWidth() / 3);
-		this.startDrag(data, shadowBuilder, null, 0);
+		// Build the drag shadow needed for startDrag
+		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(selectedItems.size(), dragView.getWidth() / 3);
+		
+		// Start drag without ClipData and with myLocalState equaling selectedItems (has to be cast when DragEvent is received).
+		this.startDrag(null, shadowBuilder, selectedItems, 0);
 	}
 
 
@@ -224,7 +175,7 @@ public class DirectoryView extends ListView {
 			case DragEvent.ACTION_DRAG_STARTED:
 			case DragEvent.ACTION_DRAG_LOCATION:
 				setDragAccents(event);
-				dragNavigate(event);
+				navigateDrag(event);
 				break;
 				
 			case DragEvent.ACTION_DRAG_ENDED:
@@ -247,13 +198,13 @@ public class DirectoryView extends ListView {
 	}
 	
 	// Handle navigation through NoteExplorer during DragEvent.
-	private void dragNavigate(DragEvent event) {
+	private void navigateDrag(DragEvent event) {
 		
 		// Find the file represented by the view the user's finger is over
 		int positionUnderPointer = this.pointToPosition((int) event.getX(), (int) event.getY());
-		File fileUnderPointer = null;
+		INoteHierarchyItem itemUnderPointer = null;
 		if (positionUnderPointer >= 0) {
-			fileUnderPointer = mAdapter.getItem(positionUnderPointer);
+			itemUnderPointer = mAdapter.getItem(positionUnderPointer);
 		}
 
 		// Watch to see if the user wants to scroll up
@@ -287,7 +238,7 @@ public class DirectoryView extends ListView {
 			}
 
 		// Watch to see if the user wants to open a valid folder
-		} else if (fileUnderPointer != null && fileUnderPointer.isDirectory() && !mAdapter.isSelected(positionUnderPointer)) {
+		} else if (itemUnderPointer != null && itemUnderPointer.isFolder() && !mAdapter.isSelected(positionUnderPointer)) {
 
 			// Compute distance of user's finger from setPoint for later
 			float draggedDistanceSquared = STATIONARY_RADIUS_SQUARED + 5;
@@ -302,7 +253,7 @@ public class DirectoryView extends ListView {
 
 			// If user has been hovering over folder for long enough open it
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mExplorer.addView(new DirectoryView(mExplorer.getContext(), fileUnderPointer, mExplorer));
+				mExplorer.addView(new FolderView(mExplorer.getContext(), itemUnderPointer, mExplorer));
 				mExplorer.showNext();
 			}
 
@@ -318,9 +269,9 @@ public class DirectoryView extends ListView {
 		
 		// Find the file represented by the view the user's finger is over
 		int positionUnderPointer = this.pointToPosition((int) event.getX(), (int) event.getY());
-		File fileUnderPointer = null;
+		INoteHierarchyItem itemUnderPointer = null;
 		if (positionUnderPointer >= 0) {
-			fileUnderPointer = mAdapter.getItem(positionUnderPointer);
+			itemUnderPointer = mAdapter.getItem(positionUnderPointer);
 		}
 		
 		// Trigger highlight between list elements
@@ -361,7 +312,7 @@ public class DirectoryView extends ListView {
 		}
 		
 		// Trigger directory open highlight on right of the directory's row
-		if (fileUnderPointer != null && fileUnderPointer.isDirectory() && !mAdapter.isSelected(positionUnderPointer)) {
+		if (itemUnderPointer != null && itemUnderPointer.isFolder() && !mAdapter.isSelected(positionUnderPointer)) {
 			folderOpenHighlight = positionUnderPointer;
 		} else {
 			folderOpenHighlight = -1;
@@ -434,12 +385,7 @@ public class DirectoryView extends ListView {
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
+	public INoteHierarchyItem getNoteHierarchyItem () {
+		return mFolder;
+	}
 }
