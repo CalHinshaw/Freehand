@@ -13,15 +13,24 @@ import android.os.Environment;
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.view.Menu;
+import android.view.View;
+import android.widget.LinearLayout;
 
 public class MainMenu extends Activity {
 	
 	NoteExplorer mExplorer;
+	LinearLayout itemsSelectedActionBar;
+	LinearLayout defaultActionBar;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
+        
+        defaultActionBar = (LinearLayout) findViewById(R.id.defaultActionBar);
+        itemsSelectedActionBar = (LinearLayout) findViewById(R.id.itemsSelectedActionBar);
+        
+        itemsSelectedActionBar.setVisibility(View.INVISIBLE);
         
         // Gather resources needed to create the NoteFileHierarchyItem that's getting passed to mExplorer
         File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");

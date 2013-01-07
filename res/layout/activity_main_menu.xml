@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="fill_parent"
+        android:id="@+id/defaultActionBar"
+        
+	    android:layout_alignParentTop="true"
+	    android:layout_width="fill_parent"
         android:layout_height="60dip"
+        
         android:orientation="horizontal" >
         
     	<Button 
@@ -28,13 +32,39 @@
     	    android:layout_height="fill_parent" />
     	
  	</LinearLayout>
-	   
+ 	
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+        android:id="@+id/itemsSelectedActionBar"
+        
+        android:layout_alignParentTop="true"
+	    android:layout_width="fill_parent"
+        android:layout_height="60dip"
+        
+        android:orientation="horizontal" >
+    	
+        <Button 
+	   		android:id = "@+id/cancelButton"
+	    	android:text = "@string/cancel" 
+    		android:layout_width="wrap_content"
+    		android:layout_height="fill_parent" />
+        
+        <Button 
+	   		android:id = "@+id/deleteButton"
+	    	android:text = "@string/delete" 
+    		android:layout_width="wrap_content"
+    		android:layout_height="fill_parent" />
+        </LinearLayout>
+        	   
 	    
 	<com.calhounhinshaw.freehandalpha.main_menu.NoteExplorer
 	    android:id="@+id/noteExplorer"
-	    android:layout_width="match_parent"
+	    
+	    android:layout_alignParentLeft="true"
+	    android:layout_alignParentBottom="true"
+	    android:layout_below="@id/defaultActionBar"
+	    android:layout_width="fill_parent"
+	    
 	    android:layout_height= "0dip"
-	    android:layout_weight="1"
 	    android:drawSelectorOnTop="false" />
  
-</LinearLayout>
+</RelativeLayout>
