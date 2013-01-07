@@ -34,6 +34,7 @@ public class FolderView extends ListView {
 	private NoteExplorer mExplorer;
 	private FolderViewAdapter mAdapter;
 	private INoteHierarchyItem mFolder;
+	private IActionBarListener mActionBarListener;
 
 	// These store the persistent information for dragWatcher
 	private boolean watchForDrag = false;
@@ -51,10 +52,11 @@ public class FolderView extends ListView {
 	private int dropUnderHighlight = -1;	// the view the drop highlight draws UNDER
 
 
-	public FolderView(Context context, INoteHierarchyItem newFolder, NoteExplorer newExplorer) {
+	public FolderView(Context context, INoteHierarchyItem newFolder, NoteExplorer newExplorer, IActionBarListener newListener) {
 		super(context);
 		mExplorer = newExplorer;
 		mFolder = newFolder;
+		mActionBarListener = newListener;
 
 		List<INoteHierarchyItem> mFolderChildren = mFolder.getChildren();
 
@@ -71,24 +73,28 @@ public class FolderView extends ListView {
 		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
 			INoteHierarchyItem clickedItem = ((FolderViewAdapter.RowDataHolder) clickedView.getTag()).noteHierarchyItem;
-			if (mAdapter.hasSelections())
+			if (mAdapter.hasSelections()) {
 				mAdapter.clearSelections();
+			}
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder()) {
 				mExplorer.addView(new FolderView(mExplorer.getContext(),
-					clickedItem, mExplorer));
+					clickedItem, mExplorer, mActionBarListener));
 				mExplorer.showNext();
 			}
 
 			// TODO: implement click on file (opens the note)
+			
+			mActionBarListener.setDefaultActionBar();
 		}
 	};
 
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
-		public boolean onItemLongClick(AdapterView<?> parent, View pressedView,
-			int position, long id) {
+		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
 			mAdapter.addSelection(position);
+			mActionBarListener.setItemsSelectedActionBar();
+			
 			pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
 
 			watchForDrag = true;
@@ -122,8 +128,7 @@ public class FolderView extends ListView {
 
 	// If drag gesture call initDrag
 	private void dragWatcher(MotionEvent event) {
-		if (watchForDrag == true
-			&& event.getAction() == MotionEvent.ACTION_MOVE) {
+		if (watchForDrag == true && event.getAction() == MotionEvent.ACTION_MOVE) {
 			if (setPoint == null) {
 				setPoint = new PointF(event.getX(), event.getY());
 			} else {
@@ -253,7 +258,7 @@ public class FolderView extends ListView {
 
 			// If user has been hovering over folder for long enough open it
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mExplorer.addView(new FolderView(mExplorer.getContext(), itemUnderPointer, mExplorer));
+				mExplorer.addView(new FolderView(mExplorer.getContext(), itemUnderPointer, mExplorer, mActionBarListener));
 				mExplorer.showNext();
 			}
 

@@ -19,6 +19,7 @@ public class NoteExplorer extends ViewAnimator{
 	private Animation outToRightAnimation;
 	
 	private INoteHierarchyItem mRootFolder;
+	private IActionBarListener mActionBarListener;
 	
 	public NoteExplorer(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -56,14 +57,20 @@ public class NoteExplorer extends ViewAnimator{
 		outToLeftAnimation.setDuration(ANIMATION_DURATION);
 	}
 	
+	
+	// setActionBarListener MUST BE CALLED BEFORE THIS!!!!!!
 	public void setRootHierarchyItem (INoteHierarchyItem newFolder) {
 		mRootFolder = newFolder;
 		
-		this.addView(new FolderView(this.getContext(), mRootFolder, this));
+		this.addView(new FolderView(this.getContext(), mRootFolder, this, mActionBarListener));
+	}
+	
+	public void setActionBarListener (IActionBarListener newListener) {
+		mActionBarListener = newListener;
 	}
 	
 	public void openNewFolder (INoteHierarchyItem newFolder) {
-		this.addView(new FolderView(this.getContext(), newFolder, this));
+		this.addView(new FolderView(this.getContext(), newFolder, this, mActionBarListener));
 	}
 	
 	public boolean isInRootDirectory() {

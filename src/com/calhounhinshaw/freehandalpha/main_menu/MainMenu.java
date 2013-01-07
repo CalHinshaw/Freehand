@@ -16,7 +16,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.LinearLayout;
 
-public class MainMenu extends Activity {
+public class MainMenu extends Activity implements IActionBarListener {
 	
 	NoteExplorer mExplorer;
 	LinearLayout itemsSelectedActionBar;
@@ -41,6 +41,7 @@ public class MainMenu extends Activity {
         
         // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);
+        mExplorer.setActionBarListener(this);
         mExplorer.setRootHierarchyItem(rootItem);
     }
 
@@ -60,5 +61,15 @@ public class MainMenu extends Activity {
     	} else {										// finally, close app
     		mExplorer.moveUpDirectory();
     	}
+    }
+    
+    public void setItemsSelectedActionBar () {
+    	itemsSelectedActionBar.setVisibility(View.VISIBLE);
+    	defaultActionBar.setVisibility(View.INVISIBLE);
+    }
+    
+    public void setDefaultActionBar () {
+    	itemsSelectedActionBar.setVisibility(View.INVISIBLE);
+    	defaultActionBar.setVisibility(View.VISIBLE);
     }
 }
