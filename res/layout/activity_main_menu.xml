@@ -17,19 +17,22 @@
 	   		android:id = "@+id/newNoteButton"
 	    	android:text = "@string/new_note" 
     		android:layout_width="wrap_content"
-    		android:layout_height="fill_parent" />
+    		android:layout_height="fill_parent"
+    		android:layout_weight="1" />
     	
     	<Button 
     	    android:id="@+id/newFolderButton"
     	    android:text="@string/new_folder"
     	    android:layout_width="wrap_content" 
-    	    android:layout_height="fill_parent" />
+    	    android:layout_height="fill_parent"
+    	    android:layout_weight="1" />
     	
     	<Button 
     	    android:id = "@+id/showAllNotesButton"
     	    android:text = "@string/show_all_notes"
     	    android:layout_width="wrap_content"
-    	    android:layout_height="fill_parent" />
+    	    android:layout_height="fill_parent"
+    	    android:layout_weight="1" />
     	
  	</LinearLayout>
  	

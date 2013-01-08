@@ -14,12 +14,14 @@ import android.graphics.Rect;
 import android.graphics.Shader;
 import android.util.Log;
 import android.view.DragEvent;
+import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-public class FolderView extends ListView {
+public class FolderView extends ListView implements OnGestureListener {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final int NO_COLOR = 0x00FFFFFF;
@@ -39,7 +41,6 @@ public class FolderView extends ListView {
 
 	// These store the persistent information for dragWatcher
 	private boolean watchForDrag = false;
-	private View dragView = null;
 
 	// These store the persistent information for all of the drag gestures
 	private PointF setPoint = null;
@@ -51,6 +52,8 @@ public class FolderView extends ListView {
 	private boolean drawScrollDownHighlight = false;
 	private int folderOpenHighlight = -1;
 	private int dropUnderHighlight = -1;	// the view the drop highlight draws UNDER
+	
+	private final GestureDetector flingDetector;
 
 
 	public FolderView(Context context, INoteHierarchyItem newFolder, NoteExplorer newExplorer, IActionBarListener newListener) {
@@ -67,11 +70,15 @@ public class FolderView extends ListView {
 		
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
+		
+		// Set flingDetector
+		flingDetector = new GestureDetector(this.getContext(), this, this.getHandler());
 	}
 
 	// Open folder or note when clicked.
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
+			
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
 			INoteHierarchyItem clickedItem = ((FolderViewAdapter.RowDataHolder) clickedView.getTag()).noteHierarchyItem;
 			if (mAdapter.hasSelections()) {
@@ -99,7 +106,6 @@ public class FolderView extends ListView {
 			pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
 
 			watchForDrag = true;
-			dragView = pressedView;
 
 			return true;
 		}
@@ -115,21 +121,32 @@ public class FolderView extends ListView {
 	}
 
 
-	// This method watches for the drag and drop gesture without interfering
-	// with any of the class' other
-	// behaviors.
+	// This method watches for the drag and drop gesture without interfering with any of the class' other behaviors.
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		super.onTouchEvent(event);
+		selectedItemDragWatcher(event);
 		dragWatcher(event);
+		flingDetector.onTouchEvent(event);
 
 		return true;
+	}
+	
+	private void selectedItemDragWatcher(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			int itemAtTouchPosition = this.pointToPosition((int) event.getX(), (int) event.getY());
+			if (mAdapter.isSelected(itemAtTouchPosition)) {
+				Log.d("PEN", Integer.toString(itemAtTouchPosition));
+				
+				watchForDrag = true;
+			}
+		}
 	}
 
 
 	// If drag gesture call initDrag
 	private void dragWatcher(MotionEvent event) {
-		if (watchForDrag == true && event.getAction() == MotionEvent.ACTION_MOVE) {
+		if (watchForDrag == true && (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN)) {
 			if (setPoint == null) {
 				setPoint = new PointF(event.getX(), event.getY());
 			} else {
@@ -142,7 +159,6 @@ public class FolderView extends ListView {
 
 					setPoint = null;
 					watchForDrag = false;
-					dragView = null;
 				}
 			}
 		} else if (watchForDrag == true
@@ -151,7 +167,6 @@ public class FolderView extends ListView {
 				.getAction() == MotionEvent.ACTION_DOWN)) {
 			setPoint = null;
 			watchForDrag = false;
-			dragView = null;
 		}
 	}
 
@@ -167,7 +182,7 @@ public class FolderView extends ListView {
 		mAdapter.greySelections();
 
 		// Build the drag shadow needed for startDrag
-		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(selectedItems.size(), dragView.getWidth() / 3);
+		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(selectedItems.size(), this.getWidth() / 3);
 		
 		// Start drag without ClipData and with myLocalState equaling selectedItems (has to be cast when DragEvent is received).
 		this.startDrag(null, shadowBuilder, selectedItems, 0);
@@ -184,7 +199,9 @@ public class FolderView extends ListView {
 				
 			case DragEvent.ACTION_DRAG_ENDED:
 			case DragEvent.ACTION_DRAG_EXITED:
+			case DragEvent.ACTION_DROP:
 				clearDragHighlightMarkers();
+				mAdapter.ungreySelections();
 				break;
 		}
 
@@ -325,6 +342,8 @@ public class FolderView extends ListView {
 		this.invalidate();
 	}
 	
+
+	
 	// Returns null if view at wantedPosition isn't on screen or wanted position doesn't exist
 	private View getViewAtPosition (int wantedPosition) {
 		int firstPosition = this.getFirstVisiblePosition() - this.getHeaderViewsCount();
@@ -395,4 +414,26 @@ public class FolderView extends ListView {
 	public void deleteSelectedItems () {
 		Log.d("PEN", "deletion isn't implemented yet, but just you wait!");
 	}
+
+
+	
+
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+		if (Math.abs(e1.getY()-e2.getY()) <= this.getHeight()/12 && velocityX >= 3000) {
+			if (e1.getX()-e2.getX() <= -this.getWidth()/4) {
+				Log.d("PEN", "fling left at " + Float.toString(velocityX));
+				mExplorer.moveUpDirectory();
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	// Unneeded OnGestureDetector methods
+	public boolean onDown(MotionEvent arg0) { return false; }
+	public void onLongPress(MotionEvent e) { }
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) { return false; }
+	public void onShowPress(MotionEvent e) { }
+	public boolean onSingleTapUp(MotionEvent e) { return false; }
 }

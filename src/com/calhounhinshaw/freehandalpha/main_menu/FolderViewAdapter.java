@@ -156,8 +156,7 @@ public class FolderViewAdapter extends ArrayAdapter<INoteHierarchyItem> {
 	public boolean isSelected (int position) {
 		return selectedItems.contains(position);
 	}
-
-
+	
 	public void greySelections() {
 		selectedItemsGreyed = true;
 		this.notifyDataSetChanged();
