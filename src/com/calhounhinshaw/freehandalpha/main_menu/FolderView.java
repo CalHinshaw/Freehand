@@ -100,12 +100,21 @@ public class FolderView extends ListView implements OnGestureListener {
 
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
-			mAdapter.addSelection(position);
-			mActionBarListener.setItemsSelectedActionBar();
-			
-			pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
+			if (mAdapter.isSelected(position)) {
+				mAdapter.removeSelection(position);
+				if (!mAdapter.hasSelections()) {
+					setFastScrollAlwaysVisible(false);
+				}
+			} else {
+				mAdapter.addSelection(position);
+				mActionBarListener.setItemsSelectedActionBar();
+				setFastScrollAlwaysVisible(true);
+				
+				pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
 
-			watchForDrag = true;
+				watchForDrag = true;
+			}
+			
 
 			return true;
 		}
@@ -118,6 +127,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 	public void clearAdapterSelections() {
 		mAdapter.clearSelections();
+		this.setFastScrollAlwaysVisible(false);
 	}
 
 

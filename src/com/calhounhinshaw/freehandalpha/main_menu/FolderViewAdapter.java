@@ -157,6 +157,11 @@ public class FolderViewAdapter extends ArrayAdapter<INoteHierarchyItem> {
 		return selectedItems.contains(position);
 	}
 	
+	public void removeSelection (int position) {
+		selectedItems.remove(position);
+		this.notifyDataSetChanged();
+	}
+	
 	public void greySelections() {
 		selectedItemsGreyed = true;
 		this.notifyDataSetChanged();
