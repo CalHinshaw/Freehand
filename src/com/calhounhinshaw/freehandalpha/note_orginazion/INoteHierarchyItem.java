@@ -11,12 +11,23 @@ public interface INoteHierarchyItem {
 	public boolean isFolder();
 	
 	public int getNumChildren ();
-	public INoteHierarchyItem getChildAt (int index);
+	public INoteHierarchyItem getChildAt (int index) throws IndexOutOfBoundsException;
 	
-	// return false if something in the directory being modified has been modified in a conflicting way
-	public boolean moveNoteHierarchyItems (List<INoteHierarchyItem> toMove);
-	public boolean deleteChildAtIndex (int toDelete);
-	public boolean renameItemAtIndex (int index, String newName);
+	/**
+	 * Rename this INoteHierarchyItem
+	 * 
+	 * @param newName
+	 * @return true if successful, false if unsuccessful. If a change that cannot be reconciled has been made to the
+	 * underlying representation since the last time it was updated, a renaming won't even be tried.
+	 */
+	public boolean rename (String newName);
+	
+	/**
+	 * Delete this INoteHierarchyItem.
+	 * Returns true if the deletion was successful, false if it was not. In the case of an unsuccessful deletion, the files successfully deleted WILL NOT be restored.
+	 */
+	public boolean delete();
+	public boolean move (List<INoteHierarchyItem> destination);
 	
 	public INoteHierarchyItem addFolder (String folderName);
 	public INoteHierarchyItem addNote (String noteName);
