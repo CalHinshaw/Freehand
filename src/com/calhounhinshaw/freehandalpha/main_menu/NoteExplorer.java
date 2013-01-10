@@ -124,4 +124,12 @@ public class NoteExplorer extends ViewAnimator{
 	public void deleteSelectedItems () {
 		((FolderView) this.getCurrentView()).deleteSelectedItems();
 	}
+	
+	public void newNote() {
+		((FolderView) this.getCurrentView()).newNote();
+	}
+	
+	public void newFolder() {
+		((FolderView) this.getCurrentView()).newFolder();
+	}
 }

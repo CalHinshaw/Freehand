@@ -1,5 +1,7 @@
 package com.calhounhinshaw.freehandalpha.note_orginazion;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -72,6 +74,19 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 
 		return mChildren.get(index);
 	}
+	
+	public boolean containsItemName(String testContains) {
+		updateChildren();
+		
+		for (INoteHierarchyItem i : mChildren) {
+			if (testContains.equals(i.getName())) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 
 	public boolean rename(String newName) {
 		File newNameFile = new File(mFile.getParent(), newName);
@@ -121,8 +136,12 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 
 
 	public INoteHierarchyItem addFolder(String folderName) {
-		// TODO Auto-generated method stub
-		return null;
+		File newFolder = new File(mFile, folderName);
+		newFolder.mkdirs();
+		updateChildren();
+		notifyChangeListeners();
+		
+		return new NoteFileHierarchyItem(newFolder, this, mSorter, defaultNoteDrawable, defaultFolderDrawable);
 	}
 
 	public INoteHierarchyItem addNote(String noteName) {
@@ -134,6 +153,18 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	public void setSorter(INoteHierarchyItemSorter newSorter) {
 		mSorter = newSorter;
 		updateChildren();
+	}
+	
+	
+	public DataOutputStream getOutputStream() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public DataInputStream getInputStream() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 
@@ -170,10 +201,8 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 	
 	private void notifyChangeListeners() {
-		if (mChangeListeners.size() > 1) {
-			for (IChangeListener l : mChangeListeners) {
-				l.onChange();
-			}
+		for (IChangeListener l : mChangeListeners) {
+			l.onChange();
 		}
 	}
 	

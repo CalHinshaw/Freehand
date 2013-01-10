@@ -1,5 +1,7 @@
 package com.calhounhinshaw.freehandalpha.note_orginazion;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.List;
 
 import android.graphics.drawable.Drawable;
@@ -12,6 +14,7 @@ public interface INoteHierarchyItem {
 	
 	public int getNumChildren ();
 	public INoteHierarchyItem getChildAt (int index) throws IndexOutOfBoundsException;
+	public boolean containsItemName (String testContains);
 	
 	/**
 	 * Rename this INoteHierarchyItem
@@ -36,4 +39,7 @@ public interface INoteHierarchyItem {
 	public void removeChangeListener (IChangeListener toRemove);
 	
 	public void setSorter (INoteHierarchyItemSorter newSorter);
+	
+	public DataOutputStream getOutputStream();
+	public DataInputStream getInputStream();
 }

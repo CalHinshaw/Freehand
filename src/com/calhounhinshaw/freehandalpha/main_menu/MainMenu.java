@@ -17,7 +17,6 @@ import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -106,13 +105,13 @@ public class MainMenu extends Activity implements IActionBarListener {
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			// TODO implement newNoteButtonOnClickListener
+			mExplorer.newNote();
 		}
 	};
 	
 	private OnClickListener newFolderButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			// TODO implement newFolderButtonOnClickListener
+			mExplorer.newFolder();
 		}
 	};
 	

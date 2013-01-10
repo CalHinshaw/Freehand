@@ -5,6 +5,9 @@ import java.util.List;
 import com.calhounhinshaw.freehandalpha.R;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
+import android.app.Activity;
+import android.app.DialogFragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
@@ -61,12 +64,11 @@ public class FolderView extends ListView implements OnGestureListener {
 		mExplorer = newExplorer;
 		mFolder = newFolder;
 		mActionBarListener = newListener;
-		
-		mFolder.addChangeListener(mAdapter);
 
 		// Create and set the adapter for this ListView
 		mAdapter = new FolderAdapter(mFolder, R.layout.directoryview_row, this.getContext());
 		this.setAdapter(mAdapter);
+		mFolder.addChangeListener(mAdapter);
 		
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
@@ -430,13 +432,46 @@ public class FolderView extends ListView implements OnGestureListener {
 		// TODO: add some sort of retry (or at least notification) if deletion is unsuccessful.
 	}
 
+	public void newNote() {
+		
+	}
+	
+	public void newFolder() {
+		try {
+			// Get the fragment manager we need to start the dialog
+			FragmentManager fm = ((Activity) this.getContext()).getFragmentManager();
+			
+			// Create the function that will be run when the user presses the Create Folder button
+			SingleStringFunctor onCreate = new SingleStringFunctor() {
+				@Override
+				public void function(String s) {
+					mFolder.addFolder(s);
+				}
+			};
+			
+			// Find the default input - unnamed + the smallest unused natural number
+			int i = 1;
+			
+			while (mFolder.containsItemName("unnamed" + Integer.toString(i))) {
+				i++;
+			}
+			
+			String defaultInput = "unnamed" + Integer.toString(i);
+			
+			// Create the dialog and run it
+			DialogFragment d = new InputDialog("New Folder", "Enter the name of the folder.", defaultInput, "Create Folder", "Cancel", onCreate);
+			d.show(fm, "new folder");
+			
+		} catch (ClassCastException e) {
+			Log.d("PEN", "Can't get the FragmentManager from here");
+		}
+	}
 
 	
 
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 		if (Math.abs(e1.getY()-e2.getY()) <= this.getHeight()/12 && velocityX >= 3000) {
 			if (e1.getX()-e2.getX() <= -this.getWidth()/4) {
-				Log.d("PEN", "fling left at " + Float.toString(velocityX));
 				mExplorer.moveUpDirectory();
 				return true;
 			}
