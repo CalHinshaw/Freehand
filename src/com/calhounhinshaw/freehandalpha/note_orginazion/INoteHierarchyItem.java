@@ -32,7 +32,14 @@ public interface INoteHierarchyItem {
 	public boolean delete();
 	public boolean move (List<INoteHierarchyItem> destination);
 	
+	/**
+	 * returns null if it failed to add the folder of the given name
+	 */
 	public INoteHierarchyItem addFolder (String folderName);
+	
+	/**
+	 * returns null if it failed to add the note of the given name
+	 */
 	public INoteHierarchyItem addNote (String noteName);
 	
 	public void addChangeListener (IChangeListener toAdd);

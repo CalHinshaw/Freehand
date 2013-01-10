@@ -3,6 +3,7 @@ package com.calhounhinshaw.freehandalpha.note_orginazion;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -137,15 +138,31 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 
 	public INoteHierarchyItem addFolder(String folderName) {
 		File newFolder = new File(mFile, folderName);
-		newFolder.mkdirs();
-		updateChildren();
-		notifyChangeListeners();
+		if (newFolder.mkdirs()) {
+			updateChildren();
+			notifyChangeListeners();
+			
+			return new NoteFileHierarchyItem(newFolder, this, mSorter, defaultNoteDrawable, defaultFolderDrawable);
+		} else {
+			return null;
+		}
 		
-		return new NoteFileHierarchyItem(newFolder, this, mSorter, defaultNoteDrawable, defaultFolderDrawable);
+		
 	}
 
 	public INoteHierarchyItem addNote(String noteName) {
-		// TODO Auto-generated method stub
+		try {
+			File newNote = new File(mFile, noteName + ".note");
+			newNote.createNewFile();
+			updateChildren();
+			notifyChangeListeners();
+			
+			return new NoteFileHierarchyItem(newNote, this, mSorter, defaultNoteDrawable, defaultFolderDrawable);
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		return null;
 	}
 
