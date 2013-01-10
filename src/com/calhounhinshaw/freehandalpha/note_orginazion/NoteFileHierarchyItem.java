@@ -14,14 +14,15 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	private ArrayList<INoteHierarchyItem> mChildren = null;
 	
 	private INoteHierarchyItemSorter mSorter;
-	private LinkedList<IChangeListener> mChangeListeners;
+	private LinkedList<IChangeListener> mChangeListeners = new LinkedList<IChangeListener>();
 	
 	// Used when this this note is moved or deleted to call NoteFileHierarchyItem.childrenModified();
 	private NoteFileHierarchyItem mParent;
 	
-	public NoteFileHierarchyItem (File newFile, NoteFileHierarchyItem newParent, Drawable noteDrawable, Drawable folderDrawable) {
+	public NoteFileHierarchyItem (File newFile, NoteFileHierarchyItem newParent, INoteHierarchyItemSorter newSorter, Drawable noteDrawable, Drawable folderDrawable) {
 		mFile = newFile;
 		mParent = newParent;
+		mSorter = newSorter;
 		defaultNoteDrawable = noteDrawable;
 		defaultFolderDrawable = folderDrawable;
 	}
@@ -152,13 +153,13 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		if (!mFile.isDirectory()) {
 			mChildren = new ArrayList<INoteHierarchyItem>(0);
 		} else {
-			mChildren = new ArrayList<INoteHierarchyItem>(mChildren.size());
+			mChildren = new ArrayList<INoteHierarchyItem>();
 			File fileContents[] = mFile.listFiles();
 			
 			for (File f : fileContents) {
 				if (!f.isHidden()) {
 					if (f.isDirectory() || (f.isFile() && f.getName().contains(".note"))) {
-						mChildren.add(new NoteFileHierarchyItem(f, this, defaultNoteDrawable, defaultFolderDrawable));
+						mChildren.add(new NoteFileHierarchyItem(f, this, mSorter, defaultNoteDrawable, defaultFolderDrawable));
 					}
 				}
 			}
@@ -169,8 +170,10 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 	
 	private void notifyChangeListeners() {
-		for (IChangeListener l : mChangeListeners) {
-			l.onChange();
+		if (mChangeListeners.size() > 1) {
+			for (IChangeListener l : mChangeListeners) {
+				l.onChange();
+			}
 		}
 	}
 	

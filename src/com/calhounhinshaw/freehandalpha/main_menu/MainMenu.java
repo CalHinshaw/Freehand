@@ -4,6 +4,7 @@ import java.io.File;
 
 import com.calhounhinshaw.freehandalpha.R;
 
+import com.calhounhinshaw.freehandalpha.note_orginazion.DefaultNoteSorter;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 import com.calhounhinshaw.freehandalpha.note_orginazion.NoteFileHierarchyItem;
 
@@ -159,7 +160,7 @@ public class MainMenu extends Activity implements IActionBarListener {
         Drawable defaultNoteDrawable = this.getResources().getDrawable(R.drawable.pencil);
         Drawable defaultFileDrawable = this.getResources().getDrawable(R.drawable.folder);
         
-        INoteHierarchyItem rootItem = new NoteFileHierarchyItem(rootDirectory, null, defaultNoteDrawable, defaultFileDrawable);
+        INoteHierarchyItem rootItem = new NoteFileHierarchyItem(rootDirectory, null, new DefaultNoteSorter(), defaultNoteDrawable, defaultFileDrawable);
         
         // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);

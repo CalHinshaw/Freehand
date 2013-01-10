@@ -35,7 +35,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	
 	// Items for various callbacks and whatnot
 	private NoteExplorer mExplorer;
-	private FolderViewAdapter mAdapter;
+	private FolderAdapter mAdapter;
 	private INoteHierarchyItem mFolder;
 	private IActionBarListener mActionBarListener;
 
@@ -61,11 +61,11 @@ public class FolderView extends ListView implements OnGestureListener {
 		mExplorer = newExplorer;
 		mFolder = newFolder;
 		mActionBarListener = newListener;
-
-		List<INoteHierarchyItem> mFolderChildren = mFolder.getChildren();
+		
+		mFolder.addChangeListener(mAdapter);
 
 		// Create and set the adapter for this ListView
-		mAdapter = new FolderViewAdapter(this.getContext(), R.layout.directoryview_row, mFolderChildren.toArray(new INoteHierarchyItem[mFolderChildren.size()]));
+		mAdapter = new FolderAdapter(mFolder, R.layout.directoryview_row, this.getContext());
 		this.setAdapter(mAdapter);
 		
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
@@ -80,7 +80,7 @@ public class FolderView extends ListView implements OnGestureListener {
 		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
 			
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
-			INoteHierarchyItem clickedItem = ((FolderViewAdapter.RowDataHolder) clickedView.getTag()).noteHierarchyItem;
+			INoteHierarchyItem clickedItem = ((FolderAdapter.RowDataHolder) clickedView.getTag()).noteHierarchyItem;
 			if (mAdapter.hasSelections()) {
 				mAdapter.clearSelections();
 			}
@@ -422,7 +422,12 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 	
 	public void deleteSelectedItems () {
-		Log.d("PEN", "deletion isn't implemented yet, but just you wait!");
+		List<INoteHierarchyItem> toDelete = mAdapter.getSelections();
+		for (INoteHierarchyItem i : toDelete) {
+			i.delete();
+		}
+		
+		// TODO: add some sort of retry (or at least notification) if deletion is unsuccessful.
 	}
 
 
