@@ -1,0 +1,28 @@
+    <menu xmlns:android="http://schemas.android.com/apk/res/android">
+        
+        <item 
+            android:id="@+id/photoItem"
+            android:title = "Take Photo" />
+        
+        <item 
+            android:id="@+id/imageItem"
+            android:title = "Insert Image" />
+        
+        <item 
+            android:id="@+id/textItem"
+            android:title = "Insert Text" />
+        
+        <item 
+            android:id="@+id/metadataItem"
+            android:title = "Edit Meta Data" />
+        
+        <item 
+            android:id="@+id/saveItem"
+            android:title = "Save Note" />
+        
+        <item 
+            android:id="@+id/settingsItem"
+            android:title = "Settings" />
+        
+        
+    </menu>

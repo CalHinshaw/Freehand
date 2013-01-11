@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id = "@+id/note_activity_layout"
+    android:layout_width = "fill_parent"
+    android:layout_height = "fill_parent" >
+    
+    <Button
+        android:id="@+id/undo"
+        android:layout_width = "40dip"
+        android:layout_height = "40dip"
+        android:background="@drawable/undo_button_selector" />
+    
+    <Button 
+        android:id="@+id/redo"
+        android:background="@drawable/redo_button_selector"
+        android:layout_width = "40dip"
+        android:layout_height = "40dip"  
+        android:layout_toRightOf="@id/undo"
+        android:layout_marginRight="5dip"
+        android:layout_marginLeft="5dip"
+        />
+    
+
+    
+    <RadioGroup 
+        android:id="@+id/penSelectorRadioGroup"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/redo" >
+        
+        <RadioButton 
+        	android:id="@+id/erase"
+        	android:button="@drawable/erase_button_selector"
+        	android:layout_width = "40dip"
+        	android:layout_height = "40dip"
+        	android:layout_marginRight="5dip"  
+        	/>
+        
+        <RadioButton 
+      		android:id="@+id/select"
+        	android:button="@drawable/select_button_selector"
+        	android:layout_width = "40dip"
+        	android:layout_height = "40dip"
+        	/>
+        
+        <com.calhounroberthinshaw.freehand.v0_05.PenRadioButton
+        	android:id="@+id/pen1Button"
+        	android:layout_width = "40dip"
+        	android:layout_height = "40dip"
+        	android:layout_marginLeft="5dip" 
+        	/>
+        
+        <com.calhounroberthinshaw.freehand.v0_05.PenRadioButton
+        	android:id="@+id/pen2Button"
+        	android:layout_width = "40dip"
+        	android:layout_height = "40dip"  
+        	android:layout_marginLeft="5dip"
+        	/>
+        
+        <com.calhounroberthinshaw.freehand.v0_05.PenRadioButton
+        	android:id="@+id/pen3Button"
+        	android:layout_width = "40dip"
+        	android:layout_height = "40dip" 
+        	android:layout_marginLeft="5dip"
+        	/>
+        
+        <com.calhounroberthinshaw.freehand.v0_05.PenRadioButton
+        	android:id="@+id/pen4Button"
+        	android:layout_width = "40dip"
+        	android:layout_height = "40dip"  
+        	android:layout_marginLeft="5dip"
+        	/>
+        
+        <com.calhounroberthinshaw.freehand.v0_05.PenRadioButton
+        	android:id="@+id/pen5Button"
+        	android:layout_width = "40dip"
+        	android:layout_height = "40dip"  
+        	android:layout_marginLeft="5dip"
+        	/>
+        
+    </RadioGroup>
+        
+
+	<com.calhounroberthinshaw.freehand.v0_05.NoteView
+	    android:id = "@+id/note"
+	    android:layout_width = "fill_parent"
+	    android:layout_below = "@id/undo"
+	    android:layout_height="fill_parent"
+	    android:layout_marginTop="10dip"
+	    />
+	
+	
+	
+	
+	
+</RelativeLayout>
