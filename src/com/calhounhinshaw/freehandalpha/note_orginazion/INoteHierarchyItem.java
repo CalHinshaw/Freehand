@@ -55,4 +55,6 @@ public interface INoteHierarchyItem extends Parcelable {
 	
 	public DataOutputStream getOutputStream() throws IOException;
 	public DataInputStream getInputStream() throws IOException;
+	
+	public void forceUpdate ();
 }

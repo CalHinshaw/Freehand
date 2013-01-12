@@ -69,7 +69,7 @@ public class NoteExplorer extends ViewAnimator{
 		this.removeView(toDelete);
 		this.getCurrentView().setVerticalScrollBarEnabled(true);
 		
-		//mActionBarListener.setDefaultActionBar();
+		forceUpdate();
 	}
 	
 	@Override
@@ -101,5 +101,9 @@ public class NoteExplorer extends ViewAnimator{
 	
 	public void newFolder() {
 		((FolderView) this.getCurrentView()).newFolder();
+	}
+	
+	public void forceUpdate() {
+		((FolderView) this.getCurrentView()).forceUpdate();
 	}
 }

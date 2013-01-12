@@ -157,6 +157,12 @@ public class MainMenu extends Activity implements IActionBarListener {
         mExplorer.setActionBarListener(this);
         mExplorer.setRootHierarchyItem(rootItem);
     }
+    
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	mExplorer.forceUpdate();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

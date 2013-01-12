@@ -17,7 +17,7 @@ import android.os.Parcelable;
 import android.util.Log;
 
 public class NoteFileHierarchyItem implements INoteHierarchyItem {
-	private final File mFile;
+	private File mFile;
 	private Drawable defaultNoteDrawable = null;
 	private Drawable defaultFolderDrawable = null;
 	private ArrayList<INoteHierarchyItem> mChildren = null;
@@ -102,9 +102,18 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	
 
 	public boolean rename(String newName) {
-		File newNameFile = new File(mFile.getParent(), newName);
+		Log.d("PEN", "Before:  " + mFile.getAbsolutePath());
+		File newNameFile;
+		
+		if (!mFile.isDirectory()) {
+			newNameFile = new File(mFile.getParent(), newName + ".note");
+		} else {
+			newNameFile = new File(mFile.getParent(), newName);
+		}
+		
 		
 		if (mFile.renameTo(newNameFile)) {
+			mFile = newNameFile;
 			notifyChangeListeners();
 			notifyParentOfChange();
 			return true;
@@ -118,6 +127,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		File newName = new File(newParent, mFile.getName());
 		
 		if(mFile.renameTo(newName)) {
+			mFile = newName;
 			mParent = (NoteFileHierarchyItem) destination;
 			clearChangeListeners();
 			
@@ -221,6 +231,10 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 
 	public DataInputStream getInputStream() throws IOException {
 		return new DataInputStream(new BufferedInputStream(new FileInputStream(mFile)));
+	}
+	
+	public void forceUpdate() {
+		updateChildren();
 	}
 	
 	

@@ -385,8 +385,7 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	   		         String text=edit.getText().toString();
 
 	   		         dialog.dismiss();
-	   		         mNoteView.changeMetadata(text + ".note");
-	   		         mNoteView.saveNote();
+	   		         mNoteView.changeMetadata(text);
 	   		     }
 	   		 });   
 	   		 dialog.show();

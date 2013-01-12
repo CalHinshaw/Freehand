@@ -541,7 +541,10 @@ public class FolderView extends ListView implements OnGestureListener {
 		this.getContext().startActivity(i);
 	}
 	
-	
+	public void forceUpdate() {
+		mFolder.forceUpdate();
+		mAdapter.onChange();
+	}
 
 	
 
