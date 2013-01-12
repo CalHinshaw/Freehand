@@ -69,7 +69,7 @@ public class NoteExplorer extends ViewAnimator{
 		this.removeView(toDelete);
 		this.getCurrentView().setVerticalScrollBarEnabled(true);
 		
-		mActionBarListener.setDefaultActionBar();
+		//mActionBarListener.setDefaultActionBar();
 	}
 	
 	@Override
