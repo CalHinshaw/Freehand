@@ -1,6 +1,6 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
-import com.calhounhinshaw.freehandalpha.R;
+import com.calhounroberthinshaw.freehand.R;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

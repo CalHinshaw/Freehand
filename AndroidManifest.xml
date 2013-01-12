@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.calhounhinshaw.freehandalpha"
-    android:versionCode="1"
-    android:versionName="1.0" >
+    package="com.calhounroberthinshaw.freehand"
+    android:versionCode="2"
+    android:versionName="v0.10" >
 
     <uses-sdk
         android:minSdkVersion="15"
@@ -17,7 +17,7 @@
         android:hardwareAccelerated="true" >
                 
         <activity
-            android:name=".main_menu.MainMenu"
+            android:name="com.calhounhinshaw.freehandalpha.main_menu.MainMenu"
             android:label="@string/title_activity_main_menu" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

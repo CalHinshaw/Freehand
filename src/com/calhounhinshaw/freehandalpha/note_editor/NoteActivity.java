@@ -1,6 +1,6 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
-import com.calhounhinshaw.freehandalpha.R;
+import com.calhounroberthinshaw.freehand.R;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.app.Activity;

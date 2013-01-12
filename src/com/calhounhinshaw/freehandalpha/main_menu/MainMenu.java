@@ -2,7 +2,7 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.io.File;
 
-import com.calhounhinshaw.freehandalpha.R;
+import com.calhounroberthinshaw.freehand.R;
 
 import com.calhounhinshaw.freehandalpha.note_orginazion.DefaultNoteSorter;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
