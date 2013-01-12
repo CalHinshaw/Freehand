@@ -202,6 +202,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 
 
+	@SuppressWarnings("unchecked")
 	public boolean onDragEvent(DragEvent event) {
 		switch (event.getAction()) {
 			case DragEvent.ACTION_DRAG_STARTED:
@@ -211,6 +212,17 @@ public class FolderView extends ListView implements OnGestureListener {
 				break;
 				
 			case DragEvent.ACTION_DROP:
+				
+				List<INoteHierarchyItem> toMove = (List<INoteHierarchyItem>) event.getLocalState();
+				
+				for (INoteHierarchyItem i : toMove) {
+					Log.d("PEN", "trying to move");
+					if (!i.moveTo(mFolder)){
+						Toast.makeText(getContext(), "Move failed. Please try again.", Toast.LENGTH_LONG).show();
+					}
+				}
+				
+				
 				mActionBarListener.setDefaultActionBar();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
