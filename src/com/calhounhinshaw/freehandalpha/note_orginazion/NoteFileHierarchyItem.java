@@ -10,8 +10,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
@@ -107,15 +105,28 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		File newNameFile = new File(mFile.getParent(), newName);
 		
 		if (mFile.renameTo(newNameFile)) {
+			notifyChangeListeners();
+			notifyParentOfChange();
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	public boolean move(List<INoteHierarchyItem> destination) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean moveTo(INoteHierarchyItem destination) {
+		File newParent = ((NoteFileHierarchyItem) destination).getFile();
+		File newName = new File(newParent, mFile.getName());
+		
+		if(mFile.renameTo(newName)) {
+			mParent = (NoteFileHierarchyItem) destination;
+			clearChangeListeners();
+			
+			notifyChangeListeners();
+			notifyParentOfChange();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	// Callbacks to parent will scale linearly with the number of children being deleted - I don't think it will be a problem but it might be.
@@ -147,6 +158,10 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 
 	public void removeChangeListener(IChangeListener toRemove) {
 		mChangeListeners.remove(toRemove);
+	}
+	
+	public void clearChangeListeners() {
+		mChangeListeners = new LinkedList<IChangeListener>();
 	}
 
 
@@ -241,6 +256,15 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	public void childrenModified() {
 		updateChildren();
 		notifyChangeListeners();
+	}
+	
+	/**
+	 * Use this at your own risk. It should only really be used internally.
+	 * 
+	 * @return the file this NoteFileHierarchyItem is based on
+	 */
+	public File getFile() {
+		return mFile;
 	}
 	
 	//*********************************** INTERNAL HELPER METHODS ****************************************************

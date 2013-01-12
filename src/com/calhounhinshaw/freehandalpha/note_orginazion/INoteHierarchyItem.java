@@ -3,11 +3,14 @@ package com.calhounhinshaw.freehandalpha.note_orginazion;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.List;
-
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 
+/**
+ * Don't mix and match different implementations for INoteHierarchyItem!
+ * @author cal
+ *
+ */
 public interface INoteHierarchyItem extends Parcelable {
 	public String getName();
 	public long getDateModified();
@@ -31,7 +34,7 @@ public interface INoteHierarchyItem extends Parcelable {
 	 * Returns true if the deletion was successful, false if it was not. In the case of an unsuccessful deletion, the files successfully deleted WILL NOT be restored.
 	 */
 	public boolean delete();
-	public boolean move (List<INoteHierarchyItem> destination);
+	public boolean moveTo (INoteHierarchyItem destination);
 	
 	/**
 	 * returns null if it failed to add the folder of the given name
@@ -45,6 +48,7 @@ public interface INoteHierarchyItem extends Parcelable {
 	
 	public void addChangeListener (IChangeListener toAdd);
 	public void removeChangeListener (IChangeListener toRemove);
+	public void clearChangeListeners ();
 	
 	public void setSorter (INoteHierarchyItemSorter newSorter);
 	public void setDefaultDrawables (Drawable defaultNoteDrawable, Drawable defaultFolderDrawable);
