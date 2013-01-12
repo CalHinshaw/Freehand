@@ -3,12 +3,14 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 import java.util.List;
 
 import com.calhounhinshaw.freehandalpha.R;
+import com.calhounhinshaw.freehandalpha.note_editor.NoteActivity;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -92,11 +94,10 @@ public class FolderView extends ListView implements OnGestureListener {
 			if (clickedItem.isFolder()) {
 				mExplorer.addView(new FolderView(mExplorer.getContext(), clickedItem, mExplorer, mActionBarListener));
 				mExplorer.showNext();
+				mActionBarListener.setDefaultActionBar();
+			} else {
+				openNote(clickedItem);
 			}
-
-			// TODO: implement click on file (opens the note)
-			
-			mActionBarListener.setDefaultActionBar();
 		}
 	};
 
@@ -446,9 +447,9 @@ public class FolderView extends ListView implements OnGestureListener {
 			SingleStringFunctor newFolderFunction = new SingleStringFunctor() {
 				@Override
 				public void function(String s) {
-					INoteHierarchyItem newFolder = mFolder.addNote(s);
-					if (newFolder != null) {
-						// TODO: open note after it's created
+					INoteHierarchyItem newNote = mFolder.addNote(s);
+					if (newNote != null) {
+						openNote(newNote);
 					} else {
 						Toast.makeText(getContext(), "Create new note failed. Please try again.", Toast.LENGTH_LONG).show();
 					}
@@ -510,6 +511,16 @@ public class FolderView extends ListView implements OnGestureListener {
 			Log.d("PEN", "Can't get the FragmentManager from here");
 		}
 	}
+	
+	
+	private void openNote (INoteHierarchyItem toOpen) {
+		Intent i = new Intent(this.getContext(), NoteActivity.class);
+		i.putExtra("com.calhounhinshaw.freehandalpha.note_editor.INoteHierarchyItem", toOpen);
+		i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		this.getContext().startActivity(i);
+	}
+	
+	
 
 	
 

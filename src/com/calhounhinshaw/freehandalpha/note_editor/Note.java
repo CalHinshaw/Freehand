@@ -1,11 +1,7 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,8 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.io.FileOutputStream;
-
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.graphics.Canvas;

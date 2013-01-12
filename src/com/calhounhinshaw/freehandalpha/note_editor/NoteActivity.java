@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -70,19 +71,14 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	};
 	
 	
-	
-	
-	
-	
-	
-	
-	
 	public void onCreate (Bundle savedInstanceState) {
 		// "system" level stuff
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView (R.layout.note_activity);
 		getWindow().setLayout(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+		
+		overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
 		
 		// getting views from xml layout
 		mLayout = (RelativeLayout) findViewById(R.id.note_activity_layout);
@@ -105,9 +101,10 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 		// setting up the note view
 		final Object oldData = getLastNonConfigurationInstance();
 		if (oldData == null) {
-			Bundle passedInfo = getIntent().getBundleExtra("note_hierarchy_item_bundle");
-			if (passedInfo != null && passedInfo.get("note_hierarchy_item") != null) {
-				mNoteView.openNote((INoteHierarchyItem) passedInfo.get("note_hierarchy_item"));
+			Parcelable noteItem = getIntent().getParcelableExtra("com.calhounhinshaw.freehandalpha.note_editor.INoteHierarchyItem");
+			
+			if (noteItem != null) {
+				mNoteView.openNote((INoteHierarchyItem) noteItem);
 			}
 		} else {
 			mNoteView.openNote((Note) oldData);
@@ -399,5 +396,12 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	   		Toast.makeText(this, "Coming Soon!", Toast.LENGTH_LONG).show();
 	   		return super.onOptionsItemSelected(item);
 		}
+	}
+	
+	@Override
+	public void onBackPressed() {
+		this.finish();
+		overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
+		super.onBackPressed();
 	}
 }

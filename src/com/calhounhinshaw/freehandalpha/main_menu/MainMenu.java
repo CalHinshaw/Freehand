@@ -159,7 +159,9 @@ public class MainMenu extends Activity implements IActionBarListener {
         Drawable defaultNoteDrawable = this.getResources().getDrawable(R.drawable.pencil);
         Drawable defaultFileDrawable = this.getResources().getDrawable(R.drawable.folder);
         
-        INoteHierarchyItem rootItem = new NoteFileHierarchyItem(rootDirectory, null, new DefaultNoteSorter(), defaultNoteDrawable, defaultFileDrawable);
+        INoteHierarchyItem rootItem = new NoteFileHierarchyItem(rootDirectory, null);
+        rootItem.setDefaultDrawables(defaultNoteDrawable, defaultFileDrawable);
+        rootItem.setSorter(new DefaultNoteSorter());
         
         // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);

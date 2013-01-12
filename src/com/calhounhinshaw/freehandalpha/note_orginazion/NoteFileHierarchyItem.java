@@ -1,33 +1,38 @@
 package com.calhounhinshaw.freehandalpha.note_orginazion;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.util.Log;
 
 public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	private final File mFile;
-	private final Drawable defaultNoteDrawable;
-	private final Drawable defaultFolderDrawable;
+	private Drawable defaultNoteDrawable = null;
+	private Drawable defaultFolderDrawable = null;
 	private ArrayList<INoteHierarchyItem> mChildren = null;
 	
 	private INoteHierarchyItemSorter mSorter;
 	private LinkedList<IChangeListener> mChangeListeners = new LinkedList<IChangeListener>();
 	
 	// Used when this this note is moved or deleted to call NoteFileHierarchyItem.childrenModified();
-	private NoteFileHierarchyItem mParent;
+	private NoteFileHierarchyItem mParent = null;
 	
-	public NoteFileHierarchyItem (File newFile, NoteFileHierarchyItem newParent, INoteHierarchyItemSorter newSorter, Drawable noteDrawable, Drawable folderDrawable) {
+	public NoteFileHierarchyItem (File newFile, NoteFileHierarchyItem newParent) {
 		mFile = newFile;
 		mParent = newParent;
-		mSorter = newSorter;
-		defaultNoteDrawable = noteDrawable;
-		defaultFolderDrawable = folderDrawable;
 	}
 	
 	
@@ -43,9 +48,18 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 
 	public Drawable getThumbnail() {
 		if (mFile.isDirectory()) {
-			return defaultFolderDrawable;
+			if (defaultFolderDrawable != null) {
+				return defaultFolderDrawable;
+			} else {
+				return new ColorDrawable();
+			}
+			
 		} else {
-			return defaultNoteDrawable;
+			if (defaultNoteDrawable != null) {
+				return defaultNoteDrawable;
+			} else {
+				return new ColorDrawable();
+			}
 		}
 	}
 
@@ -142,7 +156,11 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 			updateChildren();
 			notifyChangeListeners();
 			
-			return new NoteFileHierarchyItem(newFolder, this, mSorter, defaultNoteDrawable, defaultFolderDrawable);
+			NoteFileHierarchyItem newItem = new NoteFileHierarchyItem(newFolder, this);
+			newItem.setDefaultDrawables(defaultNoteDrawable, defaultFolderDrawable);
+			newItem.setSorter(mSorter);
+			return newItem;
+			
 		} else {
 			return null;
 		}
@@ -157,7 +175,10 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 			updateChildren();
 			notifyChangeListeners();
 			
-			return new NoteFileHierarchyItem(newNote, this, mSorter, defaultNoteDrawable, defaultFolderDrawable);
+			NoteFileHierarchyItem newItem = new NoteFileHierarchyItem(newNote, this);
+			newItem.setDefaultDrawables(defaultNoteDrawable, defaultFolderDrawable);
+			newItem.setSorter(mSorter);
+			return newItem;
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -172,25 +193,55 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		updateChildren();
 	}
 	
+	public void setDefaultDrawables (Drawable newNoteDrawable, Drawable newFolderDrawable) {
+		defaultNoteDrawable = newNoteDrawable;
+		defaultFolderDrawable = newFolderDrawable;
+	}
 	
-	public DataOutputStream getOutputStream() {
-		// TODO Auto-generated method stub
-		return null;
+	
+	public DataOutputStream getOutputStream() throws IOException {
+		return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(mFile)));
 	}
 
 
-	public DataInputStream getInputStream() {
-		// TODO Auto-generated method stub
-		return null;
+	public DataInputStream getInputStream() throws IOException {
+		return new DataInputStream(new BufferedInputStream(new FileInputStream(mFile)));
 	}
 	
+	
+	// ********************************* Parcelable METHODS ****************************************
+	
+	public int describeContents() {
+		return 0;
+	}
 
+
+	public void writeToParcel(Parcel dest, int flags) {
+		Log.d("PEN", mFile.getAbsolutePath());
+		
+		dest.writeString(mFile.getAbsolutePath());
+	}
+	
+	public static final Parcelable.Creator<INoteHierarchyItem> CREATOR = new Parcelable.Creator<INoteHierarchyItem>() {
+		public INoteHierarchyItem createFromParcel(Parcel in) {
+			String test = in.readString();
+			Log.d("PEN", test);
+			File newFile = new File(test);
+			
+			return new NoteFileHierarchyItem(newFile, null);
+		}
+
+		public INoteHierarchyItem[] newArray(int size) {
+			return new INoteHierarchyItem[size];
+		}
+	};
+	
+	
 	//*********************************** Public NoteFileHierarchyItem METHODS ***************************************
 	public void childrenModified() {
 		updateChildren();
 		notifyChangeListeners();
 	}
-	
 	
 	//*********************************** INTERNAL HELPER METHODS ****************************************************
 	
@@ -207,13 +258,19 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 			for (File f : fileContents) {
 				if (!f.isHidden()) {
 					if (f.isDirectory() || (f.isFile() && f.getName().contains(".note"))) {
-						mChildren.add(new NoteFileHierarchyItem(f, this, mSorter, defaultNoteDrawable, defaultFolderDrawable));
+						
+						NoteFileHierarchyItem newItem = new NoteFileHierarchyItem(f, this);
+						newItem.setDefaultDrawables(defaultNoteDrawable, defaultFolderDrawable);
+						newItem.setSorter(mSorter);
+						
+						mChildren.add(newItem);
 					}
 				}
 			}
 			
-			// Use supplied sorter
-			mChildren = mSorter.sort(mChildren);
+			if (mSorter != null) {
+				mChildren = mSorter.sort(mChildren);
+			}
 		}
 	}
 	

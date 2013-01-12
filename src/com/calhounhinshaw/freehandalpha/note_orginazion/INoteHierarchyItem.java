@@ -2,11 +2,13 @@ package com.calhounhinshaw.freehandalpha.note_orginazion;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 import android.graphics.drawable.Drawable;
+import android.os.Parcelable;
 
-public interface INoteHierarchyItem {
+public interface INoteHierarchyItem extends Parcelable {
 	public String getName();
 	public long getDateModified();
 	public Drawable getThumbnail();
@@ -19,9 +21,8 @@ public interface INoteHierarchyItem {
 	/**
 	 * Rename this INoteHierarchyItem
 	 * 
-	 * @param newName
-	 * @return true if successful, false if unsuccessful. If a change that cannot be reconciled has been made to the
-	 * underlying representation since the last time it was updated, a renaming won't even be tried.
+	 * @param newName The name getName will return in the future
+	 * @return true if successful, false if unsuccessful
 	 */
 	public boolean rename (String newName);
 	
@@ -46,7 +47,8 @@ public interface INoteHierarchyItem {
 	public void removeChangeListener (IChangeListener toRemove);
 	
 	public void setSorter (INoteHierarchyItemSorter newSorter);
+	public void setDefaultDrawables (Drawable defaultNoteDrawable, Drawable defaultFolderDrawable);
 	
-	public DataOutputStream getOutputStream();
-	public DataInputStream getInputStream();
+	public DataOutputStream getOutputStream() throws IOException;
+	public DataInputStream getInputStream() throws IOException;
 }
