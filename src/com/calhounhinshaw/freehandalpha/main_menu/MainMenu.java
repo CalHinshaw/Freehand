@@ -101,7 +101,6 @@ public class MainMenu extends Activity implements IActionBarListener {
 	private LinearLayout defaultActionBar;
 	private Button defaultNewNoteButton;
 	private Button defaultNewFolderButton;
-	private Button defaultShowAllNotesButton;
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
@@ -114,13 +113,6 @@ public class MainMenu extends Activity implements IActionBarListener {
 			mExplorer.newFolder();
 		}
 	};
-	
-	private OnClickListener showAllNotesButtonOnClickListener = new OnClickListener() {
-		public void onClick(View v) {
-			// TODO implement showAllNotesButtonOnClickListener
-		}
-	};
-	
 	
 	
 	
@@ -137,9 +129,6 @@ public class MainMenu extends Activity implements IActionBarListener {
         
         defaultNewFolderButton = (Button) findViewById(R.id.newFolderButton);
         defaultNewFolderButton.setOnClickListener(newFolderButtonOnClickListener);
-        
-        defaultShowAllNotesButton = (Button) findViewById(R.id.showAllNotesButton);
-        defaultShowAllNotesButton.setOnClickListener(showAllNotesButtonOnClickListener);
         
         // Set up the itemsSelectedActionBar
         itemsSelectedActionBar = (LinearLayout) findViewById(R.id.itemsSelectedActionBar);
