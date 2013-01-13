@@ -6,6 +6,7 @@ import java.util.Vector;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -204,7 +205,13 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, OnP
 	}
 //------------------------------------------------------------------------------------------
 
+	public Bitmap getBitmap () {
+		return mNote.getBitmap();
+	}
 	
+	public String getName () {
+		return mNote.getName();
+	}
 	
 
 //****************************** Touch Handeling Methods *********************************************
@@ -310,6 +317,8 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, OnP
 			
 			boundingRect.inset((int) (-1*currentPaintSize/zoomMultiplier) - 10, (int) (-1*currentPaintSize/zoomMultiplier) - 10);
 			myThread.invalidate(boundingRect);
+			
+			mNote.getBitmap();
 			
 			break;
 		}

@@ -1,11 +1,15 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
+import java.util.ArrayList;
+
 import com.calhounroberthinshaw.freehand.R;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
+import com.calhounhinshaw.freehandalpha.share.Sharer;
 
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -390,6 +394,16 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	   		 });   
 	   		 dialog.show();
 	   		 return true;
+	   		 
+		case R.id.shareItem:
+			ArrayList<Bitmap> toShare = new ArrayList<Bitmap>(1);
+			toShare.add(mNoteView.getBitmap());
+			
+			ArrayList<String> names = new ArrayList<String>(1);
+			names.add(mNoteView.getName());
+			
+			Sharer.shareAsJPEG(toShare, names, this);
+			return true;
 	   		 
 	   	default:
 	   		Toast.makeText(this, "Coming Soon!", Toast.LENGTH_LONG).show();

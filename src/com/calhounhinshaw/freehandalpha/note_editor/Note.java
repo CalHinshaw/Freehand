@@ -12,11 +12,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.os.Environment;
 import android.util.Log;
 
@@ -114,6 +116,10 @@ class Note {
 		mFile.rename(newName);
 	}
 	
+	public synchronized String getName () {
+		return mFile.getName();
+	}
+	
 	
 	private synchronized List<Stroke> getImageListCopy() {
 		List<Stroke> tempList = new LinkedList<Stroke>();
@@ -128,8 +134,7 @@ class Note {
 			return tempList;
 		}
 	}
-	
-	
+
 	
 	
 	
@@ -267,6 +272,50 @@ class Note {
 			}
 		}
 	}
+	
+	
+	/**
+	 * @return a bitmap representation of the note or null if the note is empty
+	 */
+	public synchronized Bitmap getBitmap () {
+		if (imageList != null && imageList.size() > 0 && imageList.get(0) != null) {
+			RectF boundingRect = imageList.get(0).getBoundingRect();
+			RectF r;
+			
+			for (Stroke s : imageList) {
+				r = s.getBoundingRect();
+				
+				if (r.left < boundingRect.left) {
+					boundingRect.left = r.left;
+				} else if (r.right > boundingRect.right) {
+					boundingRect.right = r.right;
+				}
+				
+				if (r.top < boundingRect.top) {
+					boundingRect.top = r.top;
+				} else if (r.bottom > boundingRect.bottom) {
+					boundingRect.bottom = r.bottom;
+				}
+			}
+			
+			// Give the image a border
+			boundingRect.left -= 100;
+			boundingRect.right += 100;
+			boundingRect.top -= 100;
+			boundingRect.bottom += 100;
+			
+			Bitmap toDrawOn = Bitmap.createBitmap((int) boundingRect.width(), (int) boundingRect.height(), Bitmap.Config.ARGB_8888);
+			
+			Canvas c = new Canvas(toDrawOn);
+			drawNote(c, boundingRect.left, boundingRect.top, 1);
+			
+			return toDrawOn;
+		} else {
+			return null;
+		}
+	}
+	
+	
 //-----------------------------------------------------------------------------------------------------------
 	
 	
@@ -582,6 +631,35 @@ class Note {
 		}
 		
 		
+		/**
+		 * @return the bounding rectangle if the stroke contains points or null if it's empty
+		 */
+		public RectF getBoundingRect() {
+			if (stroke != null && stroke.size() > 0 && stroke.get(0) != null && stroke.get(0).length >0 && stroke.get(0)[0] != null) {
+				RectF boundingRect = new RectF(stroke.get(0)[0].x, stroke.get(0)[0].y, stroke.get(0)[0].x, stroke.get(0)[0].y);
+					
+					for (PointF[] points : stroke) {
+						for (PointF p : points) {
+							if (p.x < boundingRect.left) {
+								boundingRect.left = p.x;
+							} else if (p.x > boundingRect.right) {
+								boundingRect.right = p.x;
+							}
+							
+							if (p.y < boundingRect.top) {
+								boundingRect.top = p.y;
+							} else if (p.y > boundingRect.bottom) {
+								boundingRect.bottom = p.y;
+							}
+						}
+					}
+					
+					return boundingRect;
+			} else {
+				return null;
+			}
+			
+		}
 		
 		
 		
