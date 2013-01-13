@@ -373,7 +373,7 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 			mNoteView.saveNote();
 			return true;
 			
-		case R.id.metadataItem:
+		case R.id.renameItem:
 			final Dialog dialog = new Dialog(NoteActivity.this);
 	   		 dialog.setContentView(R.layout.new_note_name_dialog);
 	   		 dialog.setTitle("Title");

@@ -9,5 +9,6 @@
     <string name="show_all_notes">Show All Notes</string>
     <string name="cancel">Cancel Selection/Drag</string>
     <string name="delete">Delete</string>
+    <string name="share_button">Share</string>
 
 </resources>
