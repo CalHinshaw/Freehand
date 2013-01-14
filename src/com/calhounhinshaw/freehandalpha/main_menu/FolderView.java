@@ -103,7 +103,7 @@ public class FolderView extends ListView implements OnGestureListener {
 				mExplorer.showNext();
 				mActionBarListener.setDefaultActionBarOn();
 			} else {
-				openNote(clickedItem);
+				mPresenter.openNote(clickedItem);
 			}
 		}
 	};
@@ -464,13 +464,6 @@ public class FolderView extends ListView implements OnGestureListener {
 		mPresenter.createNewFolder(mFolder);
 	}
 	
-	
-	private void openNote (INoteHierarchyItem toOpen) {
-		Intent i = new Intent(this.getContext(), NoteActivity.class);
-		i.putExtra("com.calhounhinshaw.freehandalpha.note_editor.INoteHierarchyItem", toOpen);
-		i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-		this.getContext().startActivity(i);
-	}
 	
 	public void forceUpdate() {
 		mFolder.forceUpdate();
