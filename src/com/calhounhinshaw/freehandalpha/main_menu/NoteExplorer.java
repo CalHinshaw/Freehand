@@ -45,9 +45,7 @@ public class NoteExplorer extends ViewAnimator{
 		mActionBarListener = newListener;
 	}
 	
-	public void openNewFolder (INoteHierarchyItem newFolder) {
-		this.addView(new FolderView(this.getContext(), newFolder, this, mActionBarListener, mPresenter));
-	}
+
 	
 	public boolean isInRootDirectory() {
 		INoteHierarchyItem currentFolder = ((FolderView) this.getCurrentView()).getNoteHierarchyItem();
@@ -78,8 +76,9 @@ public class NoteExplorer extends ViewAnimator{
 		forceUpdate();
 	}
 	
-	public void addView(INoteHierarchyItem newFolderItem) {
-		this.addView(new FolderView(this.getContext(), newFolderItem, this, mActionBarListener, mPresenter));
+	public void openFolder (INoteHierarchyItem newFolder) {
+		this.addView(new FolderView(this.getContext(), newFolder, this, mActionBarListener, mPresenter));
+		this.showNext();
 	}
 	
 	@Override

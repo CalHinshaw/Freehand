@@ -90,7 +90,7 @@ public class MainMenuPresenter {
 		INoteHierarchyItem newFolder = dest.addFolder(name);
 		
 		if (newFolder != null) {
-			mExplorer.addView(newFolder);
+			mExplorer.openFolder(newFolder);
 		} else {
 			mActivity.displayToast("Create new folder failed. Please try again.");
 		}
@@ -131,10 +131,26 @@ public class MainMenuPresenter {
 	}
 	
 	
-	//*************************************** Open Note ******************************************************************************
+	//*************************************** Open Note/Folder *******************************************************************
 	
 	public void openNote (INoteHierarchyItem toOpen) {
 		mActivity.openNoteActivity(toOpen);
 	}
+	
+	public void openFolder (INoteHierarchyItem toOpen) {
+		mExplorer.openFolder(toOpen);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 }
