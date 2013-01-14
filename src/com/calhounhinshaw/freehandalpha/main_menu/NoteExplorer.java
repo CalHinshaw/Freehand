@@ -78,6 +78,10 @@ public class NoteExplorer extends ViewAnimator{
 		forceUpdate();
 	}
 	
+	public void addView(INoteHierarchyItem newFolderItem) {
+		addView(new FolderView(this.getContext(), newFolderItem, this, mActionBarListener, mPresenter));
+	}
+	
 	@Override
 	public void addView(View child) {
 		this.setInAnimation(inFromRightAnimation);

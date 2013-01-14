@@ -1,5 +1,6 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 import com.calhounroberthinshaw.freehand.R;
 
 import android.app.AlertDialog;
@@ -10,10 +11,11 @@ import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager.LayoutParams;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class InputDialog extends DialogFragment {
+public class NewItemDialog extends DialogFragment {
 
 	private String mTitleText;
 	private String mMessageText;
@@ -21,14 +23,16 @@ public class InputDialog extends DialogFragment {
 	private String mPositiveButtonText;
 	private String mNegativeButtonText;
 	
-	private SingleStringFunctor mOnConfirmFunction;
+	private NewItemFunctor mOnConfirmFunction;
+	private INoteHierarchyItem mNoteHierarchyItem;
 	
-	public InputDialog (String newTitleText, String newMessageText, String newDefaultInput, String newPositiveButtonText, String newNegativeButtonText, SingleStringFunctor newOnConfirmFunction) {
+	public NewItemDialog (String newTitleText, String newMessageText, String newDefaultInput, String newPositiveButtonText, String newNegativeButtonText, INoteHierarchyItem newItem, NewItemFunctor newOnConfirmFunction) {
 		mTitleText = newTitleText;
 		mMessageText = newMessageText;
 		mDefaultInput = newDefaultInput;
 		mPositiveButtonText = newPositiveButtonText;
 		mNegativeButtonText = newNegativeButtonText;
+		mNoteHierarchyItem = newItem;
 		mOnConfirmFunction = newOnConfirmFunction;
 	}
 	
@@ -45,10 +49,11 @@ public class InputDialog extends DialogFragment {
 		// Create onClickListener for the positive button
 		OnClickListener positiveListener = new OnClickListener () {
 			public void onClick(DialogInterface dialog, int which) {
-				mOnConfirmFunction.function(input.getText().toString());
+				mOnConfirmFunction.function(mNoteHierarchyItem, input.getText().toString());
 			}
 		};
 		
+		// Create the dialog
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), AlertDialog.THEME_HOLO_LIGHT);
 		
 		builder.setTitle(mTitleText)
@@ -56,7 +61,11 @@ public class InputDialog extends DialogFragment {
 			.setNegativeButton(mNegativeButtonText, null)
 			.setPositiveButton(mPositiveButtonText, positiveListener);
 			
+		AlertDialog d = builder.create();
 		
-		return builder.create();
+		// Show soft keyboard automatically
+		d.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+		
+		return d;
 	}
 }

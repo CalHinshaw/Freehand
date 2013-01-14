@@ -462,9 +462,9 @@ public class FolderView extends ListView implements OnGestureListener {
 			FragmentManager fm = ((Activity) this.getContext()).getFragmentManager();
 			
 			// Create the function that will be run when the user presses the Create Folder button
-			SingleStringFunctor newFolderFunction = new SingleStringFunctor() {
+			NewItemFunctor newFolderFunction = new NewItemFunctor() {
 				@Override
-				public void function(String s) {
+				public void function(INoteHierarchyItem item, String s) {
 					INoteHierarchyItem newNote = mFolder.addNote(s);
 					if (newNote != null) {
 						openNote(newNote);
@@ -484,7 +484,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			String defaultInput = "unnamed note " + Integer.toString(i);
 			
 			// Create the dialog and run it
-			DialogFragment d = new InputDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", newFolderFunction);
+			DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", null, newFolderFunction);
 			d.show(fm, "new note");
 			
 		} catch (ClassCastException e) {
@@ -493,41 +493,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 	
 	public void newFolder() {
-		try {
-			// Get the fragment manager we need to start the dialog
-			FragmentManager fm = ((Activity) this.getContext()).getFragmentManager();
-			
-			// Create the function that will be run when the user presses the Create Folder button
-			SingleStringFunctor newFolderFunction = new SingleStringFunctor() {
-				@Override
-				public void function(String s) {
-					INoteHierarchyItem newFolder = mFolder.addFolder(s);
-					
-					if (newFolder != null) {
-						mExplorer.addView(new FolderView(mExplorer.getContext(), newFolder, mExplorer, mActionBarListener, mPresenter));
-						mExplorer.showNext();
-					} else {
-						Toast.makeText(getContext(), "Create new folder failed. Please try again.", Toast.LENGTH_LONG).show();
-					}
-				}
-			};
-			
-			// Find the default input - unnamed + the smallest unused natural number
-			int i = 1;
-			
-			while (mFolder.containsItemName("unnamed folder " + Integer.toString(i))) {
-				i++;
-			}
-			
-			String defaultInput = "unnamed folder " + Integer.toString(i);
-			
-			// Create the dialog and run it
-			DialogFragment d = new InputDialog("Create New Folder", "Enter the name of the folder.", defaultInput, "Create Folder", "Cancel", newFolderFunction);
-			d.show(fm, "new folder");
-			
-		} catch (ClassCastException e) {
-			Log.d("PEN", "Can't get the FragmentManager from here");
-		}
+		mPresenter.createNewFolder(mFolder);
 	}
 	
 	

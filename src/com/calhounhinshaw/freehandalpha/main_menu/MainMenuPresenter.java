@@ -2,7 +2,12 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.util.List;
 
+import android.app.Activity;
 import android.app.DialogFragment;
+import android.app.FragmentManager;
+import android.util.Log;
+import android.widget.Toast;
+
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 /**
@@ -13,12 +18,19 @@ import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 public class MainMenuPresenter {
 	
 	// The activity this presenter is responsible for. It is used to display Dialogs and Toasts.
-	private MainMenuActivity mActivity;
+	private final MainMenuActivity mActivity;
+	
+	// The NoteExplorer that holds the view stack. It is used to display FolderViews.
+	private final NoteExplorer mExplorer;
 	
 	
-	public MainMenuPresenter (MainMenuActivity activity) {
+	public MainMenuPresenter (MainMenuActivity activity, NoteExplorer explorer) {
 		mActivity = activity;
+		mExplorer = explorer;
 	}
+	
+	
+	//***************************************** Deletion Methods ****************************************
 	
 	/**
 	 * Delete the INoteHierarchyItems passed in after presenting the user with a confirmation dialog.
@@ -50,4 +62,41 @@ public class MainMenuPresenter {
 			mActivity.displayToast("Deletion failed. Please try again.");
 		}
 	}
+	
+	
+	//************************************** New Folder Methods *********************************************
+	
+	public void createNewFolder (INoteHierarchyItem dest) {
+
+			// Create the function that will be run when the user presses the Create Folder button
+			NewItemFunctor newFolderFunction = new NewItemFunctor() {
+				@Override
+				public void function(INoteHierarchyItem destinationItem, String folderName) {
+					createNewFolder(destinationItem, folderName);
+				}
+			};
+			
+			// Find the default input - unnamed + the smallest unused natural number
+			int i = 1;
+			while (dest.containsItemName("unnamed folder " + Integer.toString(i))) {
+				i++;
+			}
+			String defaultInput = "unnamed folder " + Integer.toString(i);
+			
+			// Create the dialog and pass it to activity to be run
+			DialogFragment d = new NewItemDialog("Create New Folder", "Enter the name of the folder.", defaultInput, "Create Folder", "Cancel", dest, newFolderFunction);
+			mActivity.displayDialogFragment(d, "New Folder");
+	}
+	
+	public void createNewFolder (INoteHierarchyItem dest, String name) {
+		INoteHierarchyItem newFolder = dest.addFolder(name);
+		
+		if (newFolder != null) {
+			mExplorer.addView(newFolder);
+		} else {
+			mActivity.displayToast("Create new folder failed. Please try again.");
+		}
+	}
+	
+	
 }

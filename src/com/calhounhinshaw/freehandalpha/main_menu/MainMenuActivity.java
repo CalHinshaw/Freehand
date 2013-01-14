@@ -199,7 +199,7 @@ public class MainMenuActivity extends Activity implements IActionBarListener {
         
         // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);
-        mExplorer.setPresenter(new MainMenuPresenter(this));
+        mExplorer.setPresenter(new MainMenuPresenter(this, mExplorer));
         mExplorer.setActionBarListener(this);
         mExplorer.setRootHierarchyItem(rootItem);
     }
