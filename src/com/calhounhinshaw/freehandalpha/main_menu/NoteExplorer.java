@@ -5,6 +5,7 @@ import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -105,5 +106,10 @@ public class NoteExplorer extends ViewAnimator{
 	
 	public void forceUpdate() {
 		((FolderView) this.getCurrentView()).forceUpdate();
+	}
+	
+	public void shareSelected() {
+		Log.d("PEN", "shareSelected in NoteExplorer called");
+		((FolderView) this.getCurrentView()).shareSelected();
 	}
 }

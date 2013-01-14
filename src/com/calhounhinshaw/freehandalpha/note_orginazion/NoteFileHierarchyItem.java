@@ -10,6 +10,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Parcel;
@@ -21,6 +23,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	private Drawable defaultNoteDrawable = null;
 	private Drawable defaultFolderDrawable = null;
 	private ArrayList<INoteHierarchyItem> mChildren = null;
+	private ArrayList<INoteHierarchyItem> mRecursiveChildren = null;
 	
 	private INoteHierarchyItemSorter mSorter;
 	private LinkedList<IChangeListener> mChangeListeners = new LinkedList<IChangeListener>();
@@ -89,8 +92,11 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 	
 	public boolean containsItemName(String testContains) {
-		updateChildren();
-		
+		// Make sure we've populated mChildren
+		if (mChildren == null) {
+			updateChildren();
+		}
+				
 		for (INoteHierarchyItem i : mChildren) {
 			if (testContains.equals(i.getName())) {
 				return true;
@@ -98,6 +104,32 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 		
 		return false;
+	}
+	
+	
+	public int getRecursiveNumChildren() {
+		if (mRecursiveChildren == null) {
+			recursivelyUpdateChildren();
+		}
+		
+		return mRecursiveChildren.size();
+	}
+
+
+	public INoteHierarchyItem getRecursiveChildAt(int index) throws IndexOutOfBoundsException {
+		if (mRecursiveChildren == null) {
+			recursivelyUpdateChildren();
+		}
+		
+		return mRecursiveChildren.get(index);
+	}
+	
+	public List<INoteHierarchyItem> getAllRecursiveChildren() {
+		if (mRecursiveChildren == null) {
+			recursivelyUpdateChildren();
+		}
+		
+		return mRecursiveChildren;
 	}
 	
 
@@ -144,7 +176,10 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	// to create one and decides to put it in my app's directory they can deal with the fall out themselves. That being said, I should add it at some
 	// point in the future.
 	public boolean delete() {
-		updateChildren();
+		// Make sure we've populated mChildren
+		if (mChildren == null) {
+			updateChildren();
+		}
 		
 		if (isFolder()) {
 			for (INoteHierarchyItem i : mChildren) {
@@ -310,6 +345,44 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 				mChildren = mSorter.sort(mChildren);
 			}
 		}
+	}
+	
+	private void recursivelyUpdateChildren () {
+		if (!mFile.isDirectory()) {
+			mRecursiveChildren = new ArrayList<INoteHierarchyItem>(0);
+		} else {
+			mRecursiveChildren = new ArrayList<INoteHierarchyItem>();
+			LinkedList<File> children = recursiveList(mFile);
+			
+			for (File f : children) {
+				if (!f.isHidden() && f.isFile() && f.getName().contains(".note")) {
+					NoteFileHierarchyItem newItem = new NoteFileHierarchyItem(f, this);
+					newItem.setDefaultDrawables(defaultNoteDrawable, defaultFolderDrawable);
+					newItem.setSorter(mSorter);
+					
+					mRecursiveChildren.add(newItem);
+				}
+			}
+			
+			if (mSorter != null) {
+				mRecursiveChildren = mSorter.sort(mRecursiveChildren);
+			}
+		}
+	}
+	
+	private LinkedList<File> recursiveList (File toList) {
+		LinkedList<File> toReturn = new LinkedList<File>();
+		File[] directChildren = toList.listFiles();
+		
+		for (File f : directChildren) {
+			if (f.isDirectory()) {
+				toReturn.addAll(recursiveList(f));
+			} else {
+				toReturn.add(f);
+			}
+		}
+		
+		return toReturn;
 	}
 	
 	private void notifyChangeListeners() {

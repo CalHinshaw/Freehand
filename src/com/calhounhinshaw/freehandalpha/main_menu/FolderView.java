@@ -1,16 +1,21 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.calhounroberthinshaw.freehand.R;
+import com.calhounhinshaw.freehandalpha.note_editor.Note;
 import com.calhounhinshaw.freehandalpha.note_editor.NoteActivity;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
+import com.calhounhinshaw.freehandalpha.share.Sharer;
 
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -94,7 +99,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			if (clickedItem.isFolder()) {
 				mExplorer.addView(new FolderView(mExplorer.getContext(), clickedItem, mExplorer, mActionBarListener));
 				mExplorer.showNext();
-				mActionBarListener.setDefaultActionBar();
+				mActionBarListener.setDefaultActionBarOn();
 			} else {
 				openNote(clickedItem);
 			}
@@ -110,7 +115,7 @@ public class FolderView extends ListView implements OnGestureListener {
 				}
 			} else {
 				mAdapter.addSelection(position);
-				mActionBarListener.setItemsSelectedActionBar();
+				mActionBarListener.setItemsSelectedActionBarOn();
 				setFastScrollAlwaysVisible(true);
 				
 				pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
@@ -223,14 +228,14 @@ public class FolderView extends ListView implements OnGestureListener {
 				}
 				
 				
-				mActionBarListener.setDefaultActionBar();
+				mActionBarListener.setDefaultActionBarOn();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
 				mAdapter.clearSelections();
 				break;
 				
 			case DragEvent.ACTION_DRAG_ENDED:
-				mActionBarListener.setDefaultActionBar();
+				mActionBarListener.setDefaultActionBarOn();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
 				mAdapter.clearSelections();
@@ -545,7 +550,27 @@ public class FolderView extends ListView implements OnGestureListener {
 		mFolder.forceUpdate();
 		mAdapter.onChange();
 	}
-
+	
+	public void shareSelected() {
+		Log.d("PEN", "shareSelected in FolderView called");
+		List<INoteHierarchyItem> selections = mAdapter.getSelections();
+		LinkedList<INoteHierarchyItem> toShare = new LinkedList<INoteHierarchyItem>();
+		
+		for (INoteHierarchyItem i : selections) {
+			if (i.isFolder()) {
+				toShare.addAll(i.getAllRecursiveChildren());
+			} else {
+				toShare.add(i);
+			}
+		}
+		
+		if (toShare.size() == 1) {
+			Sharer.shareNoteHierarchyItemsAsJPEG(toShare, this.getContext());
+		} else {
+			Toast.makeText(getContext(), "You can only share one note at a time right now. Sharing multiple notes coming soon!", Toast.LENGTH_LONG).show();
+		}
+		
+	}
 	
 
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {

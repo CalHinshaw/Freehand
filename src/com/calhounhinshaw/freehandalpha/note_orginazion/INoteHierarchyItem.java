@@ -3,6 +3,8 @@ package com.calhounhinshaw.freehandalpha.note_orginazion;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.List;
+
 import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 
@@ -20,6 +22,11 @@ public interface INoteHierarchyItem extends Parcelable {
 	public int getNumChildren ();
 	public INoteHierarchyItem getChildAt (int index) throws IndexOutOfBoundsException;
 	public boolean containsItemName (String testContains);
+	
+	public int getRecursiveNumChildren ();
+	public INoteHierarchyItem getRecursiveChildAt (int index) throws IndexOutOfBoundsException;
+	public List<INoteHierarchyItem> getAllRecursiveChildren();
+	
 	
 	/**
 	 * Rename this INoteHierarchyItem

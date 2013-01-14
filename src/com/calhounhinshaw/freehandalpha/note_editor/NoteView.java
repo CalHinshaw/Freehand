@@ -205,10 +205,6 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, OnP
 	}
 //------------------------------------------------------------------------------------------
 
-	public Bitmap getBitmap () {
-		return mNote.getBitmap();
-	}
-	
 	public String getName () {
 		return mNote.getName();
 	}

@@ -17,6 +17,7 @@ import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -35,11 +36,12 @@ public class MainMenu extends Activity implements IActionBarListener {
 	private LinearLayout itemsSelectedActionBar;
 	private Button selectedCancelButton;
 	private Button selectedDeleteButton;
+	private Button selectedShareButton;
 	
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
 			mExplorer.clearDirectorySelections();
-			setDefaultActionBar();
+			setDefaultActionBarOn();
 		}
 	};
 	
@@ -47,7 +49,16 @@ public class MainMenu extends Activity implements IActionBarListener {
 		public void onClick(View v) {
 			mExplorer.deleteSelectedItems();
 			mExplorer.clearDirectorySelections();
-			setDefaultActionBar();
+			setDefaultActionBarOn();
+		}
+	};
+	
+	private OnClickListener shareButtonOnClickListener = new OnClickListener() {
+		public void onClick(View v) {
+			Log.d("PEN", "share button pressed");
+			mExplorer.shareSelected();
+			mExplorer.clearDirectorySelections();
+			setDefaultActionBarOn();
 		}
 	};
 	
@@ -56,7 +67,7 @@ public class MainMenu extends Activity implements IActionBarListener {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
 					mExplorer.clearDirectorySelections();
-					setDefaultActionBar();
+					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -79,7 +90,7 @@ public class MainMenu extends Activity implements IActionBarListener {
 				case DragEvent.ACTION_DROP:
 					mExplorer.deleteSelectedItems();
 					mExplorer.clearDirectorySelections();
-					setDefaultActionBar();
+					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -96,6 +107,33 @@ public class MainMenu extends Activity implements IActionBarListener {
 			return true;
 		}
 	};
+	
+	private OnDragListener shareButtonDragListener = new OnDragListener() {
+
+		public boolean onDrag(View v, DragEvent event) {
+			switch(event.getAction()) {
+				case DragEvent.ACTION_DROP:
+					mExplorer.shareSelected();
+					mExplorer.clearDirectorySelections();
+					setDefaultActionBarOn();
+					v.getBackground().setColorFilter(null);
+					break;
+					
+				case DragEvent.ACTION_DRAG_ENTERED:
+					v.getBackground().setColorFilter(new PorterDuffColorFilter(ORANGE_HIGHLIGHT, PorterDuff.Mode.ADD));
+					break;
+					
+				case DragEvent.ACTION_DRAG_EXITED:
+					v.getBackground().setColorFilter(null);
+					break;
+			}
+			
+			return true;
+		}
+		
+	};
+	
+	
 	
 	// defaultActionBar view references
 	private LinearLayout defaultActionBar;
@@ -137,6 +175,10 @@ public class MainMenu extends Activity implements IActionBarListener {
         selectedCancelButton.setOnClickListener(cancelButtonOnClickListener);
         selectedCancelButton.setOnDragListener(cancelButtonDragListener);
         
+        selectedShareButton = (Button) findViewById(R.id.shareButton);
+        selectedShareButton.setOnClickListener(shareButtonOnClickListener);
+        selectedShareButton.setOnDragListener(shareButtonDragListener);
+        
         selectedDeleteButton = (Button) findViewById(R.id.deleteButton);
         selectedDeleteButton.setOnClickListener(deleteButtonOnClickListener);
         selectedDeleteButton.setOnDragListener(deleteButtonDragListener);
@@ -175,7 +217,7 @@ public class MainMenu extends Activity implements IActionBarListener {
     public void onBackPressed() {
     	if(mExplorer.directoryHasSelected()) {			//first clear selections
     		mExplorer.clearDirectorySelections();
-    		this.setDefaultActionBar();
+    		this.setDefaultActionBarOn();
     	} else if (mExplorer.isInRootDirectory()) {		// then close folders
     		super.onBackPressed();
     	} else {										// finally, close app
@@ -183,13 +225,18 @@ public class MainMenu extends Activity implements IActionBarListener {
     	}
     }
     
-    public void setItemsSelectedActionBar () {
+    public void setItemsSelectedActionBarOn () {
     	itemsSelectedActionBar.setVisibility(View.VISIBLE);
     	defaultActionBar.setVisibility(View.INVISIBLE);
     }
     
-    public void setDefaultActionBar () {
+    public void setDefaultActionBarOn () {
     	itemsSelectedActionBar.setVisibility(View.INVISIBLE);
     	defaultActionBar.setVisibility(View.VISIBLE);
     }
+
+	public void setShareProgressBar(boolean isOn) {
+		// TODO Auto-generated method stub
+		
+	}
 }

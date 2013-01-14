@@ -22,7 +22,7 @@ import android.graphics.RectF;
 import android.os.Environment;
 import android.util.Log;
 
-class Note {
+public class Note {
 //*********************************** Member Variables ********************************************
 	
 	private static final int SAVE_FORMAT_VERSION = 1;

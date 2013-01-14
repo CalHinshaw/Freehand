@@ -396,13 +396,10 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	   		 return true;
 	   		 
 		case R.id.shareItem:
-			ArrayList<Bitmap> toShare = new ArrayList<Bitmap>(1);
-			toShare.add(mNoteView.getBitmap());
-			
-			ArrayList<String> names = new ArrayList<String>(1);
-			names.add(mNoteView.getName());
-			
-			Sharer.shareAsJPEG(toShare, names, this);
+			ArrayList<Note> toShare = new ArrayList<Note>(1);
+			toShare.add(mNoteView.getNote());
+
+			Sharer.shareNotesAsJPEG(toShare, this);
 			return true;
 	   		 
 	   	default:

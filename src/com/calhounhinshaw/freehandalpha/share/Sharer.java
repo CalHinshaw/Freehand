@@ -6,6 +6,9 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.calhounhinshaw.freehandalpha.note_editor.Note;
+import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,7 +18,39 @@ import android.os.Environment;
 import android.util.Log;
 
 public class Sharer {
-	public static void shareAsJPEG (List<Bitmap> toShare, List<String> names, Context context) {
+	public static void shareNoteHierarchyItemsAsJPEG (List<INoteHierarchyItem> toShare, Context context) {
+		ArrayList<Note> notesToShare = new ArrayList<Note>(toShare.size());
+		
+		for (INoteHierarchyItem i : toShare) {
+			notesToShare.add(new Note(i));
+		}
+		
+		shareNotesAsJPEG(notesToShare, context);
+	}
+	
+	public static void shareNotesAsJPEG (List<Note> toShare, Context context) {
+		ArrayList<String> names = new ArrayList<String>(toShare.size());
+		ArrayList<Bitmap> bitmaps = new ArrayList<Bitmap>(toShare.size());
+		
+		
+		for (Note n : toShare) {
+			
+			// Add the name. If there's a duplicate append a number.
+			if (!names.contains(n.getName())) {
+				names.add(n.getName());
+			} else {
+				int duplicateCounter = 0;
+				
+				while(names.contains(n.getName())) {
+					duplicateCounter++;
+				}
+				
+				names.add(n.getName() + Integer.toString(duplicateCounter));
+			}
+			
+			bitmaps.add(n.getBitmap());
+		}
+		
 		try {
 			File tempDir = new File(Environment.getExternalStorageDirectory(), "Freehand");
 			tempDir.mkdirs();
@@ -24,7 +59,7 @@ public class Sharer {
 			
 			for (int i = 0; i < toShare.size(); i++) {
 				File tempFile = new File(tempDir, names.get(i) + ".jpeg");
-				toShare.get(i).compress(CompressFormat.JPEG, 100, new FileOutputStream(tempFile));
+				bitmaps.get(i).compress(CompressFormat.JPEG, 100, new FileOutputStream(tempFile));
 				imageUris.add(Uri.fromFile(tempFile));
 			}
 			
