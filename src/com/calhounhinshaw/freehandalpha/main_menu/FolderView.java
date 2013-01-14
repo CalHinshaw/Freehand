@@ -207,16 +207,8 @@ public class FolderView extends ListView implements OnGestureListener {
 				break;
 				
 			case DragEvent.ACTION_DROP:
-				
 				List<INoteHierarchyItem> toMove = (List<INoteHierarchyItem>) event.getLocalState();
-				
-				for (INoteHierarchyItem i : toMove) {
-					Log.d("PEN", "trying to move");
-					if (!i.moveTo(mFolder)){
-						Toast.makeText(getContext(), "Move failed. Please try again.", Toast.LENGTH_LONG).show();
-					}
-				}
-				
+				mPresenter.move(toMove, mFolder);
 				
 				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();

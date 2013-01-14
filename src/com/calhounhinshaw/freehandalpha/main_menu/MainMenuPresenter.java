@@ -4,6 +4,8 @@ import java.util.List;
 
 import android.app.DialogFragment;
 import android.content.Intent;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.calhounhinshaw.freehandalpha.note_editor.NoteActivity;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
@@ -130,6 +132,22 @@ public class MainMenuPresenter {
 		}
 	}
 	
+	
+	//***************************************** Move Methods ***********************************************************
+	
+	public void move (List<INoteHierarchyItem> toMove, INoteHierarchyItem dest) {
+		boolean moveFailed = false;
+		
+		for (INoteHierarchyItem i : toMove) {
+			if (!i.moveTo(dest)){
+				moveFailed = true;
+			}
+		}
+		
+		if (moveFailed == true) {
+			mActivity.displayToast("Move failed. Please try again.");
+		}
+	}
 	
 	//*************************************** Open Note/Folder *******************************************************************
 	
