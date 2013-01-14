@@ -142,9 +142,15 @@ public class MainMenuPresenter {
 	}
 	
 	
+	//*************************************** Misc Methods (better names would be... better...) **********************************
 	
+	public void closeCurrentFolder() {
+		mExplorer.moveUpDirectory();
+	}
 	
-	
+	public boolean testInRootDirectory() {
+		return mExplorer.isInRootDirectory();
+	}
 	
 	
 	

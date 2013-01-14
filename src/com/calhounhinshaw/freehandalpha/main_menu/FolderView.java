@@ -45,7 +45,6 @@ public class FolderView extends ListView implements OnGestureListener {
 	private static final int SCROLL_DURATION = 60;
 	
 	// Items for various callbacks and whatnot
-	private NoteExplorer mExplorer;
 	private FolderAdapter mAdapter;
 	private INoteHierarchyItem mFolder;
 	private IActionBarListener mActionBarListener;
@@ -68,9 +67,8 @@ public class FolderView extends ListView implements OnGestureListener {
 	private final GestureDetector flingDetector;
 
 
-	public FolderView(Context context, INoteHierarchyItem newFolder, NoteExplorer newExplorer, IActionBarListener newListener, MainMenuPresenter newPresenter) {
+	public FolderView(Context context, INoteHierarchyItem newFolder, IActionBarListener newListener, MainMenuPresenter newPresenter) {
 		super(context);
-		mExplorer = newExplorer;
 		mFolder = newFolder;
 		mActionBarListener = newListener;
 		mPresenter = newPresenter;
@@ -99,8 +97,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder()) {
-				mExplorer.addView(new FolderView(mExplorer.getContext(), clickedItem, mExplorer, mActionBarListener, mPresenter));
-				mExplorer.showNext();
+				mPresenter.openFolder(clickedItem);
 				mActionBarListener.setDefaultActionBarOn();
 			} else {
 				mPresenter.openNote(clickedItem);
@@ -262,6 +259,12 @@ public class FolderView extends ListView implements OnGestureListener {
 	// Handle navigation through NoteExplorer during DragEvent.
 	private void navigateDrag(DragEvent event) {
 		
+		// Don't start timing until after the in animation has ended
+		if (this.getAnimation() != null && !this.getAnimation().hasEnded()) {
+			actionTimeMarker = 0;
+			return;
+		}
+		
 		// Find the file represented by the view the user's finger is over
 		int positionUnderPointer = this.pointToPosition((int) event.getX(), (int) event.getY());
 		INoteHierarchyItem itemUnderPointer = null;
@@ -295,8 +298,8 @@ public class FolderView extends ListView implements OnGestureListener {
 				actionTimeMarker = System.currentTimeMillis();
 
 			// If user's been on the left side for long enough go up a directory
-			} else if ((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER && !mExplorer.isInRootDirectory()) {
-				mExplorer.moveUpDirectory();
+			} else if ((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER && !mPresenter.testInRootDirectory()) {
+				mPresenter.closeCurrentFolder();
 			}
 
 		// Watch to see if the user wants to open a valid folder
@@ -315,8 +318,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// If user has been hovering over folder for long enough open it
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mExplorer.addView(new FolderView(mExplorer.getContext(), itemUnderPointer, mExplorer, mActionBarListener, mPresenter));
-				mExplorer.showNext();
+				mPresenter.openFolder(itemUnderPointer);
 			}
 
 		// No actions are possible, reset timer
@@ -495,7 +497,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 		if (Math.abs(e1.getY()-e2.getY()) <= this.getHeight()/12 && velocityX >= 3000) {
 			if (e1.getX()-e2.getX() <= -this.getWidth()/4) {
-				mExplorer.moveUpDirectory();
+				mPresenter.closeCurrentFolder();
 				return true;
 			}
 		}
