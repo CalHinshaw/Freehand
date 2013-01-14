@@ -2,12 +2,7 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.util.List;
 
-import android.app.Activity;
 import android.app.DialogFragment;
-import android.app.FragmentManager;
-import android.util.Log;
-import android.widget.Toast;
-
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 /**
@@ -76,7 +71,7 @@ public class MainMenuPresenter {
 				}
 			};
 			
-			// Find the default input - unnamed + the smallest unused natural number
+			// Find the default input string - unnamed + the smallest unused natural number
 			int i = 1;
 			while (dest.containsItemName("unnamed folder " + Integer.toString(i))) {
 				i++;

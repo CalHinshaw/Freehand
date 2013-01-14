@@ -79,7 +79,7 @@ public class NoteExplorer extends ViewAnimator{
 	}
 	
 	public void addView(INoteHierarchyItem newFolderItem) {
-		addView(new FolderView(this.getContext(), newFolderItem, this, mActionBarListener, mPresenter));
+		this.addView(new FolderView(this.getContext(), newFolderItem, this, mActionBarListener, mPresenter));
 	}
 	
 	@Override
