@@ -142,7 +142,7 @@ public class MainMenuPresenter {
 	}
 	
 	
-	//*************************************** Misc Methods (better names would be... better...) **********************************
+	//*************************************** Misc Methods (largely used for decoupling the views while re-architecting the main menu) **********************************
 	
 	public void closeCurrentFolder() {
 		mExplorer.moveUpDirectory();
@@ -152,7 +152,13 @@ public class MainMenuPresenter {
 		return mExplorer.isInRootDirectory();
 	}
 	
+	public void turnDefaultActionBarOn () {
+		mActivity.setDefaultActionBarOn();
+	}
 	
+	public void turnItemsSelectedActionBarOn () {
+		mActivity.setItemsSelectedActionBarOn();
+	}
 	
 	
 	

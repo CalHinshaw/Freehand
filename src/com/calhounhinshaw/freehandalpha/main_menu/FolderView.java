@@ -1,21 +1,13 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import com.calhounroberthinshaw.freehand.R;
-import com.calhounhinshaw.freehandalpha.note_editor.Note;
-import com.calhounhinshaw.freehandalpha.note_editor.NoteActivity;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 import com.calhounhinshaw.freehandalpha.share.Sharer;
 
-import android.app.Activity;
-import android.app.DialogFragment;
-import android.app.FragmentManager;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -44,10 +36,10 @@ public class FolderView extends ListView implements OnGestureListener {
 	private static final int SCROLL_DISTANCE = 40;
 	private static final int SCROLL_DURATION = 60;
 	
-	// Items for various callbacks and whatnot
+	// Items that define this view
 	private FolderAdapter mAdapter;
 	private INoteHierarchyItem mFolder;
-	private IActionBarListener mActionBarListener;
+	
 	private MainMenuPresenter mPresenter;
 
 	// These store the persistent information for dragWatcher
@@ -67,10 +59,9 @@ public class FolderView extends ListView implements OnGestureListener {
 	private final GestureDetector flingDetector;
 
 
-	public FolderView(Context context, INoteHierarchyItem newFolder, IActionBarListener newListener, MainMenuPresenter newPresenter) {
+	public FolderView(Context context, INoteHierarchyItem newFolder, MainMenuPresenter newPresenter) {
 		super(context);
 		mFolder = newFolder;
-		mActionBarListener = newListener;
 		mPresenter = newPresenter;
 
 		// Create and set the adapter for this ListView
@@ -98,7 +89,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			// Clicking on directory opens it
 			if (clickedItem.isFolder()) {
 				mPresenter.openFolder(clickedItem);
-				mActionBarListener.setDefaultActionBarOn();
+				mPresenter.turnDefaultActionBarOn();
 			} else {
 				mPresenter.openNote(clickedItem);
 			}
@@ -114,7 +105,7 @@ public class FolderView extends ListView implements OnGestureListener {
 				}
 			} else {
 				mAdapter.addSelection(position);
-				mActionBarListener.setItemsSelectedActionBarOn();
+				mPresenter.turnItemsSelectedActionBarOn();
 				setFastScrollAlwaysVisible(true);
 				
 				pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
@@ -227,14 +218,14 @@ public class FolderView extends ListView implements OnGestureListener {
 				}
 				
 				
-				mActionBarListener.setDefaultActionBarOn();
+				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
 				mAdapter.clearSelections();
 				break;
 				
 			case DragEvent.ACTION_DRAG_ENDED:
-				mActionBarListener.setDefaultActionBarOn();
+				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
 				mAdapter.clearSelections();
