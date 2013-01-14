@@ -3,6 +3,9 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 import java.util.List;
 
 import android.app.DialogFragment;
+import android.content.Intent;
+
+import com.calhounhinshaw.freehandalpha.note_editor.NoteActivity;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 /**
@@ -71,7 +74,7 @@ public class MainMenuPresenter {
 				}
 			};
 			
-			// Find the default input string - unnamed + the smallest unused natural number
+			// Find the default input string - unnamed folder + the smallest unused natural number
 			int i = 1;
 			while (dest.containsItemName("unnamed folder " + Integer.toString(i))) {
 				i++;
@@ -93,5 +96,45 @@ public class MainMenuPresenter {
 		}
 	}
 	
+	//************************************** New Note Methods (who wants first class functions anyway?) ************************
+	
+	public void createNewNote (INoteHierarchyItem dest) {
+
+		// Create the function that will be run when the user presses the Create Note button
+		NewItemFunctor newNoteFunction = new NewItemFunctor() {
+			@Override
+			public void function(INoteHierarchyItem destinationItem, String folderName) {
+				createNewNote(destinationItem, folderName);
+			}
+		};
+		
+		// Find the default input string - unnamed note + the smallest unused natural number
+		int i = 1;
+		while (dest.containsItemName("unnamed note " + Integer.toString(i))) {
+			i++;
+		}
+		String defaultInput = "unnamed note " + Integer.toString(i);
+		
+		// Create the dialog and pass it to activity to be run
+		DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", dest, newNoteFunction);
+		mActivity.displayDialogFragment(d, "New Note");
+	}
+	
+	public void createNewNote (INoteHierarchyItem dest, String name) {
+		INoteHierarchyItem newNote = dest.addNote(name);
+		
+		if (newNote != null) {
+			openNote(newNote);
+		} else {
+			mActivity.displayToast("Create new note failed. Please try again.");
+		}
+	}
+	
+	
+	//*************************************** Open Note ******************************************************************************
+	
+	public void openNote (INoteHierarchyItem toOpen) {
+		mActivity.openNoteActivity(toOpen);
+	}
 	
 }

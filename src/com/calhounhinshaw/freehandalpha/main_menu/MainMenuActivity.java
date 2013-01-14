@@ -4,6 +4,7 @@ import java.io.File;
 
 import com.calhounroberthinshaw.freehand.R;
 
+import com.calhounhinshaw.freehandalpha.note_editor.NoteActivity;
 import com.calhounhinshaw.freehandalpha.note_orginazion.DefaultNoteSorter;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 import com.calhounhinshaw.freehandalpha.note_orginazion.NoteFileHierarchyItem;
@@ -16,6 +17,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -249,5 +251,11 @@ public class MainMenuActivity extends Activity implements IActionBarListener {
     public void displayToast (String toastText) {
     	Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
     }
-
+    
+	public void openNoteActivity (INoteHierarchyItem toOpen) {
+		Intent i = new Intent(this, NoteActivity.class);
+		i.putExtra("com.calhounhinshaw.freehandalpha.note_editor.INoteHierarchyItem", toOpen);
+		i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+		this.startActivity(i);
+	}
 }

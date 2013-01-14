@@ -457,39 +457,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 
 	public void newNote() {
-		try {
-			// Get the fragment manager we need to start the dialog
-			FragmentManager fm = ((Activity) this.getContext()).getFragmentManager();
-			
-			// Create the function that will be run when the user presses the Create Folder button
-			NewItemFunctor newFolderFunction = new NewItemFunctor() {
-				@Override
-				public void function(INoteHierarchyItem item, String s) {
-					INoteHierarchyItem newNote = mFolder.addNote(s);
-					if (newNote != null) {
-						openNote(newNote);
-					} else {
-						Toast.makeText(getContext(), "Create new note failed. Please try again.", Toast.LENGTH_LONG).show();
-					}
-				}
-			};
-			
-			// Find the default input - unnamed + the smallest unused natural number
-			int i = 1;
-			
-			while (mFolder.containsItemName("unnamed note " + Integer.toString(i))) {
-				i++;
-			}
-			
-			String defaultInput = "unnamed note " + Integer.toString(i);
-			
-			// Create the dialog and run it
-			DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", null, newFolderFunction);
-			d.show(fm, "new note");
-			
-		} catch (ClassCastException e) {
-			Log.d("PEN", "Can't get the FragmentManager from here");
-		}
+		mPresenter.createNewNote(mFolder);
 	}
 	
 	public void newFolder() {
