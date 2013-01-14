@@ -13,6 +13,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -25,8 +27,9 @@ import android.view.View.OnClickListener;
 import android.view.View.OnDragListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
-public class MainMenu extends Activity implements IActionBarListener {
+public class MainMenuActivity extends Activity implements IActionBarListener {
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final long VIBRATE_DURATION = 50;
 	
@@ -196,6 +199,7 @@ public class MainMenu extends Activity implements IActionBarListener {
         
         // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);
+        mExplorer.setPresenter(new MainMenuPresenter(this));
         mExplorer.setActionBarListener(this);
         mExplorer.setRootHierarchyItem(rootItem);
     }
@@ -234,9 +238,16 @@ public class MainMenu extends Activity implements IActionBarListener {
     	itemsSelectedActionBar.setVisibility(View.INVISIBLE);
     	defaultActionBar.setVisibility(View.VISIBLE);
     }
+    
+    
+    //**************************** PRESENTER METHODS (part of the rewrite) **************************
+    
+    public void displayDialogFragment (DialogFragment toDisplay, String tag) {
+    	toDisplay.show(this.getFragmentManager(), tag);
+    }
+    
+    public void displayToast (String toastText) {
+    	Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
+    }
 
-	public void setShareProgressBar(boolean isOn) {
-		// TODO Auto-generated method stub
-		
-	}
 }

@@ -17,7 +17,7 @@
         android:hardwareAccelerated="true" >
                 
         <activity
-            android:name="com.calhounhinshaw.freehandalpha.main_menu.MainMenu"
+            android:name="com.calhounhinshaw.freehandalpha.main_menu.MainMenuActivity"
             android:label="@string/title_activity_main_menu" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

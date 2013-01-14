@@ -49,6 +49,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	private FolderAdapter mAdapter;
 	private INoteHierarchyItem mFolder;
 	private IActionBarListener mActionBarListener;
+	private MainMenuPresenter mPresenter;
 
 	// These store the persistent information for dragWatcher
 	private boolean watchForDrag = false;
@@ -67,11 +68,12 @@ public class FolderView extends ListView implements OnGestureListener {
 	private final GestureDetector flingDetector;
 
 
-	public FolderView(Context context, INoteHierarchyItem newFolder, NoteExplorer newExplorer, IActionBarListener newListener) {
+	public FolderView(Context context, INoteHierarchyItem newFolder, NoteExplorer newExplorer, IActionBarListener newListener, MainMenuPresenter newPresenter) {
 		super(context);
 		mExplorer = newExplorer;
 		mFolder = newFolder;
 		mActionBarListener = newListener;
+		mPresenter = newPresenter;
 
 		// Create and set the adapter for this ListView
 		mAdapter = new FolderAdapter(mFolder, R.layout.directoryview_row, this.getContext());
@@ -97,7 +99,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder()) {
-				mExplorer.addView(new FolderView(mExplorer.getContext(), clickedItem, mExplorer, mActionBarListener));
+				mExplorer.addView(new FolderView(mExplorer.getContext(), clickedItem, mExplorer, mActionBarListener, mPresenter));
 				mExplorer.showNext();
 				mActionBarListener.setDefaultActionBarOn();
 			} else {
@@ -313,7 +315,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// If user has been hovering over folder for long enough open it
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mExplorer.addView(new FolderView(mExplorer.getContext(), itemUnderPointer, mExplorer, mActionBarListener));
+				mExplorer.addView(new FolderView(mExplorer.getContext(), itemUnderPointer, mExplorer, mActionBarListener, mPresenter));
 				mExplorer.showNext();
 			}
 
@@ -451,17 +453,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 	
 	public void deleteSelectedItems () {
-		try {
-			// Get the fragment manager we need to start the dialog
-			FragmentManager fm = ((Activity) this.getContext()).getFragmentManager();
-			
-			// Create the dialog and run it
-			DialogFragment d = new ConfirmDeleteDialog("Confirm Delete?", "Delete", "Cancel", mAdapter.getSelections(), this.getContext());
-			d.show(fm, "delete");
-			
-		} catch (ClassCastException e) {
-			Log.d("PEN", "Can't get the FragmentManager from here");
-		}
+		mPresenter.deleteWithConfirmation(mAdapter.getSelections());
 	}
 
 	public void newNote() {
@@ -512,7 +504,7 @@ public class FolderView extends ListView implements OnGestureListener {
 					INoteHierarchyItem newFolder = mFolder.addFolder(s);
 					
 					if (newFolder != null) {
-						mExplorer.addView(new FolderView(mExplorer.getContext(), newFolder, mExplorer, mActionBarListener));
+						mExplorer.addView(new FolderView(mExplorer.getContext(), newFolder, mExplorer, mActionBarListener, mPresenter));
 						mExplorer.showNext();
 					} else {
 						Toast.makeText(getContext(), "Create new folder failed. Please try again.", Toast.LENGTH_LONG).show();
