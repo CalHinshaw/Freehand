@@ -1,5 +1,6 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -16,37 +17,28 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-class FolderAdapter extends BaseAdapter implements IChangeListener {
+class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> implements IChangeListener {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	
-	private INoteHierarchyItem mFolder;
 	private Context mContext;
 	private int mRowViewResourceId;
 	
 	private Set<Integer> selectedItems = new TreeSet<Integer>();
 	private boolean selectedItemsGreyed = false;
 	
-	public FolderAdapter (INoteHierarchyItem newFolder, int newRowViewResourceId, Context newContext) {
-		mFolder = newFolder;
+	
+	
+	
+	public FolderAdapter (Context newContext, int newRowViewResourceId) {
+		super(newContext, newRowViewResourceId, new ArrayList<INoteHierarchyItem>());
 		mContext = newContext;
 		mRowViewResourceId = newRowViewResourceId;
 	}
 	
-	public int getCount() {
-		return mFolder.getNumChildren();
-	}
-
-	public INoteHierarchyItem getItem(int position) {
-		return mFolder.getChildAt(position);
-	}
-
-	public long getItemId(int position) {
-		return -1;
-	}
 
 	public View getView(int position, View convertView, ViewGroup parent) {
 		RowDataHolder holder;
@@ -67,7 +59,7 @@ class FolderAdapter extends BaseAdapter implements IChangeListener {
 		}
 		
 		// Set the content of convertView's sub-views
-		holder.noteHierarchyItem = mFolder.getChildAt(position);
+		holder.noteHierarchyItem = this.getItem(position);
 		holder.name.setText(holder.noteHierarchyItem.getName());
 		holder.thumbnail.setImageDrawable(holder.noteHierarchyItem.getThumbnail());
 		holder.dateModified.setText(new Date(holder.noteHierarchyItem.getDateModified()).toString());
@@ -91,10 +83,12 @@ class FolderAdapter extends BaseAdapter implements IChangeListener {
 		TextView name;
 		TextView dateModified;
 		INoteHierarchyItem noteHierarchyItem;
-
-
-		public RowDataHolder() {
-		}
+	}
+	
+	public void updateContent (List<INoteHierarchyItem> newContent) {
+		this.clear();
+		this.addAll(newContent);
+		this.notifyDataSetChanged();
 	}
 	
 	
@@ -120,7 +114,7 @@ class FolderAdapter extends BaseAdapter implements IChangeListener {
 		List<INoteHierarchyItem> toReturn = new LinkedList<INoteHierarchyItem>();
 		
 		for (int i : selectedItems) {
-			toReturn.add(mFolder.getChildAt(i));
+			toReturn.add(this.getItem(i));
 		}
 
 		return toReturn;

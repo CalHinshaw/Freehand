@@ -9,7 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 
 /**
- * Don't mix and match different implementations for INoteHierarchyItem!
+ * Don't mix and match different implementations of INoteHierarchyItem!
  * @author cal
  *
  */
@@ -21,12 +21,16 @@ public interface INoteHierarchyItem extends Parcelable {
 	
 	public int getNumChildren ();
 	public INoteHierarchyItem getChildAt (int index) throws IndexOutOfBoundsException;
-	public boolean containsItemName (String testContains);
+	public List<INoteHierarchyItem> getAllChildren();
 	
 	public int getRecursiveNumChildren ();
 	public INoteHierarchyItem getRecursiveChildAt (int index) throws IndexOutOfBoundsException;
 	public List<INoteHierarchyItem> getAllRecursiveChildren();
 	
+	public boolean containsItemName (String testContains);
+	
+	public boolean isSelected();
+	public void setSelected(boolean isSelected);
 	
 	/**
 	 * Rename this INoteHierarchyItem

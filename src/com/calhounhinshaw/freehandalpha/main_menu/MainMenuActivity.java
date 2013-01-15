@@ -34,6 +34,8 @@ public class MainMenuActivity extends Activity {
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final long VIBRATE_DURATION = 50;
 	
+	private MainMenuPresenter mPresenter;
+	
 	private NoteExplorer mExplorer;
 	
 	// itemsSelectedActionBar view references
@@ -200,14 +202,13 @@ public class MainMenuActivity extends Activity {
         
         // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
         mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);
-        mExplorer.setPresenter(new MainMenuPresenter(this, mExplorer));
-        mExplorer.setRootHierarchyItem(rootItem);
+        
+        mPresenter = new MainMenuPresenter(this, mExplorer, rootItem);
     }
     
     @Override
     protected void onResume() {
     	super.onResume();
-    	mExplorer.forceUpdate();
     }
 
     @Override

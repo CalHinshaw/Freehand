@@ -33,24 +33,15 @@ public class NoteExplorer extends ViewAnimator{
 		mPresenter = newPresenter;
 	}
 	
-	// setActionBarListener MUST BE CALLED BEFORE THIS!!!!!!
 	public void setRootHierarchyItem (INoteHierarchyItem newFolder) {
 		mRootFolder = newFolder;
-		
-		this.addView(new FolderView(this.getContext(), mRootFolder, mPresenter));
 	}
 	
 	
 
 	
 	public boolean isInRootDirectory() {
-		INoteHierarchyItem currentFolder = ((FolderView) this.getCurrentView()).getNoteHierarchyItem();
-		
-		if (mRootFolder.equals(currentFolder)) {
-			return true;
-		} else {
-			return false;
-		}
+		return false;
 	}
 	
 	public void moveUpDirectory () {
@@ -68,12 +59,10 @@ public class NoteExplorer extends ViewAnimator{
 		this.showPrevious();
 		this.removeView(toDelete);
 		this.getCurrentView().setVerticalScrollBarEnabled(true);
-		
-		forceUpdate();
 	}
 	
-	public void openFolder (INoteHierarchyItem newFolder) {
-		this.addView(new FolderView(this.getContext(), newFolder, mPresenter));
+	public void openFolder (FolderView toAdd) {
+		this.addView(toAdd);
 		this.showNext();
 	}
 	
@@ -106,10 +95,6 @@ public class NoteExplorer extends ViewAnimator{
 	
 	public void newFolder() {
 		((FolderView) this.getCurrentView()).newFolder();
-	}
-	
-	public void forceUpdate() {
-		((FolderView) this.getCurrentView()).forceUpdate();
 	}
 	
 	public void shareSelected() {

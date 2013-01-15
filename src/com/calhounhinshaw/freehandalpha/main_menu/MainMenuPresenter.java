@@ -1,8 +1,11 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import android.app.DialogFragment;
+import android.util.Log;
+
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 /**
@@ -18,10 +21,23 @@ public class MainMenuPresenter {
 	// The NoteExplorer that holds the view stack. It is used to display FolderViews.
 	private final NoteExplorer mExplorer;
 	
+	private LinkedList<FolderViewContainer> openFolderViews = new LinkedList<FolderViewContainer>();
+	private int currentFolderViewID = 0;
 	
-	public MainMenuPresenter (MainMenuActivity activity, NoteExplorer explorer) {
+	private final INoteHierarchyItem mRoot;
+	
+	
+	
+	
+	public MainMenuPresenter (MainMenuActivity activity, NoteExplorer explorer, INoteHierarchyItem newRoot) {
 		mActivity = activity;
 		mExplorer = explorer;
+		mRoot = newRoot;
+		
+		mExplorer.setRootHierarchyItem(mRoot);
+		mExplorer.setPresenter(this);
+		
+		this.openFolder(mRoot);
 	}
 	
 	
@@ -61,33 +77,37 @@ public class MainMenuPresenter {
 	
 	//************************************** New Folder Methods *********************************************
 	
-	public void createNewFolder (INoteHierarchyItem dest) {
+	public void createNewFolder (int callerID) {
+		INoteHierarchyItem toCreateIn = this.getHierarchyItemFromID(callerID);
+		 if (toCreateIn == null) {
+			 return;
+		 }
 
-			// Create the function that will be run when the user presses the Create Folder button
-			NewItemFunctor newFolderFunction = new NewItemFunctor() {
-				@Override
-				public void function(INoteHierarchyItem destinationItem, String folderName) {
-					createNewFolder(destinationItem, folderName);
-				}
-			};
-			
-			// Find the default input string - unnamed folder + the smallest unused natural number
-			int i = 1;
-			while (dest.containsItemName("unnamed folder " + Integer.toString(i))) {
-				i++;
+		// Create the function that will be run when the user presses the Create Folder button
+		NewItemFunctor newFolderFunction = new NewItemFunctor() {
+			@Override
+			public void function(INoteHierarchyItem destinationItem, String folderName) {
+				createNewFolder(destinationItem, folderName);
 			}
-			String defaultInput = "unnamed folder " + Integer.toString(i);
-			
-			// Create the dialog and pass it to activity to be run
-			DialogFragment d = new NewItemDialog("Create New Folder", "Enter the name of the folder.", defaultInput, "Create Folder", "Cancel", dest, newFolderFunction);
-			mActivity.displayDialogFragment(d, "New Folder");
+		};
+		
+		// Find the default input string - unnamed folder + the smallest unused natural number
+		int i = 1;
+		while (toCreateIn.containsItemName("unnamed folder " + Integer.toString(i))) {
+			i++;
+		}
+		String defaultInput = "unnamed folder " + Integer.toString(i);
+		
+		// Create the dialog and pass it to activity to be run
+		DialogFragment d = new NewItemDialog("Create New Folder", "Enter the name of the folder.", defaultInput, "Create Folder", "Cancel", toCreateIn, newFolderFunction);
+		mActivity.displayDialogFragment(d, "New Folder");
 	}
 	
 	public void createNewFolder (INoteHierarchyItem dest, String name) {
 		INoteHierarchyItem newFolder = dest.addFolder(name);
 		
 		if (newFolder != null) {
-			mExplorer.openFolder(newFolder);
+			this.openFolder(newFolder);
 		} else {
 			mActivity.displayToast("Create new folder failed. Please try again.");
 		}
@@ -95,8 +115,13 @@ public class MainMenuPresenter {
 	
 	//************************************** New Note Methods (who wants first class functions anyway?) ************************
 	
-	public void createNewNote (INoteHierarchyItem dest) {
+	public void createNewNote (int callerID) {
 
+		INoteHierarchyItem toCreateIn = this.getHierarchyItemFromID(callerID);
+		 if (toCreateIn == null) {
+			 return;
+		 }
+		 
 		// Create the function that will be run when the user presses the Create Note button
 		NewItemFunctor newNoteFunction = new NewItemFunctor() {
 			@Override
@@ -107,13 +132,13 @@ public class MainMenuPresenter {
 		
 		// Find the default input string - unnamed note + the smallest unused natural number
 		int i = 1;
-		while (dest.containsItemName("unnamed note " + Integer.toString(i))) {
+		while (toCreateIn.containsItemName("unnamed note " + Integer.toString(i))) {
 			i++;
 		}
 		String defaultInput = "unnamed note " + Integer.toString(i);
 		
 		// Create the dialog and pass it to activity to be run
-		DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", dest, newNoteFunction);
+		DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", toCreateIn, newNoteFunction);
 		mActivity.displayDialogFragment(d, "New Note");
 	}
 	
@@ -130,11 +155,16 @@ public class MainMenuPresenter {
 	
 	//***************************************** Move Methods ***********************************************************
 	
-	public void move (List<INoteHierarchyItem> toMove, INoteHierarchyItem dest) {
+	public void move (List<INoteHierarchyItem> toMove, int callerID) {
+		INoteHierarchyItem moveDest = this.getHierarchyItemFromID(callerID);
+		 if (moveDest == null) {
+			 return;
+		 }
+		 
 		boolean moveFailed = false;
 		
 		for (INoteHierarchyItem i : toMove) {
-			if (!i.moveTo(dest)){
+			if (!i.moveTo(moveDest)){
 				moveFailed = true;
 			}
 		}
@@ -144,23 +174,33 @@ public class MainMenuPresenter {
 		}
 	}
 	
-	//*************************************** Open Note/Folder *******************************************************************
+	//*************************************** HierarchyItem management methods *******************************************************************
 	
 	public void openNote (INoteHierarchyItem toOpen) {
 		mActivity.openNoteActivity(toOpen);
 	}
 	
 	public void openFolder (INoteHierarchyItem toOpen) {
-		mExplorer.openFolder(toOpen);
+		FolderView v = new FolderView(mActivity, this, ++currentFolderViewID);
+		
+		v.updateContent(toOpen.getAllChildren());
+		
+		FolderViewContainer c = new FolderViewContainer(currentFolderViewID, mRoot, v);
+		
+		openFolderViews.addLast(c);
+		
+		mExplorer.openFolder(v);
 	}
-	
-	
-	//*************************************** Misc Methods (largely used for decoupling the views while re-architecting the main menu) **********************************
 	
 	public void closeCurrentFolder() {
+		openFolderViews.removeLast();
+		
 		mExplorer.moveUpDirectory();
 	}
+		
+	//*************************************** Misc Methods (largely used for decoupling the views while re-architecting the main menu) **********************************
 	
+
 	public boolean testInRootDirectory() {
 		return mExplorer.isInRootDirectory();
 	}
@@ -173,9 +213,37 @@ public class MainMenuPresenter {
 		mActivity.setItemsSelectedActionBarOn();
 	}
 	
+	private INoteHierarchyItem getHierarchyItemFromID (int callerID) {
+		// Get the hierarchy item that backs the FolderView that called this
+		INoteHierarchyItem item = null;
+		
+		for (FolderViewContainer c : openFolderViews) {
+			if (c.ID == callerID) {
+				item = c.hierarchyItem;
+				break;
+			}
+		}
+		
+		if (item == null) {
+			mActivity.displayToast("Rebuilding internal representaion. Please try again.");
+		}
+		
+		return item;
+	}
 	
+	//********************************************* Helper classes ********************************************
 	
-	
+	private class FolderViewContainer {
+		public final int ID;
+		public final INoteHierarchyItem hierarchyItem;
+		public final FolderView folderView;
+		
+		public FolderViewContainer (int newID, INoteHierarchyItem newHierarchyItem, FolderView newFolderView) {
+			ID = newID;
+			hierarchyItem = newHierarchyItem;
+			folderView = newFolderView;
+		}
+	}
 	
 	
 }

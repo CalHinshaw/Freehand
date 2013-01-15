@@ -38,7 +38,6 @@ public class FolderView extends ListView implements OnGestureListener {
 	
 	// Items that define this view
 	private FolderAdapter mAdapter;
-	private INoteHierarchyItem mFolder;
 	
 	private MainMenuPresenter mPresenter;
 
@@ -58,16 +57,19 @@ public class FolderView extends ListView implements OnGestureListener {
 	
 	private final GestureDetector flingDetector;
 
+	
+	private final int mID;
 
-	public FolderView(Context context, INoteHierarchyItem newFolder, MainMenuPresenter newPresenter) {
+	public FolderView(Context context, MainMenuPresenter newPresenter, int newID) {
 		super(context);
-		mFolder = newFolder;
 		mPresenter = newPresenter;
+		
+		mID = newID;
 
 		// Create and set the adapter for this ListView
-		mAdapter = new FolderAdapter(mFolder, R.layout.directoryview_row, this.getContext());
+		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row);
+		
 		this.setAdapter(mAdapter);
-		mFolder.addChangeListener(mAdapter);
 		
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
@@ -82,6 +84,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
 			INoteHierarchyItem clickedItem = ((FolderAdapter.RowDataHolder) clickedView.getTag()).noteHierarchyItem;
+			
 			if (mAdapter.hasSelections()) {
 				mAdapter.clearSelections();
 			}
@@ -208,7 +211,7 @@ public class FolderView extends ListView implements OnGestureListener {
 				
 			case DragEvent.ACTION_DROP:
 				List<INoteHierarchyItem> toMove = (List<INoteHierarchyItem>) event.getLocalState();
-				mPresenter.move(toMove, mFolder);
+				mPresenter.move(toMove, mID);
 				
 				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
@@ -433,27 +436,19 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 	
 	
-	public INoteHierarchyItem getNoteHierarchyItem () {
-		return mFolder;
-	}
 	
 	public void deleteSelectedItems () {
 		mPresenter.deleteWithConfirmation(mAdapter.getSelections());
 	}
 
 	public void newNote() {
-		mPresenter.createNewNote(mFolder);
+		mPresenter.createNewNote(mID);
 	}
 	
 	public void newFolder() {
-		mPresenter.createNewFolder(mFolder);
+		mPresenter.createNewFolder(mID);
 	}
 	
-	
-	public void forceUpdate() {
-		mFolder.forceUpdate();
-		mAdapter.onChange();
-	}
 	
 	public void shareSelected() {
 		Log.d("PEN", "shareSelected in FolderView called");
@@ -474,6 +469,12 @@ public class FolderView extends ListView implements OnGestureListener {
 			Toast.makeText(getContext(), "You can only share one note at a time right now. Sharing multiple notes coming soon!", Toast.LENGTH_LONG).show();
 		}
 		
+	}
+	
+	
+	
+	public void updateContent (List<INoteHierarchyItem> newContent) {
+		mAdapter.updateContent(newContent);
 	}
 	
 
