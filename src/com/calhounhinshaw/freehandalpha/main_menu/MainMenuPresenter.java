@@ -3,11 +3,6 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 import java.util.List;
 
 import android.app.DialogFragment;
-import android.content.Intent;
-import android.util.Log;
-import android.widget.Toast;
-
-import com.calhounhinshaw.freehandalpha.note_editor.NoteActivity;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 /**
