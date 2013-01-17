@@ -139,11 +139,13 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
+			mPresenter.createNewNote();
 		}
 	};
 	
 	private OnClickListener newFolderButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
+			mPresenter.createNewFolder();
 		}
 	};
 	

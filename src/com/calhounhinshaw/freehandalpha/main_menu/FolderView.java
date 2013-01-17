@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 public class FolderView extends ListView implements OnGestureListener {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
+	private static final int SOLID_BLUE_HIGHLIGHT = 0xFF0099CC;
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final int NO_COLOR = 0x00FFFFFF;
 	
@@ -58,7 +59,10 @@ public class FolderView extends ListView implements OnGestureListener {
 	
 	private final GestureDetector flingDetector;
 	
-	private Paint mPaint;
+	private Paint mDividerPaint;
+	
+	private boolean selectedState = false;
+	private Paint mSelectedPaint;
 
 	public FolderView(Context context, MainMenuPresenter newPresenter) {
 		super(context);
@@ -77,10 +81,15 @@ public class FolderView extends ListView implements OnGestureListener {
 		
 		
 		
-		mPaint = new Paint();
-		mPaint.setAntiAlias(true);
-		mPaint.setColor(Color.DKGRAY);
-		mPaint.setStrokeWidth(4);
+		mDividerPaint = new Paint();
+		mDividerPaint.setAntiAlias(true);
+		mDividerPaint.setColor(Color.DKGRAY);
+		mDividerPaint.setStrokeWidth(4);
+		
+		mSelectedPaint = new Paint();
+		mSelectedPaint.setAntiAlias(true);
+		mSelectedPaint.setColor(SOLID_BLUE_HIGHLIGHT);
+		mSelectedPaint.setStrokeWidth(7);
 	}
 
 	// Open folder or note when clicked.
@@ -145,6 +154,8 @@ public class FolderView extends ListView implements OnGestureListener {
 		dragWatcher(event);
 		flingDetector.onTouchEvent(event);
 
+		mPresenter.setSelectedFolderView(this.getId());
+		
 		return true;
 	}
 	
@@ -390,12 +401,18 @@ public class FolderView extends ListView implements OnGestureListener {
 		}
 	}
 	
-	// dispatchDraw lets me overlay highlights on the children of this view
 	@Override
 	protected void dispatchDraw (Canvas canvas) {
 		super.dispatchDraw(canvas);
 		drawHighlights(canvas);
-		canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mPaint);
+		canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mDividerPaint);
+		
+		if (selectedState == true) {
+			canvas.drawLine(this.getWidth()-3, 0, this.getWidth()-3, this.getHeight(), mSelectedPaint);
+			canvas.drawLine(3, 0, 3, this.getHeight(), mSelectedPaint);
+			canvas.drawLine(0, 3, this.getWidth(), 3, mSelectedPaint);
+			canvas.drawLine(0, this.getHeight()-3, this.getWidth(), this.getHeight()-3, mSelectedPaint);
+		}
 	}
 	
 	private void drawHighlights (Canvas canvas) {
@@ -445,15 +462,6 @@ public class FolderView extends ListView implements OnGestureListener {
 	public void deleteSelectedItems () {
 		mPresenter.deleteWithConfirmation(mAdapter.getSelections());
 	}
-
-	public void newNote() {
-		mPresenter.createNewNote(this.getId());
-	}
-	
-	public void newFolder() {
-		mPresenter.createNewFolder(this.getId());
-	}
-	
 	
 	public void shareSelected() {
 		Log.d("PEN", "shareSelected in FolderView called");
@@ -482,6 +490,14 @@ public class FolderView extends ListView implements OnGestureListener {
 		mAdapter.updateContent(newContent);
 	}
 	
+	public void setSelectedState (boolean newSelectedState) {
+		selectedState = newSelectedState;
+		this.invalidate();
+	}
+	
+	public boolean getSelectedState() {
+		return selectedState;
+	}
 
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 		if (Math.abs(e1.getY()-e2.getY()) <= this.getHeight()/12 && velocityX >= 3000) {

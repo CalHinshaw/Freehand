@@ -76,9 +76,10 @@ public class MainMenuPresenter {
 	
 	//************************************** New Folder Methods *********************************************
 	
-	public void createNewFolder (int callerID) {
-		INoteHierarchyItem toCreateIn = this.getFolderViewContainerFromID(callerID).hierarchyItem;
+	public void createNewFolder () {
+		INoteHierarchyItem toCreateIn = this.getSelectedContainer().hierarchyItem;
 		 if (toCreateIn == null) {
+			 mActivity.displayToast("Please select a folder and try again.");
 			 return;
 		 }
 
@@ -106,7 +107,7 @@ public class MainMenuPresenter {
 		INoteHierarchyItem newFolder = dest.addFolder(name);
 		
 		if (newFolder != null) {
-			this.openFolder(newFolder, 0);
+			this.openFolder(newFolder, this.getSelectedContainer().ID);
 		} else {
 			mActivity.displayToast("Create new folder failed. Please try again.");
 		}
@@ -114,10 +115,10 @@ public class MainMenuPresenter {
 	
 	//************************************** New Note Methods (who wants first class functions anyway?) ************************
 	
-	public void createNewNote (int callerID) {
-
-		INoteHierarchyItem toCreateIn = this.getFolderViewContainerFromID(callerID).hierarchyItem;
+	public void createNewNote () {
+		INoteHierarchyItem toCreateIn = this.getSelectedContainer().hierarchyItem;
 		 if (toCreateIn == null) {
+			 mActivity.displayToast("Please select a folder and try again.");
 			 return;
 		 }
 		 
@@ -155,7 +156,7 @@ public class MainMenuPresenter {
 	//***************************************** Move Methods ***********************************************************
 	
 	public void move (List<INoteHierarchyItem> toMove, int callerID) {
-		INoteHierarchyItem moveDest = this.getFolderViewContainerFromID(callerID).hierarchyItem;
+		INoteHierarchyItem moveDest = this.getContainerFromID(callerID).hierarchyItem;
 		 if (moveDest == null) {
 			 return;
 		 }
@@ -180,9 +181,11 @@ public class MainMenuPresenter {
 	}
 	
 	public void openFolder (INoteHierarchyItem toOpen, int parentID) {
+		currentFolderViewID += 1;
+		
 		// Set up the new FolderView
 		FolderView newFolderView = new FolderView(mActivity, this);
-		newFolderView.setId(++currentFolderViewID);
+		newFolderView.setId(currentFolderViewID);
 		newFolderView.updateContent(toOpen.getAllChildren());
 		
 		FolderViewContainer newContainer = new FolderViewContainer(newFolderView.getId(), toOpen, newFolderView);
@@ -215,6 +218,7 @@ public class MainMenuPresenter {
 		}
 		
 		mBrowser.updateViews(toUpdateWith);
+		this.setSelectedFolderView(currentFolderViewID);
 	}
 	
 	public void closeCurrentFolder() {
@@ -237,7 +241,7 @@ public class MainMenuPresenter {
 		mActivity.setItemsSelectedActionBarOn();
 	}
 	
-	private FolderViewContainer getFolderViewContainerFromID (int callerID) {
+	private FolderViewContainer getContainerFromID (int callerID) {
 		// Get the hierarchy item that backs the FolderView that called this
 		FolderViewContainer container = null;
 		
@@ -249,6 +253,28 @@ public class MainMenuPresenter {
 		}
 		
 		return container;
+	}
+	
+	private FolderViewContainer getSelectedContainer () {
+		for (FolderViewContainer c : openFolderViews) {
+			if (c.folderView.getSelectedState() == true) {
+				return c;
+			}
+		}
+		
+		return null;
+	}
+	
+	public void setSelectedFolderView (int selectedID) {
+		for (FolderViewContainer c : openFolderViews) {
+			if (c.ID == selectedID) {
+				Log.d("PEN", "true called for   " + Integer.toString(c.ID));
+				c.folderView.setSelectedState(true);
+			} else {
+				c.folderView.setSelectedState(false);
+			}
+			
+		}
 	}
 	
 	//********************************************* Helper classes ********************************************
