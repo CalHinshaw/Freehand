@@ -21,13 +21,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> implements IChangeListener {
+class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	
 	private Context mContext;
 	private int mRowViewResourceId;
 	
-	private Set<Integer> selectedItems = new TreeSet<Integer>();
 	private boolean selectedItemsGreyed = false;
 	
 	
@@ -66,9 +65,9 @@ class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> implements IChangeL
 		
 
 		// Change background color as appropriate
-		if (selectedItems.contains(position) && selectedItemsGreyed) {
+		if (holder.noteHierarchyItem.isSelected() && selectedItemsGreyed) {
 			convertView.setBackgroundColor(Color.LTGRAY);
-		} else if (selectedItems.contains(position)) {
+		} else if (holder.noteHierarchyItem.isSelected()) {
 			convertView.setBackgroundColor(BLUE_HIGHLIGHT);
 		} else {
 			convertView.setBackgroundColor(0x0000000000);
@@ -91,57 +90,13 @@ class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> implements IChangeL
 		this.notifyDataSetChanged();
 	}
 	
-	
-	//****************************************** SELECTION METHODS ****************************************************8
-	
-	public void addSelection(int position) {
-		selectedItems.add(position);
-	}
-
-
-	public void clearSelections() {
-		selectedItems.clear();
-		this.notifyDataSetChanged();
-	}
-
-
-	public boolean hasSelections() {
-		return !selectedItems.isEmpty();
-	}
-
-
-	public List<INoteHierarchyItem> getSelections() {
-		List<INoteHierarchyItem> toReturn = new LinkedList<INoteHierarchyItem>();
-		
-		for (int i : selectedItems) {
-			toReturn.add(this.getItem(i));
-		}
-
-		return toReturn;
-	}
-	
-	public boolean isSelected (int position) {
-		return selectedItems.contains(position);
-	}
-	
-	public void removeSelection (int position) {
-		selectedItems.remove(position);
-		this.notifyDataSetChanged();
-	}
-	
 	public void greySelections() {
 		selectedItemsGreyed = true;
 		this.notifyDataSetChanged();
 	}
 
-
 	public void ungreySelections() {
 		selectedItemsGreyed = false;
 		this.notifyDataSetChanged();
 	}
-
-	public void onChange() {
-		this.notifyDataSetChanged();
-	}
-	
 }

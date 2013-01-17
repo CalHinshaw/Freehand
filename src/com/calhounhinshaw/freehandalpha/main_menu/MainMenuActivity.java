@@ -48,12 +48,14 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
+			mPresenter.clearSelections();
 			setDefaultActionBarOn();
 		}
 	};
 	
 	private OnClickListener deleteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
+			mPresenter.deleteWithConfirmation();
 			setDefaultActionBarOn();
 		}
 	};
@@ -68,6 +70,7 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
+					mPresenter.clearSelections();
 					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
@@ -89,6 +92,7 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
+					mPresenter.deleteWithConfirmation();
 					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;

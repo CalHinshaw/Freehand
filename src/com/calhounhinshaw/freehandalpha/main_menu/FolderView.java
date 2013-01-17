@@ -99,9 +99,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
 			INoteHierarchyItem clickedItem = ((FolderAdapter.RowDataHolder) clickedView.getTag()).noteHierarchyItem;
 			
-			if (mAdapter.hasSelections()) {
-				mAdapter.clearSelections();
-			}
+			mPresenter.clearSelections();
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder()) {
@@ -115,13 +113,13 @@ public class FolderView extends ListView implements OnGestureListener {
 
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
-			if (mAdapter.isSelected(position)) {
-				mAdapter.removeSelection(position);
-				if (!mAdapter.hasSelections()) {
+			if (mAdapter.getItem(position).isSelected()) {
+				mPresenter.removeSelection(mAdapter.getItem(position));
+				if (!mPresenter.hasSelection(getId())) {
 					setFastScrollAlwaysVisible(false);
 				}
 			} else {
-				mAdapter.addSelection(position);
+				mPresenter.addSelection(mAdapter.getItem(position));
 				mPresenter.turnItemsSelectedActionBarOn();
 				setFastScrollAlwaysVisible(true);
 				
@@ -134,16 +132,6 @@ public class FolderView extends ListView implements OnGestureListener {
 			return true;
 		}
 	};
-
-	public boolean adapterHasSelections() {
-		return mAdapter.hasSelections();
-	}
-
-
-	public void clearAdapterSelections() {
-		mAdapter.clearSelections();
-		this.setFastScrollAlwaysVisible(false);
-	}
 
 
 	// This method watches for the drag and drop gesture without interfering with any of the class' other behaviors.
@@ -162,9 +150,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	private void selectedItemDragWatcher(MotionEvent event) {
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			int itemAtTouchPosition = this.pointToPosition((int) event.getX(), (int) event.getY());
-			if (mAdapter.isSelected(itemAtTouchPosition)) {
-				Log.d("PEN", Integer.toString(itemAtTouchPosition));
-				
+			if (mAdapter.getItem(itemAtTouchPosition).isSelected()) {
 				watchForDrag = true;
 			}
 		}
@@ -182,7 +168,7 @@ public class FolderView extends ListView implements OnGestureListener {
 					+ (setPoint.y - event.getY())
 					* (setPoint.y - event.getY());
 				if (draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
-					initDrag();
+					mPresenter.dragStarted(this.getId());
 
 					setPoint = null;
 					watchForDrag = false;
@@ -198,21 +184,19 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 
 
-	private void initDrag() {
-		List<INoteHierarchyItem> selectedItems = mAdapter.getSelections();
-
+	public void startDrag(List<INoteHierarchyItem> draggedItems) {
 		// Cancel drag event because no items selected
-		if (selectedItems.size() <= 0) {
+		if (draggedItems.size() <= 0) {
 			return;
 		}
 		
 		mAdapter.greySelections();
 
 		// Build the drag shadow needed for startDrag
-		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(selectedItems.size(), this.getWidth() / 3);
+		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(draggedItems.size(), this.getWidth() / 3);
 		
 		// Start drag without ClipData and with myLocalState equaling selectedItems (has to be cast when DragEvent is received).
-		this.startDrag(null, shadowBuilder, selectedItems, 0);
+		this.startDrag(null, shadowBuilder, draggedItems, 0);
 	}
 
 
@@ -232,14 +216,14 @@ public class FolderView extends ListView implements OnGestureListener {
 				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
-				mAdapter.clearSelections();
+				mPresenter.clearSelections();
 				break;
 				
 			case DragEvent.ACTION_DRAG_ENDED:
 				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
-				mAdapter.clearSelections();
+				mPresenter.clearSelections();
 			case DragEvent.ACTION_DRAG_EXITED:
 				clearDragHighlightMarkers();
 				break;
@@ -305,7 +289,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			}
 
 		// Watch to see if the user wants to open a valid folder
-		} else if (itemUnderPointer != null && itemUnderPointer.isFolder() && !mAdapter.isSelected(positionUnderPointer)) {
+		} else if (itemUnderPointer != null && itemUnderPointer.isFolder() && !itemUnderPointer.isSelected()) {
 
 			// Compute distance of user's finger from setPoint for later
 			float draggedDistanceSquared = STATIONARY_RADIUS_SQUARED + 5;
@@ -378,7 +362,7 @@ public class FolderView extends ListView implements OnGestureListener {
 		}
 		
 		// Trigger directory open highlight on right of the directory's row
-		if (itemUnderPointer != null && itemUnderPointer.isFolder() && !mAdapter.isSelected(positionUnderPointer)) {
+		if (itemUnderPointer != null && itemUnderPointer.isFolder() && !itemUnderPointer.isSelected()) {
 			folderOpenHighlight = positionUnderPointer;
 		} else {
 			folderOpenHighlight = -1;
@@ -460,12 +444,12 @@ public class FolderView extends ListView implements OnGestureListener {
 	
 	
 	public void deleteSelectedItems () {
-		mPresenter.deleteWithConfirmation(mAdapter.getSelections());
+		mPresenter.deleteWithConfirmation();
 	}
 	
 	public void shareSelected() {
 		Log.d("PEN", "shareSelected in FolderView called");
-		List<INoteHierarchyItem> selections = mAdapter.getSelections();
+		List<INoteHierarchyItem> selections = mPresenter.getSelections();
 		LinkedList<INoteHierarchyItem> toShare = new LinkedList<INoteHierarchyItem>();
 		
 		for (INoteHierarchyItem i : selections) {

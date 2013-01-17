@@ -1,13 +1,12 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import android.app.DialogFragment;
-import android.util.Log;
 import android.view.View;
 
+import com.calhounhinshaw.freehandalpha.note_orginazion.IChangeListener;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 /**
@@ -48,8 +47,8 @@ public class MainMenuPresenter {
 	 * 
 	 * @param toDelete will be deleted if the user confirms
 	 */
-	public void deleteWithConfirmation (List<INoteHierarchyItem> toDelete) {
-		DialogFragment d = new ConfirmDeleteDialog("Confirm Delete?", "Delete", "Cancel", toDelete, this);
+	public void deleteWithConfirmation () {
+		DialogFragment d = new ConfirmDeleteDialog("Confirm Delete?", "Delete", "Cancel", this.getSelections(), this);
 		mActivity.displayDialogFragment(d, "delete");
 	}
 	
@@ -186,9 +185,9 @@ public class MainMenuPresenter {
 		// Set up the new FolderView
 		FolderView newFolderView = new FolderView(mActivity, this);
 		newFolderView.setId(currentFolderViewID);
-		newFolderView.updateContent(toOpen.getAllChildren());
-		
 		FolderViewContainer newContainer = new FolderViewContainer(newFolderView.getId(), toOpen, newFolderView);
+		newContainer.updateChildren();
+		newFolderView.updateContent(newContainer.children);
 		
 		// Update openFolderViews
 		int i = 0;
@@ -268,7 +267,6 @@ public class MainMenuPresenter {
 	public void setSelectedFolderView (int selectedID) {
 		for (FolderViewContainer c : openFolderViews) {
 			if (c.ID == selectedID) {
-				Log.d("PEN", "true called for   " + Integer.toString(c.ID));
 				c.folderView.setSelectedState(true);
 			} else {
 				c.folderView.setSelectedState(false);
@@ -277,17 +275,91 @@ public class MainMenuPresenter {
 		}
 	}
 	
+	public void dragStarted(int callerID) {
+		FolderView calledFrom = getContainerFromID(callerID).folderView;
+		
+		ArrayList<INoteHierarchyItem> selected = new ArrayList<INoteHierarchyItem>();
+		for (FolderViewContainer c : openFolderViews) {
+			for (INoteHierarchyItem i : c.children) {
+				if (i.isSelected() == true) {
+					selected.add(i);
+				}
+			}
+		}
+		
+		calledFrom.startDrag(selected);
+	}
+	
+	
+	// For share, which needs to be moved in here
+	public List<INoteHierarchyItem> getSelections() {
+		ArrayList<INoteHierarchyItem> selected = new ArrayList<INoteHierarchyItem>();
+		for (FolderViewContainer c : openFolderViews) {
+			for (INoteHierarchyItem i : c.children) {
+				if (i.isSelected() == true) {
+					selected.add(i);
+				}
+			}
+		}
+		return selected;
+	}
+	
+	
+	// ******************************************** Selection methods ****************************************
+	
+	public void addSelection (INoteHierarchyItem toSelect) {
+		toSelect.setSelected(true);
+	}
+	
+	public void removeSelection (INoteHierarchyItem toRemove) {
+		toRemove.setSelected(false);
+	}
+	
+	public void clearSelections () {
+		for (FolderViewContainer c : openFolderViews) {
+			c.clearSelections();
+		}
+	}
+	
+	public boolean hasSelection (int callerID) {
+		for (INoteHierarchyItem i : getContainerFromID(callerID).children) {
+			if (i.isSelected()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	//********************************************* Helper classes ********************************************
 	
-	private class FolderViewContainer {
+	private class FolderViewContainer implements IChangeListener {
 		public final int ID;
 		public final INoteHierarchyItem hierarchyItem;
 		public final FolderView folderView;
+		
+		public List<INoteHierarchyItem> children;
 		
 		public FolderViewContainer (int newID, INoteHierarchyItem newHierarchyItem, FolderView newFolderView) {
 			ID = newID;
 			hierarchyItem = newHierarchyItem;
 			folderView = newFolderView;
+			
+			hierarchyItem.addChangeListener(this);
+		}
+		
+		public void updateChildren() {
+			children = hierarchyItem.getAllChildren();
+			folderView.updateContent(children);
+		}
+
+		public void onChange() {
+			updateChildren();
+		}
+		
+		public void clearSelections () {
+			for (INoteHierarchyItem i : children) {
+				i.setSelected(false);
+			}
 		}
 	}
 	
