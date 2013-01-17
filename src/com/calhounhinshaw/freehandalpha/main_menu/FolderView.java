@@ -57,14 +57,9 @@ public class FolderView extends ListView implements OnGestureListener {
 	
 	private final GestureDetector flingDetector;
 
-	
-	private final int mID;
-
-	public FolderView(Context context, MainMenuPresenter newPresenter, int newID) {
+	public FolderView(Context context, MainMenuPresenter newPresenter) {
 		super(context);
 		mPresenter = newPresenter;
-		
-		mID = newID;
 
 		// Create and set the adapter for this ListView
 		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row);
@@ -91,7 +86,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder()) {
-				mPresenter.openFolder(clickedItem);
+				mPresenter.openFolder(clickedItem, parent.getId());
 				mPresenter.turnDefaultActionBarOn();
 			} else {
 				mPresenter.openNote(clickedItem);
@@ -211,7 +206,7 @@ public class FolderView extends ListView implements OnGestureListener {
 				
 			case DragEvent.ACTION_DROP:
 				List<INoteHierarchyItem> toMove = (List<INoteHierarchyItem>) event.getLocalState();
-				mPresenter.move(toMove, mID);
+				mPresenter.move(toMove, this.getId());
 				
 				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
@@ -304,7 +299,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// If user has been hovering over folder for long enough open it
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mPresenter.openFolder(itemUnderPointer);
+				mPresenter.openFolder(itemUnderPointer, this.getId());
 			}
 
 		// No actions are possible, reset timer
@@ -442,11 +437,11 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 
 	public void newNote() {
-		mPresenter.createNewNote(mID);
+		mPresenter.createNewNote(this.getId());
 	}
 	
 	public void newFolder() {
-		mPresenter.createNewFolder(mID);
+		mPresenter.createNewFolder(this.getId());
 	}
 	
 	

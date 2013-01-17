@@ -1,10 +1,12 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import android.app.DialogFragment;
 import android.util.Log;
+import android.view.View;
 
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
@@ -19,9 +21,9 @@ public class MainMenuPresenter {
 	private final MainMenuActivity mActivity;
 	
 	// The NoteExplorer that holds the view stack. It is used to display FolderViews.
-	private final NoteExplorer mExplorer;
+	private final FolderBrowser mBrowser;
 	
-	private LinkedList<FolderViewContainer> openFolderViews = new LinkedList<FolderViewContainer>();
+	private ArrayList<FolderViewContainer> openFolderViews = new ArrayList<FolderViewContainer>(10);
 	private int currentFolderViewID = 0;
 	
 	private final INoteHierarchyItem mRoot;
@@ -29,15 +31,12 @@ public class MainMenuPresenter {
 	
 	
 	
-	public MainMenuPresenter (MainMenuActivity activity, NoteExplorer explorer, INoteHierarchyItem newRoot) {
+	public MainMenuPresenter (MainMenuActivity activity, FolderBrowser browser, INoteHierarchyItem newRoot) {
 		mActivity = activity;
-		mExplorer = explorer;
+		mBrowser = browser;
 		mRoot = newRoot;
 		
-		mExplorer.setRootHierarchyItem(mRoot);
-		mExplorer.setPresenter(this);
-		
-		this.openFolder(mRoot);
+		this.openFolder(mRoot, -1);
 	}
 	
 	
@@ -78,7 +77,7 @@ public class MainMenuPresenter {
 	//************************************** New Folder Methods *********************************************
 	
 	public void createNewFolder (int callerID) {
-		INoteHierarchyItem toCreateIn = this.getHierarchyItemFromID(callerID);
+		INoteHierarchyItem toCreateIn = this.getFolderViewContainerFromID(callerID).hierarchyItem;
 		 if (toCreateIn == null) {
 			 return;
 		 }
@@ -107,7 +106,7 @@ public class MainMenuPresenter {
 		INoteHierarchyItem newFolder = dest.addFolder(name);
 		
 		if (newFolder != null) {
-			this.openFolder(newFolder);
+			this.openFolder(newFolder, 0);
 		} else {
 			mActivity.displayToast("Create new folder failed. Please try again.");
 		}
@@ -117,7 +116,7 @@ public class MainMenuPresenter {
 	
 	public void createNewNote (int callerID) {
 
-		INoteHierarchyItem toCreateIn = this.getHierarchyItemFromID(callerID);
+		INoteHierarchyItem toCreateIn = this.getFolderViewContainerFromID(callerID).hierarchyItem;
 		 if (toCreateIn == null) {
 			 return;
 		 }
@@ -156,7 +155,7 @@ public class MainMenuPresenter {
 	//***************************************** Move Methods ***********************************************************
 	
 	public void move (List<INoteHierarchyItem> toMove, int callerID) {
-		INoteHierarchyItem moveDest = this.getHierarchyItemFromID(callerID);
+		INoteHierarchyItem moveDest = this.getFolderViewContainerFromID(callerID).hierarchyItem;
 		 if (moveDest == null) {
 			 return;
 		 }
@@ -180,29 +179,54 @@ public class MainMenuPresenter {
 		mActivity.openNoteActivity(toOpen);
 	}
 	
-	public void openFolder (INoteHierarchyItem toOpen) {
-		FolderView v = new FolderView(mActivity, this, ++currentFolderViewID);
+	public void openFolder (INoteHierarchyItem toOpen, int parentID) {
+		// Set up the new FolderView
+		FolderView newFolderView = new FolderView(mActivity, this);
+		newFolderView.setId(++currentFolderViewID);
+		newFolderView.updateContent(toOpen.getAllChildren());
 		
-		v.updateContent(toOpen.getAllChildren());
+		FolderViewContainer newContainer = new FolderViewContainer(newFolderView.getId(), toOpen, newFolderView);
 		
-		FolderViewContainer c = new FolderViewContainer(currentFolderViewID, mRoot, v);
+		// Update openFolderViews
+		int i = 0;
+		boolean inserted = false;
+		for (; i < openFolderViews.size(); i++) {
+			if(openFolderViews.get(i).ID == parentID) {
+				openFolderViews.add(i+=1, newContainer);
+				inserted = true;
+				break;
+			}
+		}
 		
-		openFolderViews.addLast(c);
+		if (inserted == true) {
+			i++;
+			for (; i < openFolderViews.size();) {
+				openFolderViews.remove(i);
+			}
+		} else {
+			openFolderViews.clear();
+			openFolderViews.add(newContainer);
+		}
 		
-		mExplorer.openFolder(v);
+		// Produce ArrayList of Views
+		List<View> toUpdateWith = new ArrayList<View>(openFolderViews.size());
+		for (int j = 0; j < openFolderViews.size(); j++) {
+			toUpdateWith.add(openFolderViews.get(j).folderView);
+		}
+		
+		mBrowser.updateViews(toUpdateWith);
 	}
 	
 	public void closeCurrentFolder() {
-		openFolderViews.removeLast();
-		
-		mExplorer.moveUpDirectory();
+		//openFolderViews.removeLast();
 	}
+
 		
 	//*************************************** Misc Methods (largely used for decoupling the views while re-architecting the main menu) **********************************
 	
 
 	public boolean testInRootDirectory() {
-		return mExplorer.isInRootDirectory();
+		return true;
 	}
 	
 	public void turnDefaultActionBarOn () {
@@ -213,22 +237,18 @@ public class MainMenuPresenter {
 		mActivity.setItemsSelectedActionBarOn();
 	}
 	
-	private INoteHierarchyItem getHierarchyItemFromID (int callerID) {
+	private FolderViewContainer getFolderViewContainerFromID (int callerID) {
 		// Get the hierarchy item that backs the FolderView that called this
-		INoteHierarchyItem item = null;
+		FolderViewContainer container = null;
 		
 		for (FolderViewContainer c : openFolderViews) {
 			if (c.ID == callerID) {
-				item = c.hierarchyItem;
+				container = c;
 				break;
 			}
 		}
 		
-		if (item == null) {
-			mActivity.displayToast("Rebuilding internal representaion. Please try again.");
-		}
-		
-		return item;
+		return container;
 	}
 	
 	//********************************************* Helper classes ********************************************

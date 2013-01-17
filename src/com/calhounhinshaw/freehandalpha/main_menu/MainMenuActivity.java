@@ -27,16 +27,17 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnDragListener;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
+import android.widget.RelativeLayout.LayoutParams;
 
 public class MainMenuActivity extends Activity {
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final long VIBRATE_DURATION = 50;
 	
 	private MainMenuPresenter mPresenter;
-	
-	private NoteExplorer mExplorer;
 	
 	// itemsSelectedActionBar view references
 	private LinearLayout itemsSelectedActionBar;
@@ -46,24 +47,18 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mExplorer.clearDirectorySelections();
 			setDefaultActionBarOn();
 		}
 	};
 	
 	private OnClickListener deleteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mExplorer.deleteSelectedItems();
-			mExplorer.clearDirectorySelections();
 			setDefaultActionBarOn();
 		}
 	};
 	
 	private OnClickListener shareButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			Log.d("PEN", "share button pressed");
-			mExplorer.shareSelected();
-			mExplorer.clearDirectorySelections();
 			setDefaultActionBarOn();
 		}
 	};
@@ -72,7 +67,6 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
-					mExplorer.clearDirectorySelections();
 					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
@@ -94,8 +88,6 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
-					mExplorer.deleteSelectedItems();
-					mExplorer.clearDirectorySelections();
 					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
@@ -119,8 +111,6 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
-					mExplorer.shareSelected();
-					mExplorer.clearDirectorySelections();
 					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
@@ -148,13 +138,11 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mExplorer.newNote();
 		}
 	};
 	
 	private OnClickListener newFolderButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mExplorer.newFolder();
 		}
 	};
 	
@@ -200,10 +188,11 @@ public class MainMenuActivity extends Activity {
         rootItem.setDefaultDrawables(defaultNoteDrawable, defaultFileDrawable);
         rootItem.setSorter(new DefaultNoteSorter());
         
-        // Starts NoteExplorer in the app's root directory and set it's INoteHierarchyItem
-        mExplorer = (NoteExplorer) findViewById(R.id.noteExplorer);
+        HorizontalScrollView scrollView = ((HorizontalScrollView) findViewById(R.id.scrollView));
+        FolderBrowser browser = new FolderBrowser(this, scrollView);
+        scrollView.addView(browser);
         
-        mPresenter = new MainMenuPresenter(this, mExplorer, rootItem);
+        mPresenter = new MainMenuPresenter(this, browser, rootItem);
     }
     
     @Override
@@ -217,18 +206,18 @@ public class MainMenuActivity extends Activity {
         return true;
     }
     
-    // This method overrides the back button to let users navigate through folders more easily
-    @Override
-    public void onBackPressed() {
-    	if(mExplorer.directoryHasSelected()) {			//first clear selections
-    		mExplorer.clearDirectorySelections();
-    		this.setDefaultActionBarOn();
-    	} else if (mExplorer.isInRootDirectory()) {		// then close folders
-    		super.onBackPressed();
-    	} else {										// finally, close app
-    		mExplorer.moveUpDirectory();
-    	}
-    }
+//    // This method overrides the back button to let users navigate through folders more easily
+//    @Override
+//    public void onBackPressed() {
+//    	if(mExplorer.directoryHasSelected()) {			//first clear selections
+//    		mExplorer.clearDirectorySelections();
+//    		this.setDefaultActionBarOn();
+//    	} else if (mExplorer.isInRootDirectory()) {		// then close folders
+//    		super.onBackPressed();
+//    	} else {										// finally, close app
+//    		mExplorer.moveUpDirectory();
+//    	}
+//    }
     
     public void setItemsSelectedActionBarOn () {
     	itemsSelectedActionBar.setVisibility(View.VISIBLE);

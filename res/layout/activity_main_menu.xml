@@ -63,8 +63,8 @@
         </LinearLayout>
         	   
 	    
-	<com.calhounhinshaw.freehandalpha.main_menu.NoteExplorer
-	    android:id="@+id/noteExplorer"
+	<HorizontalScrollView
+	    android:id="@+id/scrollView"
 	    
 	    android:layout_alignParentLeft="true"
 	    android:layout_alignParentBottom="true"
