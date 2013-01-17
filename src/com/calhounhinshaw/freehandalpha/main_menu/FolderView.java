@@ -38,9 +38,8 @@ public class FolderView extends ListView implements OnGestureListener {
 	private static final int SCROLL_DISTANCE = 40;
 	private static final int SCROLL_DURATION = 60;
 	
-	// Items that define this view
-	private FolderAdapter mAdapter;
 	
+	private FolderAdapter mAdapter;
 	private MainMenuPresenter mPresenter;
 
 	// These store the persistent information for dragWatcher
@@ -57,42 +56,15 @@ public class FolderView extends ListView implements OnGestureListener {
 	private int folderOpenHighlight = -1;
 	private int dropUnderHighlight = -1;	// the view the drop highlight draws UNDER
 	
-	private final GestureDetector flingDetector;
+	// Variables responsible for highlighting this view when it's selected
+	private boolean selectedState = false;
+	private Paint mSelectedPaint;
 	
 	private Paint mDividerPaint;
 	
-	private boolean selectedState = false;
-	private Paint mSelectedPaint;
-
-	public FolderView(Context context, MainMenuPresenter newPresenter) {
-		super(context);
-		mPresenter = newPresenter;
-
-		// Create and set the adapter for this ListView
-		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row);
-		
-		this.setAdapter(mAdapter);
-		
-		this.setOnItemClickListener(DirectoryViewItemClickListener);
-		this.setOnItemLongClickListener(DirectoryViewSelectListener);
-		
-		// Set flingDetector
-		flingDetector = new GestureDetector(this.getContext(), this, this.getHandler());
-		
-		
-		
-		mDividerPaint = new Paint();
-		mDividerPaint.setAntiAlias(true);
-		mDividerPaint.setColor(Color.DKGRAY);
-		mDividerPaint.setStrokeWidth(4);
-		
-		mSelectedPaint = new Paint();
-		mSelectedPaint.setAntiAlias(true);
-		mSelectedPaint.setColor(SOLID_BLUE_HIGHLIGHT);
-		mSelectedPaint.setStrokeWidth(7);
-	}
-
-	// Open folder or note when clicked.
+	private final GestureDetector flingDetector;
+	
+	// Click listeners
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
 			
@@ -110,7 +82,6 @@ public class FolderView extends ListView implements OnGestureListener {
 			}
 		}
 	};
-
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
 			if (mAdapter.getItem(position).isSelected()) {
@@ -132,6 +103,32 @@ public class FolderView extends ListView implements OnGestureListener {
 			return true;
 		}
 	};
+
+	
+	public FolderView(Context context, MainMenuPresenter newPresenter) {
+		super(context);
+		mPresenter = newPresenter;
+
+		// Create and set the adapter for this ListView
+		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row);
+		this.setAdapter(mAdapter);
+		
+		this.setOnItemClickListener(DirectoryViewItemClickListener);
+		this.setOnItemLongClickListener(DirectoryViewSelectListener);
+		
+		// Set flingDetector
+		flingDetector = new GestureDetector(this.getContext(), this, this.getHandler());
+		
+		mDividerPaint = new Paint();
+		mDividerPaint.setAntiAlias(true);
+		mDividerPaint.setColor(Color.DKGRAY);
+		mDividerPaint.setStrokeWidth(4);
+		
+		mSelectedPaint = new Paint();
+		mSelectedPaint.setAntiAlias(true);
+		mSelectedPaint.setColor(SOLID_BLUE_HIGHLIGHT);
+		mSelectedPaint.setStrokeWidth(7);
+	}
 
 
 	// This method watches for the drag and drop gesture without interfering with any of the class' other behaviors.

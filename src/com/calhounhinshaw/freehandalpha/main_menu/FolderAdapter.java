@@ -2,13 +2,9 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import com.calhounroberthinshaw.freehand.R;
-import com.calhounhinshaw.freehandalpha.note_orginazion.IChangeListener;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.app.Activity;
@@ -26,10 +22,7 @@ class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> {
 	
 	private Context mContext;
 	private int mRowViewResourceId;
-	
 	private boolean selectedItemsGreyed = false;
-	
-	
 	
 	
 	public FolderAdapter (Context newContext, int newRowViewResourceId) {

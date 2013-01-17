@@ -20,7 +20,6 @@ import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -30,9 +29,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
-import android.widget.RelativeLayout.LayoutParams;
 
 public class MainMenuActivity extends Activity {
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
