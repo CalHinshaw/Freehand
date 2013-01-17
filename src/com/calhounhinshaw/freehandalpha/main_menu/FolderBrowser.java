@@ -1,8 +1,10 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Canvas;
 import android.util.Log;
 import android.view.View;
 import android.widget.HorizontalScrollView;
@@ -21,12 +23,7 @@ public class FolderBrowser extends RelativeLayout {
 	}
 	
 	public void updateViews (List<View> newViews) {
-		if (childWidth == -1) {
-			setChildWidth();
-		}
-
 		this.removeAllViews();
-		
 		for (int i = 0; i<newViews.size(); i++) {
 			if (i == 0) {
 				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(childWidth, LayoutParams.MATCH_PARENT);
@@ -44,6 +41,14 @@ public class FolderBrowser extends RelativeLayout {
 		}
 	}
 	
+	@Override
+	protected void dispatchDraw (Canvas canvas) {
+		if (childWidth == -1) {
+			setChildWidth();
+		}
+		
+		super.dispatchDraw(canvas);
+	}
 	
 	
 	
@@ -52,14 +57,16 @@ public class FolderBrowser extends RelativeLayout {
 		final float parentWidthPx = mParentView.getWidth();
 		
 		if (parentWidthPx > 0) {
-			
 			final float scale = getResources().getDisplayMetrics().density;
 			final float minChildWidthPx = MIN_CHILD_WIDTH_DIP * scale;
-			
-			
 			float numFoldersToShow = parentWidthPx/minChildWidthPx;
-			Log.d("PEN", "number of folders to show" + Float.toString(numFoldersToShow));
 			childWidth = (int) (parentWidthPx/((int)numFoldersToShow));
+			
+			ArrayList<View> views = new ArrayList<View>(this.getChildCount());
+			for (int i = 0; i < this.getChildCount(); i++) {
+				views.add(this.getChildAt(i));
+			}
+			updateViews(views);
 		} else {
 			childWidth = -1;
 		}

@@ -9,6 +9,7 @@ import com.calhounhinshaw.freehandalpha.share.Sharer;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PointF;
@@ -56,6 +57,8 @@ public class FolderView extends ListView implements OnGestureListener {
 	private int dropUnderHighlight = -1;	// the view the drop highlight draws UNDER
 	
 	private final GestureDetector flingDetector;
+	
+	private Paint mPaint;
 
 	public FolderView(Context context, MainMenuPresenter newPresenter) {
 		super(context);
@@ -71,6 +74,13 @@ public class FolderView extends ListView implements OnGestureListener {
 		
 		// Set flingDetector
 		flingDetector = new GestureDetector(this.getContext(), this, this.getHandler());
+		
+		
+		
+		mPaint = new Paint();
+		mPaint.setAntiAlias(true);
+		mPaint.setColor(Color.DKGRAY);
+		mPaint.setStrokeWidth(4);
 	}
 
 	// Open folder or note when clicked.
@@ -385,8 +395,8 @@ public class FolderView extends ListView implements OnGestureListener {
 	protected void dispatchDraw (Canvas canvas) {
 		super.dispatchDraw(canvas);
 		drawHighlights(canvas);
+		canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mPaint);
 	}
-	
 	
 	private void drawHighlights (Canvas canvas) {
 		Rect highlightRect;
