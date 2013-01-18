@@ -13,7 +13,7 @@ import android.os.Parcelable;
  * @author cal
  *
  */
-public interface INoteHierarchyItem extends Parcelable {
+public interface INoteHierarchyItem extends Parcelable, Comparable<INoteHierarchyItem> {
 	public String getName();
 	public long getDateModified();
 	public Drawable getThumbnail();
@@ -28,9 +28,6 @@ public interface INoteHierarchyItem extends Parcelable {
 	public List<INoteHierarchyItem> getAllRecursiveChildren();
 	
 	public boolean containsItemName (String testContains);
-	
-	public boolean isSelected();
-	public void setSelected(boolean isSelected);
 	
 	/**
 	 * Rename this INoteHierarchyItem
@@ -68,4 +65,6 @@ public interface INoteHierarchyItem extends Parcelable {
 	public DataInputStream getInputStream() throws IOException;
 	
 	public void forceUpdate ();
+	
+	public String getIdentifier();
 }

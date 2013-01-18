@@ -81,13 +81,9 @@ public class FolderView extends ListView implements OnGestureListener {
 		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
 			if (mAdapter.getItem(position).isSelected) {
 				mPresenter.removeSelection(mAdapter.getItem(position));
-				if (!mPresenter.hasSelection(getId())) {
-					setFastScrollAlwaysVisible(false);
-				}
 			} else {
 				mPresenter.addSelection(mAdapter.getItem(position));
 				mPresenter.turnItemsSelectedActionBarOn();
-				setFastScrollAlwaysVisible(true);
 				
 				pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
 

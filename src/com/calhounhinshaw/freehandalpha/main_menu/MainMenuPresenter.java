@@ -3,6 +3,7 @@ package com.calhounhinshaw.freehandalpha.main_menu;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
 
 import android.app.DialogFragment;
 import android.graphics.drawable.Drawable;
@@ -31,6 +32,7 @@ public class MainMenuPresenter {
 	
 	private final INoteHierarchyItem mRoot;
 	
+	private TreeSet<INoteHierarchyItem> selectedItems = new TreeSet<INoteHierarchyItem>();
 	
 	
 	
@@ -303,7 +305,7 @@ public class MainMenuPresenter {
 		ArrayList<INoteHierarchyItem> selected = new ArrayList<INoteHierarchyItem>();
 		for (FolderViewContainer c : openFolderViews) {
 			for (INoteHierarchyItem i : c.children) {
-				if (i.isSelected() == true) {
+				if (selectedItems.contains(i)) {
 					selected.add(i);
 				}
 			}
@@ -336,27 +338,15 @@ public class MainMenuPresenter {
 	// ******************************************** Selection methods ****************************************
 	
 	public void addSelection (HierarchyWrapper toSelect) {
-		toSelect.hierarchyItem.setSelected(true);
+		selectedItems.add(toSelect.hierarchyItem);
 	}
 	
 	public void removeSelection (HierarchyWrapper toRemove) {
-		toRemove.hierarchyItem.setSelected(false);
+		selectedItems.remove(toRemove.hierarchyItem);
 	}
 	
 	public void clearSelections () {
-		for (FolderViewContainer c : openFolderViews) {
-			c.clearSelections();
-			c.updateChildren();
-		}
-	}
-	
-	public boolean hasSelection (int callerID) {
-		for (INoteHierarchyItem i : getContainerFromID(callerID).children) {
-			if (i.isSelected()) {
-				return true;
-			}
-		}
-		return false;
+		selectedItems.clear();
 	}
 	
 	//********************************************* Helper classes ********************************************
@@ -381,8 +371,7 @@ public class MainMenuPresenter {
 			
 			ArrayList<HierarchyWrapper> toUpdateWith = new ArrayList<HierarchyWrapper>(children.size());
 			for (INoteHierarchyItem i : children) {
-				//TODO implement new selection stuff
-				toUpdateWith.add(new HierarchyWrapper(i, i.isSelected()));
+				toUpdateWith.add(new HierarchyWrapper(i, selectedItems.contains(i)));
 			}
 			
 			
@@ -393,11 +382,6 @@ public class MainMenuPresenter {
 			updateChildren();
 		}
 		
-		public synchronized void clearSelections () {
-			for (INoteHierarchyItem i : children) {
-				i.setSelected(false);
-			}
-		}
 	}
 	
 	

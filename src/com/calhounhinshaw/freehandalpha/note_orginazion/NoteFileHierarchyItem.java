@@ -28,8 +28,6 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	private INoteHierarchyItemSorter mSorter;
 	private LinkedList<IChangeListener> mChangeListeners = new LinkedList<IChangeListener>();
 	
-	private boolean isSelected = false;
-	
 	// Used when this this note is moved or deleted to call NoteFileHierarchyItem.childrenModified();
 	private NoteFileHierarchyItem mParent = null;
 	
@@ -108,16 +106,6 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 		
 		return false;
-	}
-	
-	
-	public synchronized boolean isSelected() {
-		return isSelected;
-	}
-
-	public synchronized void setSelected(boolean newSelected) {
-		isSelected = newSelected;
-		notifyChangeListeners();
 	}
 	
 	
@@ -412,5 +400,13 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		if (mParent != null) {
 			mParent.childrenModified();
 		}
+	}
+	
+	public int compareTo(INoteHierarchyItem another) {
+		return this.getIdentifier().compareTo(another.getIdentifier());
+	}
+	
+	public String getIdentifier() {
+		return mFile.getAbsolutePath();
 	}
 }
