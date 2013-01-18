@@ -41,15 +41,15 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	
 	// ********************************* PUBLIC METHODS DEFINED BY INTERFACE *****************************
 	
-	public String getName() {
+	public synchronized String getName() {
 		return mFile.getName().replace(".note", "");
 	}
 
-	public long getDateModified() {
+	public synchronized long getDateModified() {
 		return mFile.lastModified();
 	}
 
-	public Drawable getThumbnail() {
+	public synchronized Drawable getThumbnail() {
 		if (mFile.isDirectory()) {
 			if (defaultFolderDrawable != null) {
 				return defaultFolderDrawable;
@@ -66,7 +66,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 	}
 
-	public boolean isFolder () {
+	public synchronized boolean isFolder () {
 		if (mFile.isDirectory()) {
 			return true;
 		} else {
@@ -75,39 +75,31 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 	
 
-	public int getNumChildren() {
+	public synchronized int getNumChildren() {
 		// Make sure we've populated mChildren
-		if (mChildren == null) {
-			updateChildren();
-		}
+		updateChildren();
 		
 		return mChildren.size();
 	}
 
-	public INoteHierarchyItem getChildAt(int index) throws IndexOutOfBoundsException {
+	public synchronized INoteHierarchyItem getChildAt(int index) throws IndexOutOfBoundsException {
 		// Make sure we've populated mChildren
-		if (mChildren == null) {
-			updateChildren();
-		}
+		updateChildren();
 
 		return mChildren.get(index);
 	}
 	
 
-	public List<INoteHierarchyItem> getAllChildren() {
-		if (mChildren == null) {
-			updateChildren();
-		}
+	public synchronized List<INoteHierarchyItem> getAllChildren() {
+		updateChildren();
 		
 		return mChildren;
 	}
 	
 	
-	public boolean containsItemName(String testContains) {
+	public synchronized boolean containsItemName(String testContains) {
 		// Make sure we've populated mChildren
-		if (mChildren == null) {
 			updateChildren();
-		}
 				
 		for (INoteHierarchyItem i : mChildren) {
 			if (testContains.equals(i.getName())) {
@@ -119,16 +111,17 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 	
 	
-	public boolean isSelected() {
+	public synchronized boolean isSelected() {
 		return isSelected;
 	}
 
-	public void setSelected(boolean newSelected) {
+	public synchronized void setSelected(boolean newSelected) {
 		isSelected = newSelected;
+		notifyChangeListeners();
 	}
 	
 	
-	public int getRecursiveNumChildren() {
+	public synchronized int getRecursiveNumChildren() {
 		if (mRecursiveChildren == null) {
 			recursivelyUpdateChildren();
 		}
@@ -137,7 +130,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 
 
-	public INoteHierarchyItem getRecursiveChildAt(int index) throws IndexOutOfBoundsException {
+	public synchronized INoteHierarchyItem getRecursiveChildAt(int index) throws IndexOutOfBoundsException {
 		if (mRecursiveChildren == null) {
 			recursivelyUpdateChildren();
 		}
@@ -145,7 +138,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		return mRecursiveChildren.get(index);
 	}
 	
-	public List<INoteHierarchyItem> getAllRecursiveChildren() {
+	public synchronized List<INoteHierarchyItem> getAllRecursiveChildren() {
 		if (mRecursiveChildren == null) {
 			recursivelyUpdateChildren();
 		}
@@ -154,7 +147,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 	
 
-	public boolean rename(String newName) {
+	public synchronized boolean rename(String newName) {
 		Log.d("PEN", "Before:  " + mFile.getAbsolutePath());
 		File newNameFile;
 		
@@ -175,14 +168,13 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 	}
 
-	public boolean moveTo(INoteHierarchyItem destination) {
+	public synchronized boolean moveTo(INoteHierarchyItem destination) {
 		File newParent = ((NoteFileHierarchyItem) destination).getFile();
 		File newName = new File(newParent, mFile.getName());
 		
 		if(mFile.renameTo(newName)) {
 			mFile = newName;
 			mParent = (NoteFileHierarchyItem) destination;
-			clearChangeListeners();
 			
 			notifyChangeListeners();
 			notifyParentOfChange();
@@ -196,7 +188,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	// This method doesn't deal with symlinks, but that shouldn't be an issue because they're a bitch to create on Android and if anyone knows how
 	// to create one and decides to put it in my app's directory they can deal with the fall out themselves. That being said, I should add it at some
 	// point in the future.
-	public boolean delete() {
+	public synchronized boolean delete() {
 		// Make sure we've populated mChildren
 		if (mChildren == null) {
 			updateChildren();
@@ -209,33 +201,36 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 		
 		if (!mFile.delete()) {
+			notifyChangeListeners();
 			notifyParentOfChange();
 			return false;
 		} else {
+			notifyChangeListeners();
 			notifyParentOfChange();
 			return true;
 		}
 	}
 	
 
-	public void addChangeListener(IChangeListener toAdd) {
+	public synchronized void addChangeListener(IChangeListener toAdd) {
 		mChangeListeners.add(toAdd);
 	}
 
-	public void removeChangeListener(IChangeListener toRemove) {
+	public synchronized void removeChangeListener(IChangeListener toRemove) {
 		mChangeListeners.remove(toRemove);
 	}
 	
-	public void clearChangeListeners() {
+	public synchronized void clearChangeListeners() {
 		mChangeListeners = new LinkedList<IChangeListener>();
 	}
 
 
-	public INoteHierarchyItem addFolder(String folderName) {
+	public synchronized INoteHierarchyItem addFolder(String folderName) {
 		File newFolder = new File(mFile, folderName);
 		if (newFolder.mkdirs()) {
 			updateChildren();
 			notifyChangeListeners();
+			notifyParentOfChange();
 			
 			NoteFileHierarchyItem newItem = new NoteFileHierarchyItem(newFolder, this);
 			newItem.setDefaultDrawables(defaultNoteDrawable, defaultFolderDrawable);
@@ -249,12 +244,13 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		
 	}
 
-	public INoteHierarchyItem addNote(String noteName) {
+	public synchronized INoteHierarchyItem addNote(String noteName) {
 		try {
 			File newNote = new File(mFile, noteName + ".note");
 			newNote.createNewFile();
 			updateChildren();
 			notifyChangeListeners();
+			notifyParentOfChange();
 			
 			NoteFileHierarchyItem newItem = new NoteFileHierarchyItem(newNote, this);
 			newItem.setDefaultDrawables(defaultNoteDrawable, defaultFolderDrawable);
@@ -269,39 +265,39 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 
 
-	public void setSorter(INoteHierarchyItemSorter newSorter) {
+	public synchronized void setSorter(INoteHierarchyItemSorter newSorter) {
 		mSorter = newSorter;
 		updateChildren();
 	}
 	
-	public void setDefaultDrawables (Drawable newNoteDrawable, Drawable newFolderDrawable) {
+	public synchronized void setDefaultDrawables (Drawable newNoteDrawable, Drawable newFolderDrawable) {
 		defaultNoteDrawable = newNoteDrawable;
 		defaultFolderDrawable = newFolderDrawable;
 	}
 	
 	
-	public DataOutputStream getOutputStream() throws IOException {
+	public synchronized DataOutputStream getOutputStream() throws IOException {
 		return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(mFile)));
 	}
 
 
-	public DataInputStream getInputStream() throws IOException {
+	public synchronized DataInputStream getInputStream() throws IOException {
 		return new DataInputStream(new BufferedInputStream(new FileInputStream(mFile)));
 	}
 	
-	public void forceUpdate() {
+	public synchronized void forceUpdate() {
 		updateChildren();
 	}
 	
 	
 	// ********************************* Parcelable METHODS ****************************************
 	
-	public int describeContents() {
+	public synchronized int describeContents() {
 		return 0;
 	}
 
 
-	public void writeToParcel(Parcel dest, int flags) {
+	public synchronized void writeToParcel(Parcel dest, int flags) {
 		Log.d("PEN", mFile.getAbsolutePath());
 		
 		dest.writeString(mFile.getAbsolutePath());
@@ -323,7 +319,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	
 	
 	//*********************************** Public NoteFileHierarchyItem METHODS ***************************************
-	public void childrenModified() {
+	public synchronized void childrenModified() {
 		updateChildren();
 		notifyChangeListeners();
 	}
@@ -333,14 +329,14 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	 * 
 	 * @return the file this NoteFileHierarchyItem is based on
 	 */
-	public File getFile() {
+	public synchronized File getFile() {
 		return mFile;
 	}
 	
 	//*********************************** INTERNAL HELPER METHODS ****************************************************
 	
 	// Update this object's internal list of children
-	private void updateChildren() {
+	private synchronized void updateChildren() {
 		
 		// If this file is a note we have to set mChildren equal to an empty ArrayList by hand - File.listFiles returns null if the file isn't a directory
 		if (!mFile.isDirectory()) {
@@ -368,7 +364,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 	}
 	
-	private void recursivelyUpdateChildren () {
+	private synchronized void recursivelyUpdateChildren () {
 		if (!mFile.isDirectory()) {
 			mRecursiveChildren = new ArrayList<INoteHierarchyItem>(0);
 		} else {
@@ -391,7 +387,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 	}
 	
-	private LinkedList<File> recursiveList (File toList) {
+	private synchronized LinkedList<File> recursiveList (File toList) {
 		LinkedList<File> toReturn = new LinkedList<File>();
 		File[] directChildren = toList.listFiles();
 		
@@ -406,13 +402,13 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		return toReturn;
 	}
 	
-	private void notifyChangeListeners() {
+	private synchronized void notifyChangeListeners() {
 		for (IChangeListener l : mChangeListeners) {
 			l.onChange();
 		}
 	}
 	
-	private void notifyParentOfChange () {
+	private synchronized void notifyParentOfChange () {
 		if (mParent != null) {
 			mParent.childrenModified();
 		}

@@ -1,13 +1,17 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.app.DialogFragment;
+import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.View;
 
 import com.calhounhinshaw.freehandalpha.note_orginazion.IChangeListener;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
+import com.calhounhinshaw.freehandalpha.share.Sharer;
 
 /**
  * The presenter responsible for the MainMenu Activity.
@@ -154,18 +158,22 @@ public class MainMenuPresenter {
 	
 	//***************************************** Move Methods ***********************************************************
 	
-	public void move (List<INoteHierarchyItem> toMove, int callerID) {
+	public void moveTo (int callerID) {
 		INoteHierarchyItem moveDest = this.getContainerFromID(callerID).hierarchyItem;
 		 if (moveDest == null) {
 			 return;
 		 }
-		 
+
 		boolean moveFailed = false;
 		
-		for (INoteHierarchyItem i : toMove) {
+		for (INoteHierarchyItem i : this.getSelections()) {
 			if (!i.moveTo(moveDest)){
 				moveFailed = true;
 			}
+		}
+		
+		for (FolderViewContainer c: openFolderViews) {
+			c.updateChildren();
 		}
 		
 		if (moveFailed == true) {
@@ -175,11 +183,19 @@ public class MainMenuPresenter {
 	
 	//*************************************** HierarchyItem management methods *******************************************************************
 	
-	public void openNote (INoteHierarchyItem toOpen) {
+	public void openNote (HierarchyWrapper toOpen) {
+		openNote(toOpen.hierarchyItem);
+	}
+	
+	private void openNote (INoteHierarchyItem toOpen) {
 		mActivity.openNoteActivity(toOpen);
 	}
 	
-	public void openFolder (INoteHierarchyItem toOpen, int parentID) {
+	public void openFolder (HierarchyWrapper toOpen, int parentID) {
+		openFolder(toOpen.hierarchyItem, parentID);
+	}
+	
+	private void openFolder (INoteHierarchyItem toOpen, int parentID) {
 		currentFolderViewID += 1;
 		
 		// Set up the new FolderView
@@ -187,7 +203,7 @@ public class MainMenuPresenter {
 		newFolderView.setId(currentFolderViewID);
 		FolderViewContainer newContainer = new FolderViewContainer(newFolderView.getId(), toOpen, newFolderView);
 		newContainer.updateChildren();
-		newFolderView.updateContent(newContainer.children);
+		newContainer.updateChildren();
 		
 		// Update openFolderViews
 		int i = 0;
@@ -278,16 +294,7 @@ public class MainMenuPresenter {
 	public void dragStarted(int callerID) {
 		FolderView calledFrom = getContainerFromID(callerID).folderView;
 		
-		ArrayList<INoteHierarchyItem> selected = new ArrayList<INoteHierarchyItem>();
-		for (FolderViewContainer c : openFolderViews) {
-			for (INoteHierarchyItem i : c.children) {
-				if (i.isSelected() == true) {
-					selected.add(i);
-				}
-			}
-		}
-		
-		calledFrom.startDrag(selected);
+		calledFrom.startDrag(this.getSelections().size());
 	}
 	
 	
@@ -305,19 +312,41 @@ public class MainMenuPresenter {
 	}
 	
 	
-	// ******************************************** Selection methods ****************************************
-	
-	public void addSelection (INoteHierarchyItem toSelect) {
-		toSelect.setSelected(true);
+	public void shareSelectedItems() {
+		Log.d("PEN", "shareSelected in FolderView called");
+		List<INoteHierarchyItem> selections = this.getSelections();
+		LinkedList<INoteHierarchyItem> toShare = new LinkedList<INoteHierarchyItem>();
+		
+		for (INoteHierarchyItem i : selections) {
+			if (i.isFolder()) {
+				toShare.addAll(i.getAllRecursiveChildren());
+			} else {
+				toShare.add(i);
+			}
+		}
+		
+		if (toShare.size() == 1) {
+			Sharer.shareNoteHierarchyItemsAsJPEG(toShare, mActivity);
+		} else {
+			mActivity.displayToast("You can only share one note at a time right now. Sharing multiple notes coming soon!");
+		}
 	}
 	
-	public void removeSelection (INoteHierarchyItem toRemove) {
-		toRemove.setSelected(false);
+	
+	// ******************************************** Selection methods ****************************************
+	
+	public void addSelection (HierarchyWrapper toSelect) {
+		toSelect.hierarchyItem.setSelected(true);
+	}
+	
+	public void removeSelection (HierarchyWrapper toRemove) {
+		toRemove.hierarchyItem.setSelected(false);
 	}
 	
 	public void clearSelections () {
 		for (FolderViewContainer c : openFolderViews) {
 			c.clearSelections();
+			c.updateChildren();
 		}
 	}
 	
@@ -347,19 +376,48 @@ public class MainMenuPresenter {
 			hierarchyItem.addChangeListener(this);
 		}
 		
-		public void updateChildren() {
+		public synchronized void updateChildren() {
 			children = hierarchyItem.getAllChildren();
-			folderView.updateContent(children);
+			
+			ArrayList<HierarchyWrapper> toUpdateWith = new ArrayList<HierarchyWrapper>(children.size());
+			for (INoteHierarchyItem i : children) {
+				//TODO implement new selection stuff
+				toUpdateWith.add(new HierarchyWrapper(i, i.isSelected()));
+			}
+			
+			
+			folderView.updateContent(toUpdateWith);
 		}
 
-		public void onChange() {
+		public synchronized void onChange() {
 			updateChildren();
 		}
 		
-		public void clearSelections () {
+		public synchronized void clearSelections () {
 			for (INoteHierarchyItem i : children) {
 				i.setSelected(false);
 			}
+		}
+	}
+	
+	
+	public class HierarchyWrapper {
+		private final INoteHierarchyItem hierarchyItem;
+		
+		public final String name;
+		public final Drawable thumbnail;
+		public final long lastModified;
+		public final boolean isFolder;
+		public final boolean isSelected;
+		
+		public HierarchyWrapper (INoteHierarchyItem item, boolean selectionStatus) {
+			hierarchyItem = item;
+			
+			name = item.getName();
+			thumbnail = item.getThumbnail();
+			lastModified = item.getDateModified();
+			isFolder = item.isFolder();
+			isSelected = selectionStatus;
 		}
 	}
 	

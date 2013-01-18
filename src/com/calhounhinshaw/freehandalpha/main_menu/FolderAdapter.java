@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.calhounhinshaw.freehandalpha.main_menu.MainMenuPresenter.HierarchyWrapper;
 import com.calhounroberthinshaw.freehand.R;
-import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.app.Activity;
 import android.content.Context;
@@ -17,7 +17,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> {
+class FolderAdapter extends ArrayAdapter<HierarchyWrapper> {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	
 	private Context mContext;
@@ -26,7 +26,7 @@ class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> {
 	
 	
 	public FolderAdapter (Context newContext, int newRowViewResourceId) {
-		super(newContext, newRowViewResourceId, new ArrayList<INoteHierarchyItem>());
+		super(newContext, newRowViewResourceId, new ArrayList<HierarchyWrapper>());
 		mContext = newContext;
 		mRowViewResourceId = newRowViewResourceId;
 	}
@@ -51,16 +51,16 @@ class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> {
 		}
 		
 		// Set the content of convertView's sub-views
-		holder.noteHierarchyItem = this.getItem(position);
-		holder.name.setText(holder.noteHierarchyItem.getName());
-		holder.thumbnail.setImageDrawable(holder.noteHierarchyItem.getThumbnail());
-		holder.dateModified.setText(new Date(holder.noteHierarchyItem.getDateModified()).toString());
+		holder.viewItem = this.getItem(position);
+		holder.name.setText(holder.viewItem.name);
+		holder.thumbnail.setImageDrawable(holder.viewItem.thumbnail);
+		holder.dateModified.setText(new Date(holder.viewItem.lastModified).toString());
 		
 
 		// Change background color as appropriate
-		if (holder.noteHierarchyItem.isSelected() && selectedItemsGreyed) {
+		if (holder.viewItem.isSelected && selectedItemsGreyed) {
 			convertView.setBackgroundColor(Color.LTGRAY);
-		} else if (holder.noteHierarchyItem.isSelected()) {
+		} else if (holder.viewItem.isSelected) {
 			convertView.setBackgroundColor(BLUE_HIGHLIGHT);
 		} else {
 			convertView.setBackgroundColor(0x0000000000);
@@ -74,10 +74,10 @@ class FolderAdapter extends ArrayAdapter<INoteHierarchyItem> {
 		ImageView thumbnail;
 		TextView name;
 		TextView dateModified;
-		INoteHierarchyItem noteHierarchyItem;
+		HierarchyWrapper viewItem;
 	}
 	
-	public void updateContent (List<INoteHierarchyItem> newContent) {
+	public void updateContent (List<HierarchyWrapper> newContent) {
 		this.clear();
 		this.addAll(newContent);
 		this.notifyDataSetChanged();
