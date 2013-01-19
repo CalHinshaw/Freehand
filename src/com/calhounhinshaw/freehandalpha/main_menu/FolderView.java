@@ -65,16 +65,15 @@ public class FolderView extends ListView implements OnGestureListener {
 			
 			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
 			HierarchyWrapper clickedItem = ((FolderAdapter.RowDataHolder) clickedView.getTag()).viewItem;
-			
-			mPresenter.clearSelections();
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder) {
 				mPresenter.openFolder(clickedItem, FolderView.this);
-				mPresenter.turnDefaultActionBarOn();
 			} else {
 				mPresenter.openNote(clickedItem);
 			}
+			
+			mPresenter.clearSelections();
 		}
 	};
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
@@ -83,7 +82,6 @@ public class FolderView extends ListView implements OnGestureListener {
 				mPresenter.removeSelection(mAdapter.getItem(position));
 			} else {
 				mPresenter.addSelection(mAdapter.getItem(position));
-				mPresenter.turnItemsSelectedActionBarOn();
 				
 				pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
 
@@ -198,15 +196,12 @@ public class FolderView extends ListView implements OnGestureListener {
 				
 			case DragEvent.ACTION_DROP:
 				mPresenter.moveTo(this);
-				
-				mPresenter.turnDefaultActionBarOn();
+				mPresenter.clearSelections();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
-				mPresenter.clearSelections();
 				break;
 				
 			case DragEvent.ACTION_DRAG_ENDED:
-				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
 				mPresenter.clearSelections();

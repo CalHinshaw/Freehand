@@ -247,14 +247,6 @@ public class MainMenuPresenter {
 		return true;
 	}
 	
-	public void turnDefaultActionBarOn () {
-		mActivity.setDefaultActionBarOn();
-	}
-	
-	public void turnItemsSelectedActionBarOn () {
-		mActivity.setItemsSelectedActionBarOn();
-	}
-	
 	private FolderViewContainer getContainerFromView (FolderView toGet) {
 		// Get the hierarchy item that backs the FolderView that called this
 		FolderViewContainer container = null;
@@ -318,22 +310,29 @@ public class MainMenuPresenter {
 	
 	public void addSelection (HierarchyWrapper toSelect) {
 		selectedItems.add(toSelect.hierarchyItem);
-		for (FolderViewContainer c :openFolderViews) {
-			c.updateChildren();
-		}
+		selectionChangedMaintenence();
+
 	}
 	
 	public void removeSelection (HierarchyWrapper toRemove) {
 		selectedItems.remove(toRemove.hierarchyItem);
-		for (FolderViewContainer c :openFolderViews) {
-			c.updateChildren();
-		}
+		selectionChangedMaintenence();
 	}
 	
 	public void clearSelections () {
 		selectedItems.clear();
+		selectionChangedMaintenence();
+	}
+	
+	private void selectionChangedMaintenence() {
 		for (FolderViewContainer c :openFolderViews) {
 			c.updateChildren();
+		}
+		
+		if (selectedItems.isEmpty()) {
+			mActivity.setDefaultActionBarOn();
+		} else {
+			mActivity.setItemsSelectedActionBarOn();
 		}
 	}
 	

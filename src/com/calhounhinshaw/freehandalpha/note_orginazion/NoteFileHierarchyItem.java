@@ -97,7 +97,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	
 	public synchronized boolean containsItemName(String testContains) {
 		// Make sure we've populated mChildren
-			updateChildren();
+		updateChildren();
 				
 		for (INoteHierarchyItem i : mChildren) {
 			if (testContains.equals(i.getName())) {
@@ -157,8 +157,30 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	}
 
 	public synchronized boolean moveTo(INoteHierarchyItem destination) {
+		
+		// don't have to move into self
+		if (mFile.getParentFile().equals(((NoteFileHierarchyItem) destination).getFile())) {
+			return true;
+		}
+		
+		// Make sure we don't write over files by accident
+		String name = this.getName();
+		
+		if (destination.containsItemName(name)) {
+			int i = 1;
+			while (destination.containsItemName(name + " " + Integer.toString(i))) {
+				i++;
+			}
+			name = name + " " + Integer.toString(i);
+		}
+		
+		if (!this.isFolder()) {
+			name.concat(".note");
+		}
+		
+		// Move
 		File newParent = ((NoteFileHierarchyItem) destination).getFile();
-		File newName = new File(newParent, mFile.getName());
+		File newName = new File(newParent, name);
 		
 		if(mFile.renameTo(newName)) {
 			mFile = newName;
