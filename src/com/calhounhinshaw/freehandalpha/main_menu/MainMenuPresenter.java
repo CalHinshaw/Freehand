@@ -75,6 +75,8 @@ public class MainMenuPresenter {
 		if (failureToast == true) {
 			mActivity.displayToast("Deletion failed. Please try again.");
 		}
+		
+		this.clearSelections();
 	}
 	
 	
@@ -180,6 +182,8 @@ public class MainMenuPresenter {
 		if (moveFailed == true) {
 			mActivity.displayToast("Move failed. Please try again.");
 		}
+		
+		this.clearSelections();
 	}
 	
 	//*************************************** HierarchyItem management methods *******************************************************************
@@ -233,10 +237,6 @@ public class MainMenuPresenter {
 		
 		mBrowser.updateViews(toUpdateWith);
 		this.setSelectedFolderView(newFolderView);
-	}
-	
-	public void closeCurrentFolder() {
-		//openFolderViews.removeLast();
 	}
 
 		
@@ -318,14 +318,23 @@ public class MainMenuPresenter {
 	
 	public void addSelection (HierarchyWrapper toSelect) {
 		selectedItems.add(toSelect.hierarchyItem);
+		for (FolderViewContainer c :openFolderViews) {
+			c.updateChildren();
+		}
 	}
 	
 	public void removeSelection (HierarchyWrapper toRemove) {
 		selectedItems.remove(toRemove.hierarchyItem);
+		for (FolderViewContainer c :openFolderViews) {
+			c.updateChildren();
+		}
 	}
 	
 	public void clearSelections () {
 		selectedItems.clear();
+		for (FolderViewContainer c :openFolderViews) {
+			c.updateChildren();
+		}
 	}
 	
 	//********************************************* Helper classes ********************************************

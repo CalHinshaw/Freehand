@@ -271,7 +271,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// If user's been on the left side for long enough go up a directory
 			} else if ((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER && !mPresenter.testInRootDirectory()) {
-				mPresenter.closeCurrentFolder();
+				
 			}
 
 		// Watch to see if the user wants to open a valid folder
@@ -452,10 +452,14 @@ public class FolderView extends ListView implements OnGestureListener {
 		return selectedState;
 	}
 
+	
+	
+	// Should move to FolderBrowser or it's HorizontalScrollView
+	
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 		if (Math.abs(e1.getY()-e2.getY()) <= this.getHeight()/12 && velocityX >= 3000) {
 			if (e1.getX()-e2.getX() <= -this.getWidth()/4) {
-				mPresenter.closeCurrentFolder();
+				
 				return true;
 			}
 		}
