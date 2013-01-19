@@ -204,7 +204,6 @@ public class FolderView extends ListView implements OnGestureListener {
 			case DragEvent.ACTION_DRAG_ENDED:
 				clearDragHighlightMarkers();
 				mAdapter.ungreySelections();
-				mPresenter.clearSelections();
 			case DragEvent.ACTION_DRAG_EXITED:
 				clearDragHighlightMarkers();
 				break;
