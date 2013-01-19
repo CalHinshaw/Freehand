@@ -28,7 +28,6 @@ public class MainMenuPresenter {
 	private final FolderBrowser mBrowser;
 	
 	private ArrayList<FolderViewContainer> openFolderViews = new ArrayList<FolderViewContainer>(10);
-	private int currentFolderViewID = 0;
 	
 	private final INoteHierarchyItem mRoot;
 	
@@ -41,7 +40,7 @@ public class MainMenuPresenter {
 		mBrowser = browser;
 		mRoot = newRoot;
 		
-		this.openFolder(mRoot, -1);
+		this.openFolder(mRoot, null);
 	}
 	
 	
@@ -54,7 +53,7 @@ public class MainMenuPresenter {
 	 * @param toDelete will be deleted if the user confirms
 	 */
 	public void deleteWithConfirmation () {
-		DialogFragment d = new ConfirmDeleteDialog("Confirm Delete?", "Delete", "Cancel", this.getSelections(), this);
+		DialogFragment d = new ConfirmDeleteDialog("Confirm Delete?", "Delete", "Cancel", new ArrayList<INoteHierarchyItem>(selectedItems), this);
 		mActivity.displayDialogFragment(d, "delete");
 	}
 	
@@ -112,7 +111,7 @@ public class MainMenuPresenter {
 		INoteHierarchyItem newFolder = dest.addFolder(name);
 		
 		if (newFolder != null) {
-			this.openFolder(newFolder, this.getSelectedContainer().ID);
+			this.openFolder(newFolder, this.getSelectedContainer().folderView);
 		} else {
 			mActivity.displayToast("Create new folder failed. Please try again.");
 		}
@@ -160,15 +159,15 @@ public class MainMenuPresenter {
 	
 	//***************************************** Move Methods ***********************************************************
 	
-	public void moveTo (int callerID) {
-		INoteHierarchyItem moveDest = this.getContainerFromID(callerID).hierarchyItem;
+	public void moveTo (FolderView moveTarget) {
+		INoteHierarchyItem moveDest = this.getContainerFromView(moveTarget).hierarchyItem;
 		 if (moveDest == null) {
 			 return;
 		 }
 
 		boolean moveFailed = false;
 		
-		for (INoteHierarchyItem i : this.getSelections()) {
+		for (INoteHierarchyItem i : selectedItems) {
 			if (!i.moveTo(moveDest)){
 				moveFailed = true;
 			}
@@ -193,25 +192,21 @@ public class MainMenuPresenter {
 		mActivity.openNoteActivity(toOpen);
 	}
 	
-	public void openFolder (HierarchyWrapper toOpen, int parentID) {
-		openFolder(toOpen.hierarchyItem, parentID);
+	public void openFolder (HierarchyWrapper toOpen, FolderView parent) {
+		openFolder(toOpen.hierarchyItem, parent);
 	}
 	
-	private void openFolder (INoteHierarchyItem toOpen, int parentID) {
-		currentFolderViewID += 1;
-		
+	private void openFolder (INoteHierarchyItem toOpen, FolderView parent) {
 		// Set up the new FolderView
 		FolderView newFolderView = new FolderView(mActivity, this);
-		newFolderView.setId(currentFolderViewID);
-		FolderViewContainer newContainer = new FolderViewContainer(newFolderView.getId(), toOpen, newFolderView);
-		newContainer.updateChildren();
+		FolderViewContainer newContainer = new FolderViewContainer(toOpen, newFolderView);
 		newContainer.updateChildren();
 		
 		// Update openFolderViews
 		int i = 0;
 		boolean inserted = false;
 		for (; i < openFolderViews.size(); i++) {
-			if(openFolderViews.get(i).ID == parentID) {
+			if(openFolderViews.get(i).folderView == parent) {
 				openFolderViews.add(i+=1, newContainer);
 				inserted = true;
 				break;
@@ -234,8 +229,10 @@ public class MainMenuPresenter {
 			toUpdateWith.add(openFolderViews.get(j).folderView);
 		}
 		
+		Log.d("PEN", "number of views we're about to open:  " + Integer.toString(toUpdateWith.size()));
+		
 		mBrowser.updateViews(toUpdateWith);
-		this.setSelectedFolderView(currentFolderViewID);
+		this.setSelectedFolderView(newFolderView);
 	}
 	
 	public void closeCurrentFolder() {
@@ -258,12 +255,12 @@ public class MainMenuPresenter {
 		mActivity.setItemsSelectedActionBarOn();
 	}
 	
-	private FolderViewContainer getContainerFromID (int callerID) {
+	private FolderViewContainer getContainerFromView (FolderView toGet) {
 		// Get the hierarchy item that backs the FolderView that called this
 		FolderViewContainer container = null;
 		
 		for (FolderViewContainer c : openFolderViews) {
-			if (c.ID == callerID) {
+			if (c.folderView == toGet) {
 				container = c;
 				break;
 			}
@@ -282,9 +279,9 @@ public class MainMenuPresenter {
 		return null;
 	}
 	
-	public void setSelectedFolderView (int selectedID) {
+	public void setSelectedFolderView (FolderView nowSelected) {
 		for (FolderViewContainer c : openFolderViews) {
-			if (c.ID == selectedID) {
+			if (c.folderView == nowSelected) {
 				c.folderView.setSelectedState(true);
 			} else {
 				c.folderView.setSelectedState(false);
@@ -293,33 +290,15 @@ public class MainMenuPresenter {
 		}
 	}
 	
-	public void dragStarted(int callerID) {
-		FolderView calledFrom = getContainerFromID(callerID).folderView;
-		
-		calledFrom.startDrag(this.getSelections().size());
-	}
-	
-	
-	// For share, which needs to be moved in here
-	public List<INoteHierarchyItem> getSelections() {
-		ArrayList<INoteHierarchyItem> selected = new ArrayList<INoteHierarchyItem>();
-		for (FolderViewContainer c : openFolderViews) {
-			for (INoteHierarchyItem i : c.children) {
-				if (selectedItems.contains(i)) {
-					selected.add(i);
-				}
-			}
-		}
-		return selected;
+	public void dragStarted(FolderView calledFrom) {
+		calledFrom.startDrag(selectedItems.size());
 	}
 	
 	
 	public void shareSelectedItems() {
-		Log.d("PEN", "shareSelected in FolderView called");
-		List<INoteHierarchyItem> selections = this.getSelections();
 		LinkedList<INoteHierarchyItem> toShare = new LinkedList<INoteHierarchyItem>();
 		
-		for (INoteHierarchyItem i : selections) {
+		for (INoteHierarchyItem i : selectedItems) {
 			if (i.isFolder()) {
 				toShare.addAll(i.getAllRecursiveChildren());
 			} else {
@@ -352,14 +331,11 @@ public class MainMenuPresenter {
 	//********************************************* Helper classes ********************************************
 	
 	private class FolderViewContainer implements IChangeListener {
-		public final int ID;
 		public final INoteHierarchyItem hierarchyItem;
 		public final FolderView folderView;
-		
 		public List<INoteHierarchyItem> children;
 		
-		public FolderViewContainer (int newID, INoteHierarchyItem newHierarchyItem, FolderView newFolderView) {
-			ID = newID;
+		public FolderViewContainer (INoteHierarchyItem newHierarchyItem, FolderView newFolderView) {
 			hierarchyItem = newHierarchyItem;
 			folderView = newFolderView;
 			

@@ -70,7 +70,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder) {
-				mPresenter.openFolder(clickedItem, parent.getId());
+				mPresenter.openFolder(clickedItem, FolderView.this);
 				mPresenter.turnDefaultActionBarOn();
 			} else {
 				mPresenter.openNote(clickedItem);
@@ -130,7 +130,7 @@ public class FolderView extends ListView implements OnGestureListener {
 		dragWatcher(event);
 		flingDetector.onTouchEvent(event);
 
-		mPresenter.setSelectedFolderView(this.getId());
+		mPresenter.setSelectedFolderView(this);
 		
 		return true;
 	}
@@ -156,7 +156,7 @@ public class FolderView extends ListView implements OnGestureListener {
 					+ (setPoint.y - event.getY())
 					* (setPoint.y - event.getY());
 				if (draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
-					mPresenter.dragStarted(this.getId());
+					mPresenter.dragStarted(this);
 
 					setPoint = null;
 					watchForDrag = false;
@@ -197,7 +197,7 @@ public class FolderView extends ListView implements OnGestureListener {
 				break;
 				
 			case DragEvent.ACTION_DROP:
-				mPresenter.moveTo(this.getId());
+				mPresenter.moveTo(this);
 				
 				mPresenter.turnDefaultActionBarOn();
 				clearDragHighlightMarkers();
@@ -290,7 +290,7 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// If user has been hovering over folder for long enough open it
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mPresenter.openFolder(itemUnderPointer, this.getId());
+				mPresenter.openFolder(itemUnderPointer, this);
 			}
 
 		// No actions are possible, reset timer

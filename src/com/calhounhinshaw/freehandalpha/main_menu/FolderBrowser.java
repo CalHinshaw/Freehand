@@ -24,6 +24,8 @@ public class FolderBrowser extends RelativeLayout {
 	public void updateViews (List<View> newViews) {
 		this.removeAllViews();
 		for (int i = 0; i<newViews.size(); i++) {
+			newViews.get(i).setId(i+1);
+			
 			if (i == 0) {
 				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(childWidth, LayoutParams.MATCH_PARENT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
