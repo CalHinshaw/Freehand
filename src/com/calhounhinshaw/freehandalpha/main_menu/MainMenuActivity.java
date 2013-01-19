@@ -46,20 +46,17 @@ public class MainMenuActivity extends Activity {
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
 			mPresenter.clearSelections();
-			setDefaultActionBarOn();
 		}
 	};
 	
 	private OnClickListener deleteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
 			mPresenter.deleteWithConfirmation();
-			setDefaultActionBarOn();
 		}
 	};
 	
 	private OnClickListener shareButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			setDefaultActionBarOn();
 		}
 	};
 	
@@ -68,7 +65,6 @@ public class MainMenuActivity extends Activity {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
 					mPresenter.clearSelections();
-					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -90,7 +86,6 @@ public class MainMenuActivity extends Activity {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
 					mPresenter.deleteWithConfirmation();
-					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -113,7 +108,6 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
-					setDefaultActionBarOn();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -212,18 +206,12 @@ public class MainMenuActivity extends Activity {
         return true;
     }
     
-//    // This method overrides the back button to let users navigate through folders more easily
-//    @Override
-//    public void onBackPressed() {
-//    	if(mExplorer.directoryHasSelected()) {			//first clear selections
-//    		mExplorer.clearDirectorySelections();
-//    		this.setDefaultActionBarOn();
-//    	} else if (mExplorer.isInRootDirectory()) {		// then close folders
-//    		super.onBackPressed();
-//    	} else {										// finally, close app
-//    		mExplorer.moveUpDirectory();
-//    	}
-//    }
+    @Override
+    public void onBackPressed() {
+    	if (!mPresenter.clearSelections()) {
+    		super.onBackPressed();
+    	}
+    }
     
     public void setItemsSelectedActionBarOn () {
     	itemsSelectedActionBar.setVisibility(View.VISIBLE);

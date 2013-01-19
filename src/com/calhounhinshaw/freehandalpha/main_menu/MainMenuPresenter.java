@@ -29,18 +29,17 @@ public class MainMenuPresenter {
 	
 	private ArrayList<FolderViewContainer> openFolderViews = new ArrayList<FolderViewContainer>(10);
 	
-	private final INoteHierarchyItem mRoot;
+
 	
 	private TreeSet<INoteHierarchyItem> selectedItems = new TreeSet<INoteHierarchyItem>();
 	
 	
 	
-	public MainMenuPresenter (MainMenuActivity activity, FolderBrowser browser, INoteHierarchyItem newRoot) {
+	public MainMenuPresenter (MainMenuActivity activity, FolderBrowser browser, INoteHierarchyItem root) {
 		mActivity = activity;
 		mBrowser = browser;
-		mRoot = newRoot;
 		
-		this.openFolder(mRoot, null);
+		this.openFolder(root, null);
 	}
 	
 	
@@ -319,9 +318,11 @@ public class MainMenuPresenter {
 		selectionChangedMaintenence();
 	}
 	
-	public void clearSelections () {
+	public boolean clearSelections () {
+		boolean toReturn = !selectedItems.isEmpty();
 		selectedItems.clear();
 		selectionChangedMaintenence();
+		return toReturn;
 	}
 	
 	private void selectionChangedMaintenence() {
