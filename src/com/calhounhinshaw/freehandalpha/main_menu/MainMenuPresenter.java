@@ -161,10 +161,17 @@ public class MainMenuPresenter {
 	//***************************************** Move Methods ***********************************************************
 	
 	public void moveTo (FolderView moveTarget) {
+		
+		
 		INoteHierarchyItem moveDest = this.getContainerFromView(moveTarget).hierarchyItem;
-		 if (moveDest == null) {
+		
+		
+		if (moveDest == null) {
+			 Log.d("PEN", "moveTo called, moveDest null");
 			 return;
-		 }
+		}
+		 
+		Log.d("PEN", "moveTo called.  " + moveDest.getName());
 
 		boolean moveFailed = false;
 		

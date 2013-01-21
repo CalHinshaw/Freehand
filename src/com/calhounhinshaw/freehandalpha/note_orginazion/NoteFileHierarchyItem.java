@@ -175,7 +175,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		}
 		
 		if (!this.isFolder()) {
-			name.concat(".note");
+			name = name.concat(".note");
 		}
 		
 		// Move

@@ -57,6 +57,7 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener shareButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
+			mPresenter.shareSelectedItems();
 		}
 	};
 	
@@ -108,6 +109,7 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
+					mPresenter.shareSelectedItems();
 					v.getBackground().setColorFilter(null);
 					break;
 					
