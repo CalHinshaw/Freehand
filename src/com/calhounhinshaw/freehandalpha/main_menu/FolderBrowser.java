@@ -89,7 +89,6 @@ public class FolderBrowser extends RelativeLayout {
 				if (pointInView(event.getX(), event.getY(), toTest)) {
 					mPresenter.moveTo(toTest);
 					mPresenter.setSelectedFolderView(toTest);
-					break;
 				}
 				toTest.dragExitedListener();
 			}

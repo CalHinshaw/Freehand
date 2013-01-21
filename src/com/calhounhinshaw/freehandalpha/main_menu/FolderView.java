@@ -47,6 +47,7 @@ public class FolderView extends ListView implements OnGestureListener {
 	private boolean drawScrollUpHighlight = false;
 	private boolean drawScrollDownHighlight = false;
 	private int folderOpenHighlight = -1;
+	private boolean dropHighlight = false;
 	
 	// Variables responsible for highlighting this view when it's selected
 	private boolean selectedState = false;
@@ -198,6 +199,7 @@ public class FolderView extends ListView implements OnGestureListener {
 		drawScrollUpHighlight = false;
 		drawScrollDownHighlight = false;
 		folderOpenHighlight = -1;
+		dropHighlight = false;
 		
 		this.invalidate();
 	}
@@ -272,6 +274,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			itemUnderPointer = mAdapter.getItem(positionUnderPointer);
 		}
 		
+		dropHighlight = true;
 		
 		// Trigger scroll highlight on top of screen
 		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER) {
@@ -314,8 +317,8 @@ public class FolderView extends ListView implements OnGestureListener {
 	@Override
 	protected void dispatchDraw (Canvas canvas) {
 		super.dispatchDraw(canvas);
-		drawHighlights(canvas);
 		canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mDividerPaint);
+		drawHighlights(canvas);
 		
 		if (selectedState == true) {
 			canvas.drawLine(this.getWidth()-3, 0, this.getWidth()-3, this.getHeight(), mSelectedPaint);
@@ -349,6 +352,14 @@ public class FolderView extends ListView implements OnGestureListener {
 			highlightPaint.setShader(highlightShader);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
+		} else if (dropHighlight == true) {
+			highlightPaint.setColor(ORANGE_HIGHLIGHT);
+			highlightPaint.setStrokeWidth(6);
+			
+			canvas.drawLine(this.getWidth()-3, 0, this.getWidth()-3, this.getHeight(), highlightPaint);
+			canvas.drawLine(3, 0, 3, this.getHeight(), highlightPaint);
+			canvas.drawLine(0, 3, this.getWidth(), 3, highlightPaint);
+			canvas.drawLine(0, this.getHeight()-3, this.getWidth(), this.getHeight()-3, highlightPaint);
 		}
 	}
 	
