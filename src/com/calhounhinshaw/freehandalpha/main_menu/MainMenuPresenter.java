@@ -28,18 +28,16 @@ public class MainMenuPresenter {
 	private final FolderBrowser mBrowser;
 	
 	private ArrayList<FolderViewContainer> openFolderViews = new ArrayList<FolderViewContainer>(10);
-	
-
-	
 	private TreeSet<INoteHierarchyItem> selectedItems = new TreeSet<INoteHierarchyItem>();
-	
+	private FolderViewContainer selectedContainer = null;
 	
 	
 	public MainMenuPresenter (MainMenuActivity activity, FolderBrowser browser, INoteHierarchyItem root) {
 		mActivity = activity;
 		mBrowser = browser;
 		
-		this.openFolder(root, null);
+		FolderView newView = this.openFolder(root, null);
+		this.setSelectedFolderView(newView);
 	}
 	
 	
@@ -82,11 +80,18 @@ public class MainMenuPresenter {
 	//************************************** New Folder Methods *********************************************
 	
 	public void createNewFolder () {
-		INoteHierarchyItem toCreateIn = this.getSelectedContainer().hierarchyItem;
-		 if (toCreateIn == null) {
-			 mActivity.displayToast("Please select a folder and try again.");
-			 return;
-		 }
+		
+		if (selectedContainer == null) {
+			mActivity.displayToast("Please select a folder and try again.");
+			return;
+		}
+		
+		INoteHierarchyItem toCreateIn = selectedContainer.hierarchyItem;
+		
+		if (toCreateIn == null) {
+			mActivity.displayToast("Please select a folder and try again.");
+			return;
+		}
 
 		// Create the function that will be run when the user presses the Create Folder button
 		NewItemFunctor newFolderFunction = new NewItemFunctor() {
@@ -112,7 +117,8 @@ public class MainMenuPresenter {
 		INoteHierarchyItem newFolder = dest.addFolder(name);
 		
 		if (newFolder != null) {
-			this.openFolder(newFolder, this.getSelectedContainer().folderView);
+			FolderView newView = this.openFolder(newFolder, selectedContainer.folderView);
+			this.setSelectedFolderView(newView);
 		} else {
 			mActivity.displayToast("Create new folder failed. Please try again.");
 		}
@@ -121,7 +127,12 @@ public class MainMenuPresenter {
 	//************************************** New Note Methods (who wants first class functions anyway?) ************************
 	
 	public void createNewNote () {
-		INoteHierarchyItem toCreateIn = this.getSelectedContainer().hierarchyItem;
+		if (selectedContainer == null) {
+			mActivity.displayToast("Please select a folder and try again.");
+			return;
+		}
+		
+		INoteHierarchyItem toCreateIn = selectedContainer.hierarchyItem;
 		 if (toCreateIn == null) {
 			 mActivity.displayToast("Please select a folder and try again.");
 			 return;
@@ -161,17 +172,12 @@ public class MainMenuPresenter {
 	//***************************************** Move Methods ***********************************************************
 	
 	public void moveTo (FolderView moveTarget) {
-		
-		
 		INoteHierarchyItem moveDest = this.getContainerFromView(moveTarget).hierarchyItem;
-		
 		
 		if (moveDest == null) {
 			 Log.d("PEN", "moveTo called, moveDest null");
 			 return;
 		}
-		 
-		Log.d("PEN", "moveTo called.  " + moveDest.getName());
 
 		boolean moveFailed = false;
 		
@@ -202,11 +208,11 @@ public class MainMenuPresenter {
 		mActivity.openNoteActivity(toOpen);
 	}
 	
-	public void openFolder (HierarchyWrapper toOpen, FolderView parent) {
-		openFolder(toOpen.hierarchyItem, parent);
+	public FolderView openFolder (HierarchyWrapper toOpen, FolderView parent) {
+		return openFolder(toOpen.hierarchyItem, parent);
 	}
 	
-	private void openFolder (INoteHierarchyItem toOpen, FolderView parent) {
+	private FolderView openFolder (INoteHierarchyItem toOpen, FolderView parent) {
 		// Set up the new FolderView
 		FolderView newFolderView = new FolderView(mActivity, this);
 		FolderViewContainer newContainer = new FolderViewContainer(toOpen, newFolderView);
@@ -239,10 +245,9 @@ public class MainMenuPresenter {
 			toUpdateWith.add(openFolderViews.get(j).folderView);
 		}
 		
-		Log.d("PEN", "number of views we're about to open:  " + Integer.toString(toUpdateWith.size()));
-		
 		mBrowser.updateViews(toUpdateWith);
-		this.setSelectedFolderView(newFolderView);
+		
+		return newFolderView;
 	}
 
 		
@@ -267,24 +272,19 @@ public class MainMenuPresenter {
 		return container;
 	}
 	
-	private FolderViewContainer getSelectedContainer () {
-		for (FolderViewContainer c : openFolderViews) {
-			if (c.folderView.getSelectedState() == true) {
-				return c;
-			}
-		}
-		
-		return null;
-	}
 	
 	public void setSelectedFolderView (FolderView nowSelected) {
 		for (FolderViewContainer c : openFolderViews) {
 			if (c.folderView == nowSelected) {
 				c.folderView.setSelectedState(true);
+				selectedContainer = c;
 			} else {
 				c.folderView.setSelectedState(false);
 			}
-			
+		}
+		
+		if (selectedContainer != null && selectedContainer.folderView != nowSelected) {
+			selectedContainer = null;
 		}
 	}
 	

@@ -195,6 +195,8 @@ public class MainMenuActivity extends Activity {
         scrollView.addView(browser);
         
         mPresenter = new MainMenuPresenter(this, browser, rootItem);
+        
+        browser.setPresenter(mPresenter);
     }
     
     @Override

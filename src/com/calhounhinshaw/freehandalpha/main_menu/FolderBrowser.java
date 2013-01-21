@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.view.DragEvent;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.RelativeLayout;
@@ -13,6 +14,7 @@ public class FolderBrowser extends RelativeLayout {
 	private static final float MIN_CHILD_WIDTH_DIP = 300;
 	
 	private final HorizontalScrollView mParentView;
+	private MainMenuPresenter mPresenter = null;
 	
 	private int childWidth = -1;
 	
@@ -21,11 +23,14 @@ public class FolderBrowser extends RelativeLayout {
 		mParentView = scrollView;
 	}
 	
+	public void setPresenter(MainMenuPresenter newPresenter) {
+		mPresenter = newPresenter;
+	}
+	
 	public void updateViews (List<View> newViews) {
 		this.removeAllViews();
 		for (int i = 0; i<newViews.size(); i++) {
 			newViews.get(i).setId(i+1);
-			
 			if (i == 0) {
 				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(childWidth, LayoutParams.MATCH_PARENT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -51,9 +56,6 @@ public class FolderBrowser extends RelativeLayout {
 		super.dispatchDraw(canvas);
 	}
 	
-	
-	
-	
 	private void setChildWidth () {
 		final float parentWidthPx = mParentView.getWidth();
 		
@@ -73,4 +75,76 @@ public class FolderBrowser extends RelativeLayout {
 		}
 		
 	}
+	
+	//*************************************** Drag and Drop stuff ***************************************
+	
+	@Override
+	public boolean onDragEvent (DragEvent event) {
+		
+		// If the drag event is a drop, call the move method in the presenter with the
+		//  child view the drop is over as a parameter
+		if (event.getAction() == DragEvent.ACTION_DROP) {
+			for (int i = 0; i < this.getChildCount(); i++) {
+				FolderView toTest = (FolderView) this.getChildAt(i);
+				if (pointInView(event.getX(), event.getY(), toTest)) {
+					mPresenter.moveTo(toTest);
+					mPresenter.setSelectedFolderView(toTest);
+					break;
+				}
+				toTest.dragExitedListener();
+			}
+			
+			return true;
+		}
+		
+		// Check to see if we're going to scroll. If so, consume the event
+		
+		// Figure out which child view the DragEvent is over and send them the coordinates
+		//  of the event. Send all of the other children the info that they aren't selected.
+		if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+			mPresenter.setSelectedFolderView(null);
+			for (int i = 0; i < this.getChildCount(); i++) {
+				FolderView toUpdate = (FolderView) this.getChildAt(i);
+				if (pointInView(event.getX(), event.getY(), toUpdate)) {
+					toUpdate.dragListener(event.getX() - toUpdate.getLeft(), event.getY() - toUpdate.getTop());
+				} else {
+					toUpdate.dragExitedListener();
+				}
+			}
+			
+			return true;
+		}
+		
+		
+		return false;
+	}
+	
+	private boolean pointInView (float x, float y, View v) {
+		if (x >= v.getLeft() && x <= v.getRight() && y >= v.getTop() && y <= v.getBottom()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

@@ -12,7 +12,6 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Shader;
-import android.view.DragEvent;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
@@ -45,11 +44,9 @@ public class FolderView extends ListView implements OnGestureListener {
 	private long actionTimeMarker = 0;
 	
 	// These hold the highlight information for drag events
-	private boolean drawDirectoryUpHighlight = false;
 	private boolean drawScrollUpHighlight = false;
 	private boolean drawScrollDownHighlight = false;
 	private int folderOpenHighlight = -1;
-	private int dropUnderHighlight = -1;	// the view the drop highlight draws UNDER
 	
 	// Variables responsible for highlighting this view when it's selected
 	private boolean selectedState = false;
@@ -68,7 +65,8 @@ public class FolderView extends ListView implements OnGestureListener {
 
 			// Clicking on directory opens it
 			if (clickedItem.isFolder) {
-				mPresenter.openFolder(clickedItem, FolderView.this);
+				FolderView newView = mPresenter.openFolder(clickedItem, FolderView.this);
+				mPresenter.setSelectedFolderView(newView);
 			} else {
 				mPresenter.openNote(clickedItem);
 			}
@@ -76,6 +74,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			mPresenter.clearSelections();
 		}
 	};
+	
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
 			if (mAdapter.getItem(position).isSelected) {
@@ -184,46 +183,27 @@ public class FolderView extends ListView implements OnGestureListener {
 		// Start drag without ClipData and with myLocalState equaling selectedItems (has to be cast when DragEvent is received).
 		this.startDrag(null, shadowBuilder, null, 0);
 	}
-
-
-	public boolean onDragEvent(DragEvent event) {
-		switch (event.getAction()) {
-			case DragEvent.ACTION_DRAG_STARTED:
-			case DragEvent.ACTION_DRAG_LOCATION:
-				setDragAccents(event);
-				navigateDrag(event);
-				break;
-				
-			case DragEvent.ACTION_DROP:
-				mPresenter.moveTo(this);
-				mPresenter.clearSelections();
-				clearDragHighlightMarkers();
-				mAdapter.ungreySelections();
-				break;
-				
-			case DragEvent.ACTION_DRAG_ENDED:
-				clearDragHighlightMarkers();
-				mAdapter.ungreySelections();
-			case DragEvent.ACTION_DRAG_EXITED:
-				clearDragHighlightMarkers();
-				break;
-		}
-
-		return true;
+	
+	public void dragListener (float x, float y) {
+		setDragAccents(x, y);
+		navigateDrag(x, y);
+	}
+	
+	public void dragExitedListener () {
+		clearDragHighlightMarkers();
+		mAdapter.ungreySelections();
 	}
 
 	private void clearDragHighlightMarkers() {
-		drawDirectoryUpHighlight = false;
 		drawScrollUpHighlight = false;
 		drawScrollDownHighlight = false;
 		folderOpenHighlight = -1;
-		dropUnderHighlight = -1;
 		
 		this.invalidate();
 	}
 	
 	// Handle navigation through NoteExplorer during DragEvent.
-	private void navigateDrag(DragEvent event) {
+	private void navigateDrag(float x, float y) {
 		
 		// Don't start timing until after the in animation has ended
 		if (this.getAnimation() != null && !this.getAnimation().hasEnded()) {
@@ -232,14 +212,14 @@ public class FolderView extends ListView implements OnGestureListener {
 		}
 		
 		// Find the file represented by the view the user's finger is over
-		int positionUnderPointer = this.pointToPosition((int) event.getX(), (int) event.getY());
+		int positionUnderPointer = this.pointToPosition((int) x, (int) y);
 		HierarchyWrapper itemUnderPointer = null;
 		if (positionUnderPointer >= 0) {
 			itemUnderPointer = mAdapter.getItem(positionUnderPointer);
 		}
 
 		// Watch to see if the user wants to scroll up
-		if (event.getY() < this.getHeight() * SCROLL_REGION_MULTIPLIER) {
+		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER) {
 			if (this.canScrollVertically(-1)) {
 				this.smoothScrollBy(-SCROLL_DISTANCE, SCROLL_DURATION);
 			}
@@ -248,7 +228,7 @@ public class FolderView extends ListView implements OnGestureListener {
 			setPoint = null;
 			
 		// Watch to see if user wants to scroll down
-		} else if (event.getY() > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER) {
+		} else if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER) {
 			if (this.canScrollVertically(1)) {
 				this.smoothScrollBy(SCROLL_DISTANCE, SCROLL_DURATION);
 			}
@@ -256,31 +236,19 @@ public class FolderView extends ListView implements OnGestureListener {
 			actionTimeMarker = 0;
 			setPoint = null;
 			
-		// Watch to see if user wants to move up a directory
-		} else if (event.getX() < this.getWidth() * DIRECTORY_UP_REGION_MULTIPLIER) {
-
-			// Start keeping track of the amount of time the user has been hovering over the left side of the screen for
-			if (actionTimeMarker == 0) {
-				actionTimeMarker = System.currentTimeMillis();
-
-			// If user's been on the left side for long enough go up a directory
-			} else if ((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER && !mPresenter.testInRootDirectory()) {
-				
-			}
-
 		// Watch to see if the user wants to open a valid folder
 		} else if (itemUnderPointer != null && itemUnderPointer.isFolder && !itemUnderPointer.isSelected) {
 
 			// Compute distance of user's finger from setPoint for later
 			float draggedDistanceSquared = STATIONARY_RADIUS_SQUARED + 5;
 			if (setPoint != null) {
-				draggedDistanceSquared = (setPoint.x - event.getX()) * (setPoint.x - event.getX()) + (setPoint.y - event.getY()) * (setPoint.y - event.getY());
+				draggedDistanceSquared = (setPoint.x - x) * (setPoint.x - x) + (setPoint.y - y) * (setPoint.y - y);
 			}
 
 			// Start watching to see if user's finger has been hovering over a folder for long enough to open it
 			if (actionTimeMarker == 0 || draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
 				actionTimeMarker = System.currentTimeMillis();
-				setPoint = new PointF(event.getX(), event.getY());
+				setPoint = new PointF(x, y);
 
 			// If user has been hovering over folder for long enough open it
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
@@ -295,47 +263,25 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 
 	
-	private void setDragAccents (DragEvent event) {
+	private void setDragAccents (float x, float y) {
 		
 		// Find the file represented by the view the user's finger is over
-		int positionUnderPointer = this.pointToPosition((int) event.getX(), (int) event.getY());
+		int positionUnderPointer = this.pointToPosition((int) x, (int) y);
 		HierarchyWrapper itemUnderPointer = null;
 		if (positionUnderPointer >= 0) {
 			itemUnderPointer = mAdapter.getItem(positionUnderPointer);
 		}
 		
-		// Trigger highlight between list elements
-		if (positionUnderPointer >= 0) {
-			View v = getViewAtPosition(positionUnderPointer);
-			float midpoint = v.getTop() + v.getHeight()/2;
-			if (event.getY() > midpoint) {
-				dropUnderHighlight = positionUnderPointer;
-			} else if (positionUnderPointer > 0) {
-				dropUnderHighlight = positionUnderPointer-1;
-			} else {
-				dropUnderHighlight = -1;
-			}
-		} else {
-			dropUnderHighlight = -1;
-		}
-		
-		// Trigger directory up highlight on left side of screen
-		if (event.getX() < this.getWidth() * DIRECTORY_UP_REGION_MULTIPLIER) {
-			drawDirectoryUpHighlight = true;
-		} else {
-			drawDirectoryUpHighlight = false;
-		}
-		
 		
 		// Trigger scroll highlight on top of screen
-		if (event.getY() < this.getHeight() * SCROLL_REGION_MULTIPLIER) {
+		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER) {
 			drawScrollUpHighlight = true;
 		} else {
 			drawScrollUpHighlight = false;
 		}
 		
 		// Trigger scroll highlight on bottom of screen
-		if (event.getY() > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER) {
+		if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER) {
 			drawScrollDownHighlight = true;
 		} else {
 			drawScrollDownHighlight = false;
@@ -396,25 +342,10 @@ public class FolderView extends ListView implements OnGestureListener {
 			highlightPaint.setShader(highlightShader);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (drawDirectoryUpHighlight) {
-			highlightRect = new Rect(0, 0, (int)(this.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), this.getHeight());
-			highlightShader = new LinearGradient(0, 0, this.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
-			highlightPaint.setShader(highlightShader);
-			
-			canvas.drawRect(highlightRect, highlightPaint);
 		} else if (folderOpenHighlight >= 0) {
 			View v = getViewAtPosition(folderOpenHighlight);	// The highlighted view
 			highlightRect = new Rect((int)(v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), v.getRight(), v.getBottom());
 			highlightShader = new LinearGradient(v.getRight(), v.getTop(), (v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
-			highlightPaint.setShader(highlightShader);
-			
-			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (dropUnderHighlight >= 0) {
-			int midline = getViewAtPosition(dropUnderHighlight).getBottom();
-			int halfHeight = getViewAtPosition(dropUnderHighlight).getHeight()/4;
-			
-			highlightRect = new Rect(0, midline+halfHeight, this.getWidth(), midline-halfHeight);
-			highlightShader = new LinearGradient(0, midline, 0, midline+halfHeight, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.MIRROR);
 			highlightPaint.setShader(highlightShader);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
@@ -440,10 +371,6 @@ public class FolderView extends ListView implements OnGestureListener {
 	public void setSelectedState (boolean newSelectedState) {
 		selectedState = newSelectedState;
 		this.invalidate();
-	}
-	
-	public boolean getSelectedState() {
-		return selectedState;
 	}
 
 	
