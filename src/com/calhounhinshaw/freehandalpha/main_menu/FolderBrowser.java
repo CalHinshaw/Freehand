@@ -7,18 +7,18 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.view.DragEvent;
 import android.view.View;
-import android.widget.HorizontalScrollView;
 import android.widget.RelativeLayout;
 
 public class FolderBrowser extends RelativeLayout {
 	private static final float MIN_CHILD_WIDTH_DIP = 300;
 	
-	private final HorizontalScrollView mParentView;
+	private final FolderBrowserScrollView mParentView;
 	private MainMenuPresenter mPresenter = null;
 	
 	private int childWidth = -1;
+	private int childrenPerScreen = -1;
 	
-	public FolderBrowser(Context context, HorizontalScrollView scrollView) {
+	public FolderBrowser(Context context, FolderBrowserScrollView scrollView) {
 		super(context);
 		mParentView = scrollView;
 	}
@@ -28,22 +28,40 @@ public class FolderBrowser extends RelativeLayout {
 	}
 	
 	public void updateViews (List<View> newViews) {
-		this.removeAllViews();
-		for (int i = 0; i<newViews.size(); i++) {
+		mParentView.setScrollCounter(newViews.size());
+		
+		int i = 0;
+		
+		for ( ; i<newViews.size(); i++) {
 			newViews.get(i).setId(i+1);
-			if (i == 0) {
+			
+			if (newViews.get(i) == this.getChildAt(i) && this.getChildAt(i).getWidth() == childWidth) {
+				
+			} else if (i == 0) {
 				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(childWidth, LayoutParams.MATCH_PARENT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 				newViews.get(i).setLayoutParams(params);
+				
+				if (this.getChildAt(i) != null) {
+					this.removeViewAt(i);
+				}
+				this.addView(newViews.get(i), i);
 			} else {
 				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(childWidth, LayoutParams.MATCH_PARENT);
 				params.addRule(RelativeLayout.RIGHT_OF, this.getChildAt(i-1).getId());
 				params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
 				newViews.get(i).setLayoutParams(params);
+				
+				if (this.getChildAt(i) != null) {
+					this.removeViewAt(i);
+				}
+				this.addView(newViews.get(i), i);
 			}
-
-			this.addView(newViews.get(i), this.getChildCount());
+		}
+		
+		for (; i < this.getChildCount(); i++) {
+			this.removeViewAt(i);
 		}
 	}
 	
@@ -64,16 +82,18 @@ public class FolderBrowser extends RelativeLayout {
 			final float minChildWidthPx = MIN_CHILD_WIDTH_DIP * scale;
 			float numFoldersToShow = parentWidthPx/minChildWidthPx;
 			childWidth = (int) (parentWidthPx/((int)numFoldersToShow));
+			childrenPerScreen = (int)numFoldersToShow;
 			
 			ArrayList<View> views = new ArrayList<View>(this.getChildCount());
 			for (int i = 0; i < this.getChildCount(); i++) {
 				views.add(this.getChildAt(i));
 			}
 			updateViews(views);
+			
+			mParentView.setScrollIncrement(childWidth, childrenPerScreen);
 		} else {
 			childWidth = -1;
 		}
-		
 	}
 	
 	//*************************************** Drag and Drop stuff ***************************************
@@ -124,26 +144,5 @@ public class FolderBrowser extends RelativeLayout {
 		} else {
 			return false;
 		}
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	}	
 }
