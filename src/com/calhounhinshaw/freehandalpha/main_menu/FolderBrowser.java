@@ -5,6 +5,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -27,16 +28,33 @@ public class FolderBrowser extends RelativeLayout {
 		mPresenter = newPresenter;
 	}
 	
-	public void updateViews (List<View> newViews) {
+	public void requestUpdateViews (final List<View> newViews) {
+		int oldScrollCounter = mParentView.getScrollCounter();
 		mParentView.setScrollCounter(newViews.size());
-		
+		if (oldScrollCounter > newViews.size()) {
+			Runnable newRunnable = new Runnable () {
+				public void run() {
+					if (mParentView.isScrollInProgress()) {
+						FolderBrowser.this.postDelayed(this, 10);
+					} else {
+						updateViews(newViews);
+					}
+					
+				}
+			};
+			this.postDelayed(newRunnable, 10);
+		} else {
+			updateViews(newViews);
+		}
+	}
+	
+	private void updateViews (List<View> newViews) {
 		int i = 0;
-		
 		for ( ; i<newViews.size(); i++) {
 			newViews.get(i).setId(i+1);
 			
 			if (newViews.get(i) == this.getChildAt(i) && this.getChildAt(i).getWidth() == childWidth) {
-				
+				// intentionally empty
 			} else if (i == 0) {
 				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(childWidth, LayoutParams.MATCH_PARENT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -65,6 +83,7 @@ public class FolderBrowser extends RelativeLayout {
 		}
 	}
 	
+	
 	@Override
 	protected void dispatchDraw (Canvas canvas) {
 		if (childWidth == -1) {
@@ -88,7 +107,7 @@ public class FolderBrowser extends RelativeLayout {
 			for (int i = 0; i < this.getChildCount(); i++) {
 				views.add(this.getChildAt(i));
 			}
-			updateViews(views);
+			requestUpdateViews(views);
 			
 			mParentView.setScrollIncrement(childWidth, childrenPerScreen);
 		} else {

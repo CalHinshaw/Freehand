@@ -245,7 +245,7 @@ public class MainMenuPresenter {
 			toUpdateWith.add(openFolderViews.get(j).folderView);
 		}
 		
-		mBrowser.updateViews(toUpdateWith);
+		mBrowser.requestUpdateViews(toUpdateWith);
 		
 		return newFolderView;
 	}

@@ -11,14 +11,19 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 	private int mScrollIncrement = 0;
 	private int mIncrementsPerScreen = 0;
 	
-	private boolean scrollDirty = false;
+	private boolean triggerScrollRight = false;
+	private boolean triggerFixScroll = false;
+	
 	private int scrollCounter = 0;
 	private int oldScrollCounter = 0;
+	
+	private boolean scrollInProgress = false;
 	
 	private int lastManualScroll = 0;
 
 	public FolderBrowserScrollView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		this.setOverScrollMode(HorizontalScrollView.OVER_SCROLL_ALWAYS);
 	}
 	
 	public void setScrollIncrement (int newIncrement, int newIncrementsPerScreen) {
@@ -47,40 +52,66 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 	}
 	
 	public void setScrollCounter(int newValue) {
-		oldScrollCounter = scrollCounter;
-		scrollCounter = newValue;
-		scrollDirty = true;
-	}
-	
-	@Override
-	public void onDraw(Canvas canvas) {
 		
-		if (scrollDirty == true) {
+		//Scrolling left
+		if (scrollCounter > newValue) {
+			Log.d("PEN", "left");
 			
-			Log.d("PEN", "old:  " + Integer.toString(oldScrollCounter) + "      new:  " + Integer.toString(scrollCounter));
+			oldScrollCounter = newValue;
+			scrollCounter = newValue;
 			
+			this.smoothScrollTo(((scrollCounter-mIncrementsPerScreen) * mScrollIncrement), 0);
 			
-			if (oldScrollCounter != scrollCounter) {
-				this.smoothScrollTo(((scrollCounter-mIncrementsPerScreen) * mScrollIncrement), 0);
-			}
+			triggerFixScroll = false;
+			scrollInProgress = true;
+		} else if (scrollCounter < newValue){
+			Log.d("PEN", "right");
+			oldScrollCounter = scrollCounter;
+			scrollCounter = newValue;
 			
-			scrollDirty = false;
+			triggerFixScroll = true;
+			triggerScrollRight = true;
+		} else {
+			
+			oldScrollCounter = newValue;
+			scrollCounter = newValue;
+			
+			triggerFixScroll = true;
 		}
-		
-		
-		super.onDraw(canvas);
-		
 	}
 	
 	@Override
 	public void computeScroll() {
+		int temp = this.getScrollX();
+		
 		super.computeScroll();
-		if (scrollDirty == true) {
-			//TODO pretty choppy, need to fix it.
-			this.overScrollBy(9, 0, ((oldScrollCounter-mIncrementsPerScreen) * mScrollIncrement), 0, 100000, 0, 100000, 0, false);
+		
+		// Check to see if a scroll is in progress
+		if (temp == this.getScrollX()) {
+			scrollInProgress = false;
+		} else {
+			scrollInProgress = true;
+		}
+		
+		if (triggerFixScroll == true) {
+			this.setScrollX((oldScrollCounter-mIncrementsPerScreen) * mScrollIncrement);
+			triggerFixScroll = false;
+		}
+		
+		if (triggerScrollRight == true) {
+			if (oldScrollCounter != scrollCounter) {
+				this.smoothScrollTo(((scrollCounter-mIncrementsPerScreen) * mScrollIncrement), 0);
+			}
+			triggerScrollRight = false;
 		}
 	}
 	
+	public int getScrollCounter() {
+		return scrollCounter;
+	}
 	
+	public boolean isScrollInProgress () {
+		return scrollInProgress;
+	}
 	
 }
