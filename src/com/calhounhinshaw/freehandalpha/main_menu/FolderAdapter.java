@@ -78,7 +78,10 @@ class FolderAdapter extends ArrayAdapter<HierarchyWrapper> {
 	}
 	
 	public void updateContent (List<HierarchyWrapper> newContent) {
+		// Some shenanigans happens when clear is called and notifyOnChange == true in super.
+		this.setNotifyOnChange(false);
 		this.clear();
+		this.setNotifyOnChange(true);
 		this.addAll(newContent);
 		this.notifyDataSetChanged();
 	}

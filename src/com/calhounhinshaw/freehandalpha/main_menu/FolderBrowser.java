@@ -49,6 +49,7 @@ public class FolderBrowser extends RelativeLayout {
 	}
 	
 	private void updateViews (List<View> newViews) {
+		Log.d("PEN", "update views called");
 		int i = 0;
 		for ( ; i<newViews.size(); i++) {
 			newViews.get(i).setId(i+1);

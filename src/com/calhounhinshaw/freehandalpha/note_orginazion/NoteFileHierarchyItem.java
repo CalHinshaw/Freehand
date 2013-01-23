@@ -412,6 +412,14 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 		return toReturn;
 	}
 	
+	@Override
+	public boolean equals (final Object object) {
+		String myPath = this.getIdentifier();
+		String theirPath = ((NoteFileHierarchyItem) object).getIdentifier();
+		
+		return myPath.equals(theirPath);
+	}
+	
 	private synchronized void notifyChangeListeners() {
 		for (IChangeListener l : mChangeListeners) {
 			l.onChange();

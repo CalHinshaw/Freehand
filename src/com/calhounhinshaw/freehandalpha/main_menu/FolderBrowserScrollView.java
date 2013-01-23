@@ -52,30 +52,21 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 	}
 	
 	public void setScrollCounter(int newValue) {
-		
 		//Scrolling left
-		if (scrollCounter > newValue) {
-			Log.d("PEN", "left");
-			
+		if (scrollCounter > newValue) {			
 			oldScrollCounter = newValue;
 			scrollCounter = newValue;
-			
 			this.smoothScrollTo(((scrollCounter-mIncrementsPerScreen) * mScrollIncrement), 0);
-			
 			triggerFixScroll = false;
 			scrollInProgress = true;
 		} else if (scrollCounter < newValue){
-			Log.d("PEN", "right");
 			oldScrollCounter = scrollCounter;
 			scrollCounter = newValue;
-			
 			triggerFixScroll = true;
 			triggerScrollRight = true;
 		} else {
-			
 			oldScrollCounter = newValue;
 			scrollCounter = newValue;
-			
 			triggerFixScroll = true;
 		}
 	}
@@ -94,6 +85,7 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 		}
 		
 		if (triggerFixScroll == true) {
+			Log.d("PEN", "fixin'");
 			this.setScrollX((oldScrollCounter-mIncrementsPerScreen) * mScrollIncrement);
 			triggerFixScroll = false;
 		}

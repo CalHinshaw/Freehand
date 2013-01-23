@@ -213,6 +213,17 @@ public class MainMenuPresenter {
 	}
 	
 	private FolderView openFolder (INoteHierarchyItem toOpen, FolderView parent) {
+		// If the HierarchyItem is already open do nothing
+		for (FolderViewContainer c : openFolderViews) {
+			if (c.hierarchyItem.equals(toOpen)) {
+				Log.d("PEN", "In path");
+				
+				return c.folderView;
+			}
+		}
+		
+		Log.d("PEN", "continued");
+		
 		// Set up the new FolderView
 		FolderView newFolderView = new FolderView(mActivity, this);
 		FolderViewContainer newContainer = new FolderViewContainer(toOpen, newFolderView);

@@ -116,7 +116,7 @@ public class FolderView extends ListView implements OnGestureListener {
 		mSelectedPaint = new Paint();
 		mSelectedPaint.setAntiAlias(true);
 		mSelectedPaint.setColor(SOLID_BLUE_HIGHLIGHT);
-		mSelectedPaint.setStrokeWidth(7);
+		mSelectedPaint.setStrokeWidth(6);
 	}
 
 
