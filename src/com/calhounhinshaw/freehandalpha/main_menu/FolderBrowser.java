@@ -49,7 +49,6 @@ public class FolderBrowser extends RelativeLayout {
 	}
 	
 	private void updateViews (List<View> newViews) {
-		Log.d("PEN", "update views called");
 		int i = 0;
 		for ( ; i<newViews.size(); i++) {
 			newViews.get(i).setId(i+1);
@@ -113,6 +112,21 @@ public class FolderBrowser extends RelativeLayout {
 			mParentView.setScrollIncrement(childWidth, childrenPerScreen);
 		} else {
 			childWidth = -1;
+		}
+	}
+	
+	/**
+	 * Request that this class and its associated FolderBrowserScrollView display the View toShow.
+	 * @param toShow will be displayed if possible
+	 */
+	public void requestShow (View toShow) {
+		for (int i = 0; i < this.getChildCount(); i++) {
+			if (this.getChildAt(i) == toShow) {
+				if (i < mParentView.getScrollCounter()-childrenPerScreen || i >= mParentView.getScrollCounter()) {
+					mParentView.setScrollCounter(i+1);
+				}
+				return;
+			}
 		}
 	}
 	

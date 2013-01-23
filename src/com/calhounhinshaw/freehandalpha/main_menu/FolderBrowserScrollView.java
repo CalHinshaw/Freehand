@@ -85,7 +85,6 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 		}
 		
 		if (triggerFixScroll == true) {
-			Log.d("PEN", "fixin'");
 			this.setScrollX((oldScrollCounter-mIncrementsPerScreen) * mScrollIncrement);
 			triggerFixScroll = false;
 		}

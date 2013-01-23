@@ -213,16 +213,14 @@ public class MainMenuPresenter {
 	}
 	
 	private FolderView openFolder (INoteHierarchyItem toOpen, FolderView parent) {
-		// If the HierarchyItem is already open do nothing
+		// If the HierarchyItem is already open make sure it's displayed on screen but don't change openFolderViews or the mBrowser's
+		// internal HashSet
 		for (FolderViewContainer c : openFolderViews) {
 			if (c.hierarchyItem.equals(toOpen)) {
-				Log.d("PEN", "In path");
-				
+				mBrowser.requestShow(c.folderView);
 				return c.folderView;
 			}
 		}
-		
-		Log.d("PEN", "continued");
 		
 		// Set up the new FolderView
 		FolderView newFolderView = new FolderView(mActivity, this);
@@ -376,7 +374,6 @@ public class MainMenuPresenter {
 			for (INoteHierarchyItem i : children) {
 				toUpdateWith.add(new HierarchyWrapper(i, selectedItems.contains(i)));
 			}
-			
 			
 			folderView.updateContent(toUpdateWith);
 		}
