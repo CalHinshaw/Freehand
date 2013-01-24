@@ -9,7 +9,6 @@ import com.calhounhinshaw.freehandalpha.share.Sharer;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -399,7 +398,9 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 			ArrayList<Note> toShare = new ArrayList<Note>(1);
 			toShare.add(mNoteView.getNote());
 
-			Sharer.shareNotesAsJPEG(toShare, this);
+			if (Sharer.shareNotesAsJPEG(toShare, this) == false) {
+				Toast.makeText(this, "This note is too big to share, sorry for the inconvenience. I'm adding support for bigger notes in the next update.", Toast.LENGTH_LONG).show();
+			}
 			return true;
 	   		 
 	   	default:

@@ -316,7 +316,9 @@ public class MainMenuPresenter {
 		}
 		
 		if (toShare.size() == 1) {
-			Sharer.shareNoteHierarchyItemsAsJPEG(toShare, mActivity);
+			if (Sharer.shareNoteHierarchyItemsAsJPEG(toShare, mActivity) == false) {
+				mActivity.displayToast("This note is too big to share, sorry for the inconvenience. I'm adding support for bigger notes in the next update.");
+			}
 		} else {
 			mActivity.displayToast("You can only share one note at a time right now. Sharing multiple notes coming soon!");
 		}

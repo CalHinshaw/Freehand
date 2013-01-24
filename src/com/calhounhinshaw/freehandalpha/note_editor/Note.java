@@ -304,6 +304,14 @@ public class Note {
 			boundingRect.top -= 100;
 			boundingRect.bottom += 100;
 			
+			// Make sure drawing the bitmap won't crash us (temporary fix)
+			long mem = Runtime.getRuntime().maxMemory();
+			mem = mem/8;
+			if (boundingRect.width() * boundingRect.height() > mem) {
+				return null;
+			}
+			
+			
 			Bitmap toDrawOn = Bitmap.createBitmap((int) boundingRect.width(), (int) boundingRect.height(), Bitmap.Config.ARGB_8888);
 			
 			Canvas c = new Canvas(toDrawOn);
