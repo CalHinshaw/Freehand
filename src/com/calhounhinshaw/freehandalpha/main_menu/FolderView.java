@@ -193,6 +193,11 @@ public class FolderView extends ListView {
 	
 	public void dragExitedListener () {
 		clearDragHighlightMarkers();
+		
+		watchForDrag = false;
+		setPoint = null;
+		actionTimeMarker = 0;
+		
 		mAdapter.ungreySelections();
 	}
 

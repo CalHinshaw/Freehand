@@ -1,13 +1,26 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.HorizontalScrollView;
 
 public class FolderBrowserScrollView extends HorizontalScrollView {
+	private static final long DRAG_SCROLL_TIMER = 400;
+	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
+	private static final int NO_COLOR = 0x00FFFFFF;
+	
 	private int mScrollIncrement = 0;
 	private int mIncrementsPerScreen = 0;
 	
@@ -22,15 +35,22 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 	private int lastManualScroll = 0;
 	private float lastX = 0;
 	private float lastLastX = 0;
+	
+	private int mDragRegionWidth = 0;
+	private long timeEnteredDragRegion = -1;
+	private boolean drawLeftHighlight = false;
+	private boolean drawRightHighlight = false;
 
 	public FolderBrowserScrollView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		this.setOverScrollMode(HorizontalScrollView.OVER_SCROLL_ALWAYS);
+		this.setWillNotDraw(false);
 	}
 	
-	public void setScrollIncrement (int newIncrement, int newIncrementsPerScreen) {
+	public void setParameters (int newIncrement, int newIncrementsPerScreen, int newDragRegionWidth) {
 		mScrollIncrement = newIncrement;
 		mIncrementsPerScreen = newIncrementsPerScreen;
+		mDragRegionWidth = newDragRegionWidth;
 	}
 	
 	@Override
@@ -139,6 +159,81 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 	
 	public boolean isScrollInProgress () {
 		return scrollInProgress;
+	}
+	
+	public boolean dragScrollListener (DragEvent event) {
+		if (event.getX()-this.getScrollX() <= mDragRegionWidth && this.getScrollX() >= mScrollIncrement - 3) {
+			drawLeftHighlight = true;
+			drawRightHighlight = false;
+			this.invalidate();
+				
+			if (timeEnteredDragRegion == -1) {
+				timeEnteredDragRegion = System.currentTimeMillis();
+			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
+				timeEnteredDragRegion = -1;
+				oldScrollCounter = scrollCounter;
+				scrollCounter -= 1;
+				this.smoothScrollTo((scrollCounter - mIncrementsPerScreen) * mScrollIncrement, 0);
+			}
+			
+			return true;
+		} else if (event.getX()-this.getScrollX() >= (this.getWidth() - mDragRegionWidth) && this.getScrollX() <= getMaxScrollX() - mScrollIncrement + 3) {
+			drawLeftHighlight = false;
+			drawRightHighlight = true;
+			this.invalidate();
+			
+			if (timeEnteredDragRegion == -1) {
+				timeEnteredDragRegion = System.currentTimeMillis();
+				
+			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
+				timeEnteredDragRegion = -1;
+				oldScrollCounter = scrollCounter;
+				scrollCounter += 1;
+				this.smoothScrollTo((scrollCounter - mIncrementsPerScreen) * mScrollIncrement, 0);
+			}
+			
+			return true;
+		} else {
+			drawLeftHighlight = false;
+			drawRightHighlight = false;
+			this.invalidate();
+			
+			timeEnteredDragRegion = -1;
+			return false;
+		}
+	}
+	
+	private int getMaxScrollX () {
+		return this.getChildAt(0).getMeasuredWidth()- this.getWidth();
+	}
+	
+	@Override
+	protected void dispatchDraw (Canvas canvas) {
+		super.dispatchDraw(canvas);
+		
+		
+	}
+	
+	@SuppressLint("DrawAllocation")
+	@Override
+	protected void onDraw (Canvas canvas) {
+		//super.onDraw(canvas);
+		
+		if (drawLeftHighlight == true) {
+			Rect highlightRect = new Rect(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, this.getHeight());
+			Shader highlightShader = new LinearGradient(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+			Paint highlightPaint = new Paint();
+			highlightPaint.setShader(highlightShader);
+			
+			canvas.drawRect(highlightRect, highlightPaint);
+		} else if (drawRightHighlight == true) {
+			Rect highlightRect = new Rect(this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, this.getScrollX() + this.getWidth(), this.getHeight());
+			Shader highlightShader = new LinearGradient(this.getScrollX() + this.getWidth(), 0, this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+			Paint highlightPaint = new Paint();
+			highlightPaint.setShader(highlightShader);
+			
+			canvas.drawRect(highlightRect, highlightPaint);
+		}
 	}
 	
 }

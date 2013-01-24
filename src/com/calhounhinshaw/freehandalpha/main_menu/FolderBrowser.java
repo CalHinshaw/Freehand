@@ -14,12 +14,15 @@ import android.widget.RelativeLayout;
 
 public class FolderBrowser extends RelativeLayout {
 	private static final float MIN_CHILD_WIDTH_DIP = 300;
+	private static final float DRAG_SCROLL_REGION_WIDTH_DIP = 100;
 	
 	private final FolderBrowserScrollView mParentView;
 	private MainMenuPresenter mPresenter = null;
 	
 	private int childWidth = -1;
 	private int childrenPerScreen = -1;
+	
+	private int dragScrollRegionWidth = -1;
 	
 	public FolderBrowser(Context context, FolderBrowserScrollView scrollView) {
 		super(context);
@@ -110,8 +113,9 @@ public class FolderBrowser extends RelativeLayout {
 				views.add(this.getChildAt(i));
 			}
 			requestUpdateViews(views);
-			
-			mParentView.setScrollIncrement(childWidth, childrenPerScreen);
+
+			dragScrollRegionWidth = (int) (DRAG_SCROLL_REGION_WIDTH_DIP * scale);
+			mParentView.setParameters(childWidth, childrenPerScreen, dragScrollRegionWidth);
 		} else {
 			childWidth = -1;
 		}
@@ -149,6 +153,11 @@ public class FolderBrowser extends RelativeLayout {
 	@Override
 	public boolean onDragEvent (DragEvent event) {
 		
+		// Don't do anything while scrolling
+		if (mParentView.isScrollInProgress()) {
+			return true;
+		}
+		
 		// If the drag event is a drop, call the move method in the presenter with the
 		//  child view the drop is over as a parameter
 		if (event.getAction() == DragEvent.ACTION_DROP) {
@@ -171,8 +180,16 @@ public class FolderBrowser extends RelativeLayout {
 			}
 		}
 		
-		// Check to see if we're going to scroll. If so, consume the event
-		// TODO
+		// Check to see if the FolderBrowserScrollView is waiting for a valid scroll action
+		if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+			if (mParentView.dragScrollListener(event) == true) {
+				for (int i = 0; i < this.getChildCount(); i++) {
+					((FolderView) this.getChildAt(i)).dragExitedListener();
+				}
+				
+				return true;
+			}
+		}
 		
 		// Figure out which child view the DragEvent is over and send them the coordinates
 		//  of the event. Send all of the other children the info that they aren't selected.
@@ -190,8 +207,7 @@ public class FolderBrowser extends RelativeLayout {
 			return true;
 		}
 		
-		
-		return false;
+		return true;
 	}
 	
 	private boolean pointInView (float x, float y, View v) {
@@ -200,5 +216,5 @@ public class FolderBrowser extends RelativeLayout {
 		} else {
 			return false;
 		}
-	}	
+	}
 }
