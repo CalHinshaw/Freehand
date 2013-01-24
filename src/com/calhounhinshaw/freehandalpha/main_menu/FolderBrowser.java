@@ -164,7 +164,15 @@ public class FolderBrowser extends RelativeLayout {
 			return true;
 		}
 		
+		// If the drag event leaves the FolderBrowser or ends without a drop make sure all of the highlights are cleared
+		if (event.getAction() == DragEvent.ACTION_DRAG_EXITED || event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+			for (int i = 0; i < this.getChildCount(); i++) {
+				((FolderView) this.getChildAt(i)).dragExitedListener();
+			}
+		}
+		
 		// Check to see if we're going to scroll. If so, consume the event
+		// TODO
 		
 		// Figure out which child view the DragEvent is over and send them the coordinates
 		//  of the event. Send all of the other children the info that they aren't selected.
