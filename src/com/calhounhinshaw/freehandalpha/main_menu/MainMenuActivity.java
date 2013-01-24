@@ -211,7 +211,7 @@ public class MainMenuActivity extends Activity {
     
     @Override
     public void onBackPressed() {
-    	if (!mPresenter.clearSelections()) {
+    	if (mPresenter.backButtonHandler() == false) {
     		super.onBackPressed();
     	}
     }

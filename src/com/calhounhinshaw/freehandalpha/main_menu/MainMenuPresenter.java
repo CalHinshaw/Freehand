@@ -320,6 +320,21 @@ public class MainMenuPresenter {
 		}
 	}
 	
+	/**
+	 * Handles back button events.
+	 * @return true if the event was handled, false if it wasn't
+	 */
+	public boolean backButtonHandler () {
+		boolean returnValue = false;
+		
+		if (selectedItems.isEmpty() == false) {
+			this.clearSelections();
+			returnValue = true;
+		}
+		
+		return returnValue;
+	}
+	
 	
 	// ******************************************** Selection methods ****************************************
 	
