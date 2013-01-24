@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.Log;
 import android.view.DragEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
@@ -129,6 +130,18 @@ public class FolderBrowser extends RelativeLayout {
 				return;
 			}
 		}
+	}
+	
+	public boolean checkConsumeTouchEvent (MotionEvent event) {
+		boolean eventConsumed = false;
+		
+		for(int i = 0; i < this.getChildCount(); i++) {
+			if (((FolderView) this.getChildAt(i)).checkConsumeTouchEvent(event) == true) {
+				eventConsumed = true;
+			}
+		}
+		
+		return eventConsumed;
 	}
 	
 	//*************************************** Drag and Drop stuff ***************************************

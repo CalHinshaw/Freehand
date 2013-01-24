@@ -12,6 +12,7 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -118,13 +119,18 @@ public class FolderView extends ListView {
 	// This method watches for the drag and drop gesture without interfering with any of the class' other behaviors.
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		mPresenter.setSelectedFolderView(this);
+		
 		super.onTouchEvent(event);
 		selectedItemDragWatcher(event);
 		dragWatcher(event);
-
-		mPresenter.setSelectedFolderView(this);
-		
+		// Consume this touch event if a drag is started
 		return true;
+	}
+	
+	public boolean checkConsumeTouchEvent (MotionEvent event) {
+		selectedItemDragWatcher(event);
+		return watchForDrag;
 	}
 	
 	private void selectedItemDragWatcher(MotionEvent event) {
@@ -132,6 +138,7 @@ public class FolderView extends ListView {
 			int itemAtTouchPosition = this.pointToPosition((int) event.getX(), (int) event.getY());
 			if (itemAtTouchPosition != -1 && mAdapter.getItem(itemAtTouchPosition).isSelected) {
 				watchForDrag = true;
+				Log.d("PEN", "watching for drag");
 			}
 		}
 	}

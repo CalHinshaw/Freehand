@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.HorizontalScrollView;
 
 public class FolderBrowserScrollView extends HorizontalScrollView {
@@ -39,8 +40,26 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 	}
 	
 	@Override
+	public boolean onInterceptTouchEvent(MotionEvent event) {
+		// First, pass the touch event to children to see if they want to do anything with a priority higher than scrolling
+		boolean runMyTouchStuff = true;
+		for (int i = 0; i < this.getChildCount(); i++) {
+			if (((FolderBrowser) this.getChildAt(i)).checkConsumeTouchEvent(event) == true) {
+				runMyTouchStuff = false;
+			}
+		}
+		
+		if (runMyTouchStuff == true) {
+			return super.onInterceptTouchEvent(event);
+		}
+		
+		return false;
+	}
+	
+	
+	@Override
 	public boolean onTouchEvent (MotionEvent event) {
-		boolean returnValue = super.onTouchEvent(event);
+		super.onTouchEvent(event);
 		
 		if ((event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) && mScrollIncrement > 0) {
 			
@@ -65,7 +84,7 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 		lastLastX = lastX;
 		lastX = event.getX();
 		
-		return returnValue;
+		return true;
 	}
 	
 	public void setScrollCounter(int newValue) {
