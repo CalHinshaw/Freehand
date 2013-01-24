@@ -314,8 +314,6 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, OnP
 			boundingRect.inset((int) (-1*currentPaintSize/zoomMultiplier) - 10, (int) (-1*currentPaintSize/zoomMultiplier) - 10);
 			myThread.invalidate(boundingRect);
 			
-			mNote.getBitmap();
-			
 			break;
 		}
 	}
