@@ -231,6 +231,7 @@ public class MainMenuPresenter {
 		int i = 0;
 		boolean inserted = false;
 		for (; i < openFolderViews.size(); i++) {
+			openFolderViews.get(i).updateChildren();
 			if(openFolderViews.get(i).folderView == parent) {
 				openFolderViews.add(i+=1, newContainer);
 				inserted = true;
@@ -335,6 +336,16 @@ public class MainMenuPresenter {
 		return returnValue;
 	}
 	
+	private boolean openFoldersContainsHierarchyItem (INoteHierarchyItem toTest) {
+		
+		for (FolderViewContainer c : openFolderViews) {
+			if (c.hierarchyItem.equals(toTest)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
 	
 	// ******************************************** Selection methods ****************************************
 	
@@ -387,7 +398,7 @@ public class MainMenuPresenter {
 			
 			ArrayList<HierarchyWrapper> toUpdateWith = new ArrayList<HierarchyWrapper>(children.size());
 			for (INoteHierarchyItem i : children) {
-				toUpdateWith.add(new HierarchyWrapper(i, selectedItems.contains(i)));
+				toUpdateWith.add(new HierarchyWrapper(i, selectedItems.contains(i), openFoldersContainsHierarchyItem(i)));
 			}
 			
 			folderView.updateContent(toUpdateWith);
@@ -408,8 +419,9 @@ public class MainMenuPresenter {
 		public final long lastModified;
 		public final boolean isFolder;
 		public final boolean isSelected;
+		public final boolean isOpen;
 		
-		public HierarchyWrapper (INoteHierarchyItem item, boolean selectionStatus) {
+		public HierarchyWrapper (INoteHierarchyItem item, boolean selectionStatus, boolean openStatus) {
 			hierarchyItem = item;
 			
 			name = item.getName();
@@ -417,6 +429,7 @@ public class MainMenuPresenter {
 			lastModified = item.getDateModified();
 			isFolder = item.isFolder();
 			isSelected = selectionStatus;
+			isOpen = openStatus;
 		}
 	}
 	

@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 class FolderAdapter extends ArrayAdapter<HierarchyWrapper> {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
+	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	
 	private Context mContext;
 	private int mRowViewResourceId;
@@ -62,6 +63,8 @@ class FolderAdapter extends ArrayAdapter<HierarchyWrapper> {
 			convertView.setBackgroundColor(Color.LTGRAY);
 		} else if (holder.viewItem.isSelected) {
 			convertView.setBackgroundColor(BLUE_HIGHLIGHT);
+		} else if (holder.viewItem.isOpen) {
+			convertView.setBackgroundColor(ORANGE_HIGHLIGHT);
 		} else {
 			convertView.setBackgroundColor(0x0000000000);
 		}
