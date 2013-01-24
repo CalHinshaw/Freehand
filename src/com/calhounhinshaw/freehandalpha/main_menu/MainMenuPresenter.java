@@ -241,8 +241,9 @@ public class MainMenuPresenter {
 		
 		if (inserted == true) {
 			i++;
-			for (; i < openFolderViews.size();) {
-				openFolderViews.remove(i);
+			
+			for (int j = openFolderViews.size()-1; j >= i; j--) {
+				openFolderViews.remove(j);
 			}
 		} else {
 			openFolderViews.clear();

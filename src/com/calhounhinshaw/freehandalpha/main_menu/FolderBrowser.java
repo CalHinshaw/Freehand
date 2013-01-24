@@ -54,13 +54,16 @@ public class FolderBrowser extends RelativeLayout {
 	}
 	
 	private void updateViews (List<View> newViews) {
+		Log.d("PEN", Integer.toString(newViews.size()));
+		
 		int i = 0;
 		for ( ; i<newViews.size(); i++) {
 			newViews.get(i).setId(i+1);
 			
 			if (newViews.get(i) == this.getChildAt(i) && this.getChildAt(i).getWidth() == childWidth) {
-				// intentionally empty
+				
 			} else if (i == 0) {
+				
 				RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(childWidth, LayoutParams.MATCH_PARENT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
 				params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
@@ -83,7 +86,7 @@ public class FolderBrowser extends RelativeLayout {
 			}
 		}
 		
-		for (; i < this.getChildCount(); i++) {
+		for (; i < this.getChildCount();) {
 			this.removeViewAt(i);
 		}
 	}
