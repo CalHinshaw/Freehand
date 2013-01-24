@@ -12,14 +12,12 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Shader;
-import android.view.GestureDetector;
-import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-public class FolderView extends ListView implements OnGestureListener {
+public class FolderView extends ListView {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	private static final int SOLID_BLUE_HIGHLIGHT = 0xFF0099CC;
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
@@ -54,8 +52,6 @@ public class FolderView extends ListView implements OnGestureListener {
 	private Paint mSelectedPaint;
 	
 	private Paint mDividerPaint;
-	
-	private final GestureDetector flingDetector;
 	
 	// Click listeners
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
@@ -105,8 +101,7 @@ public class FolderView extends ListView implements OnGestureListener {
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
 		
-		// Set flingDetector
-		flingDetector = new GestureDetector(this.getContext(), this, this.getHandler());
+
 		
 		mDividerPaint = new Paint();
 		mDividerPaint.setAntiAlias(true);
@@ -126,7 +121,6 @@ public class FolderView extends ListView implements OnGestureListener {
 		super.onTouchEvent(event);
 		selectedItemDragWatcher(event);
 		dragWatcher(event);
-		flingDetector.onTouchEvent(event);
 
 		mPresenter.setSelectedFolderView(this);
 		
@@ -364,17 +358,6 @@ public class FolderView extends ListView implements OnGestureListener {
 	}
 	
 	
-	
-	public void deleteSelectedItems () {
-		mPresenter.deleteWithConfirmation();
-	}
-	
-	public void shareSelected() {
-		mPresenter.shareSelectedItems();
-	}
-	
-	
-	
 	public void updateContent (List<HierarchyWrapper> newContent) {
 		mAdapter.updateContent(newContent);
 	}
@@ -383,26 +366,4 @@ public class FolderView extends ListView implements OnGestureListener {
 		selectedState = newSelectedState;
 		this.invalidate();
 	}
-
-	
-	
-	// Should move to FolderBrowser or it's HorizontalScrollView
-	
-	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-		if (Math.abs(e1.getY()-e2.getY()) <= this.getHeight()/12 && velocityX >= 3000) {
-			if (e1.getX()-e2.getX() <= -this.getWidth()/4) {
-				
-				return true;
-			}
-		}
-		
-		return false;
-	}
-
-	// Unneeded OnGestureDetector methods
-	public boolean onDown(MotionEvent arg0) { return false; }
-	public void onLongPress(MotionEvent e) { }
-	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) { return false; }
-	public void onShowPress(MotionEvent e) { }
-	public boolean onSingleTapUp(MotionEvent e) { return false; }
 }

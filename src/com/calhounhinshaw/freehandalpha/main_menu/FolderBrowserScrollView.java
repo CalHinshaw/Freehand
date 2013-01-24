@@ -1,7 +1,6 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -20,6 +19,8 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 	private boolean scrollInProgress = false;
 	
 	private int lastManualScroll = 0;
+	private float lastX = 0;
+	private float lastLastX = 0;
 
 	public FolderBrowserScrollView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -42,11 +43,27 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 		boolean returnValue = super.onTouchEvent(event);
 		
 		if ((event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) && mScrollIncrement > 0) {
-			int scrolled = Math.round(((float) lastManualScroll)/((float) mScrollIncrement));
-			this.smoothScrollTo(mScrollIncrement * scrolled, 0);
-			scrollCounter = scrolled+mIncrementsPerScreen;
+			
+			// Calling velocity, may need a time component to work well
+			float velocity = lastLastX - lastX;
+			
+			float position =  (float) (((double) lastManualScroll)/((double) mScrollIncrement)) - ((float) scrollCounter) + mIncrementsPerScreen;
+			int definateDeltaPosition = (int) position;
+			float positionDecisionValue = position - definateDeltaPosition;
+			
+			if (positionDecisionValue + velocity/10 <= -0.5) {
+				definateDeltaPosition -= 1;
+			} else if (positionDecisionValue + velocity/10 >= 0.5) {
+				definateDeltaPosition += 1;
+			}
+
 			oldScrollCounter = scrollCounter;
+			scrollCounter += definateDeltaPosition;
+			this.smoothScrollTo((scrollCounter - mIncrementsPerScreen) * mScrollIncrement, 0);
 		}
+		
+		lastLastX = lastX;
+		lastX = event.getX();
 		
 		return returnValue;
 	}
