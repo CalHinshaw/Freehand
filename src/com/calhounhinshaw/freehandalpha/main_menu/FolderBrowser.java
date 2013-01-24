@@ -5,8 +5,6 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -54,8 +52,6 @@ public class FolderBrowser extends RelativeLayout {
 	}
 	
 	private void updateViews (List<View> newViews) {
-		Log.d("PEN", Integer.toString(newViews.size()));
-		
 		int i = 0;
 		for ( ; i<newViews.size(); i++) {
 			newViews.get(i).setId(i+1);

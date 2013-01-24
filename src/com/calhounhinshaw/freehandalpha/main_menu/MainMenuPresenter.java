@@ -7,7 +7,6 @@ import java.util.TreeSet;
 
 import android.app.DialogFragment;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.View;
 
 import com.calhounhinshaw.freehandalpha.note_orginazion.IChangeListener;
@@ -175,7 +174,6 @@ public class MainMenuPresenter {
 		INoteHierarchyItem moveDest = this.getContainerFromView(moveTarget).hierarchyItem;
 		
 		if (moveDest == null) {
-			 Log.d("PEN", "moveTo called, moveDest null");
 			 return;
 		}
 
