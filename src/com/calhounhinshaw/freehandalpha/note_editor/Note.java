@@ -128,6 +128,10 @@ public class Note {
 		return mFile.getName();
 	}
 	
+	public synchronized INoteHierarchyItem getHierarchyItem () {
+		return mFile;
+	}
+	
 	
 	private synchronized List<Stroke> getImageListCopy() {
 		List<Stroke> tempList = new LinkedList<Stroke>();
@@ -282,10 +286,19 @@ public class Note {
 	}
 
 	
-	public synchronized List<Uri> getJpegUris (File jepgDestination) {
+	public synchronized List<Uri> getJpegUris (File jpegDestination) {
+		
+		// Try to make the parent directory, return null if can't
+		jpegDestination.mkdirs();
+		if (jpegDestination.isDirectory() == false) {
+			Log.d("PEN", "parent directory couldn't be created");
+			return null;
+		}
+		
 		
 		// The note doesn't have anything in it.
 		if (imageList == null || imageList.size() <= 0 || imageList.get(0) == null) {
+			Log.d("PEN", "Can't share an empty note!");
 			return null;
 		}
 					
@@ -299,9 +312,6 @@ public class Note {
 			long noteMemory = (long) (2 * (boundingRect.width()+1) * (boundingRect.height()+1));	// The size of the bitmap in bytes
 			int numJpegs = (int) ((noteMemory/maxMemory) + 1);
 			
-			Log.d("PEN", "maxMem == " + Long.toString(maxMemory) + "   noteMem == " + Long.toString(noteMemory));
-			
-			
 			ArrayList<Rect> rects = getSubRects(boundingRect, numJpegs);
 			Bitmap bmp = Bitmap.createBitmap(rects.get(0).width(), rects.get(0).height(), Bitmap.Config.RGB_565);
 			
@@ -311,9 +321,10 @@ public class Note {
 				Canvas c = new Canvas(bmp);
 				drawNote(c, r.left, r.top, 1);
 				
-				File target = new File(jepgDestination, this.getName() + " " + Integer.toString(i+1) + ".jpeg");
+				File target = new File(jpegDestination, this.getName() + " " + Integer.toString(i+1) + ".png");
+				FileOutputStream outStream = new FileOutputStream(target);
 				
-				bmp.compress(CompressFormat.JPEG, 90, new FileOutputStream(target));			
+				bmp.compress(CompressFormat.PNG, 100, outStream);
 				uris.add(Uri.fromFile(target));
 			}
 			
@@ -357,9 +368,6 @@ public class Note {
 	}
 	
 	private ArrayList<Rect> getSubRects (Rect boundingRect, int numJpegs) {
-		
-		Log.d("PEN", "numJpegs == " + Integer.toString(numJpegs));
-		
 		int hCells = 1;
 		int vCells = 1;
 		
@@ -386,8 +394,6 @@ public class Note {
 				subRects.add(toAdd);
 			}
 		}
-		
-		Log.d("PEN", Integer.toString(subRects.size()));
 		
 		return subRects;
 	}

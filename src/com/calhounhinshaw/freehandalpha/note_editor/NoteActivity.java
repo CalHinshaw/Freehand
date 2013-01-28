@@ -1,18 +1,18 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
-import java.io.File;
 import java.util.ArrayList;
-
 import com.calhounroberthinshaw.freehand.R;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
+import com.calhounhinshaw.freehandalpha.share.NoteSharer;
+import com.calhounhinshaw.freehandalpha.share.ProgressUpdateFunction;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
@@ -370,6 +370,7 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean onOptionsItemSelected (MenuItem item) {
 		switch (item.getItemId()) {
@@ -396,13 +397,34 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	   		 return true;
 	   		 
 		case R.id.shareItem:
-			ArrayList<Note> toShare = new ArrayList<Note>(1);
-			toShare.add(mNoteView.getNote());
+			ArrayList<INoteHierarchyItem> toShare = new ArrayList<INoteHierarchyItem>(1);
+			toShare.add(mNoteView.getNote().getHierarchyItem());
 
-//			if (Sharer.shareNotesAsJPEG(toShare, this) == false) {
-//				Toast.makeText(this, "This note is too big to share, sorry for the inconvenience. I'm adding support for bigger notes in the next update.", Toast.LENGTH_LONG).show();
-//			}
-			//TODO
+			final ProgressDialog progressDialog = new ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT);
+			progressDialog.setProgressNumberFormat(null);
+			progressDialog.setTitle("Preparing to Share");
+			progressDialog.setMessage("Large notes take longer to share, please be patient.");
+			progressDialog.setIndeterminate(false);
+			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			
+			ProgressUpdateFunction updater = new ProgressUpdateFunction() {
+				@Override
+				public void updateProgress(int percentageComplete) {
+					if (percentageComplete > 100) {
+						progressDialog.dismiss();
+					} else {
+						if (progressDialog.isShowing() == false) {
+							progressDialog.show();
+						}
+						
+						progressDialog.setProgress(percentageComplete);
+					}
+					
+				}
+			};
+			
+			new NoteSharer(updater, this).execute(toShare);
+
 			return true;
 	   		 
 	   	default:

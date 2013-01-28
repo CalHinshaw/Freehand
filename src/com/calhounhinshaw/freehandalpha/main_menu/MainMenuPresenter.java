@@ -1,18 +1,22 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 
 import android.app.DialogFragment;
-import android.content.Intent;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
+import android.util.Log;
 import android.view.View;
 
 import com.calhounhinshaw.freehandalpha.note_orginazion.IChangeListener;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 import com.calhounhinshaw.freehandalpha.share.NoteSharer;
+import com.calhounhinshaw.freehandalpha.share.ProgressUpdateFunction;
 
 /**
  * The presenter responsible for the MainMenu Activity.
@@ -30,6 +34,9 @@ public class MainMenuPresenter {
 	private ArrayList<FolderViewContainer> openFolderViews = new ArrayList<FolderViewContainer>(10);
 	private TreeSet<INoteHierarchyItem> selectedItems = new TreeSet<INoteHierarchyItem>();
 	private FolderViewContainer selectedContainer = null;
+	
+	@SuppressWarnings("rawtypes")
+	private AsyncTask shareTask = null;
 	
 	
 	public MainMenuPresenter (MainMenuActivity activity, FolderBrowser browser, INoteHierarchyItem root) {
@@ -303,6 +310,7 @@ public class MainMenuPresenter {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public void shareSelectedItems() {
 		TreeSet<INoteHierarchyItem> toShare = new TreeSet<INoteHierarchyItem>();
 		
@@ -314,13 +322,42 @@ public class MainMenuPresenter {
 			}
 		}
 		
-		new NoteSharer().execute(new ArrayList<INoteHierarchyItem>(toShare));
+		final ProgressDialog dialog = new ProgressDialog(mActivity, ProgressDialog.THEME_HOLO_LIGHT);
+		dialog.setProgressNumberFormat(null);
+		dialog.setTitle("Preparing to Share");
+		dialog.setMessage("Large notes take longer to share, please be patient.");
+		dialog.setCancelable(true);
+		dialog.setIndeterminate(false);
+		dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		dialog.setOnCancelListener(new OnCancelListener() {
+			public void onCancel(DialogInterface dialog) {
+				cancelShareTask();
+			}
+		});
 		
 		
-		//context.startActivity(Intent.createChooser(shareIntent, "Share notes with..."));
+		ProgressUpdateFunction updater = new ProgressUpdateFunction() {
+			@Override
+			public void updateProgress(int percentageComplete) {
+				Log.d("PEN", Integer.toString(percentageComplete) + "% done!");
+				
+				if (percentageComplete > 100) {
+					dialog.dismiss();
+				} else {
+					if (dialog.isShowing() == false) {
+						dialog.show();
+					}
+					
+					dialog.setProgress(percentageComplete);
+				}
+				
+			}
+		};
 		
+		List<INoteHierarchyItem> shareList = new ArrayList<INoteHierarchyItem>(toShare);
+		shareTask = new NoteSharer(updater, mActivity).execute(shareList);
 		
-		
+		this.clearSelections();
 	}
 	
 	/**
@@ -336,6 +373,13 @@ public class MainMenuPresenter {
 		}
 		
 		return returnValue;
+	}
+	
+	public void cancelShareTask () {
+		if (shareTask != null) {
+			// The running method still completes, which can take a while. It would be nice to stop that...
+			shareTask.cancel(true);
+		}
 	}
 	
 	private boolean openFoldersContainsHierarchyItem (INoteHierarchyItem toTest) {
