@@ -6,12 +6,13 @@ import java.util.List;
 import java.util.TreeSet;
 
 import android.app.DialogFragment;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import com.calhounhinshaw.freehandalpha.note_orginazion.IChangeListener;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
-import com.calhounhinshaw.freehandalpha.share.Sharer;
+import com.calhounhinshaw.freehandalpha.share.NoteSharer;
 
 /**
  * The presenter responsible for the MainMenu Activity.
@@ -303,7 +304,7 @@ public class MainMenuPresenter {
 	
 	
 	public void shareSelectedItems() {
-		LinkedList<INoteHierarchyItem> toShare = new LinkedList<INoteHierarchyItem>();
+		TreeSet<INoteHierarchyItem> toShare = new TreeSet<INoteHierarchyItem>();
 		
 		for (INoteHierarchyItem i : selectedItems) {
 			if (i.isFolder()) {
@@ -313,13 +314,13 @@ public class MainMenuPresenter {
 			}
 		}
 		
-		if (toShare.size() == 1) {
-			if (Sharer.shareNoteHierarchyItemsAsJPEG(toShare, mActivity) == false) {
-				mActivity.displayToast("This note is too big to share, sorry for the inconvenience. I'm adding support for bigger notes in the next update.");
-			}
-		} else {
-			mActivity.displayToast("You can only share one note at a time right now. Sharing multiple notes coming soon!");
-		}
+		new NoteSharer().execute(new ArrayList<INoteHierarchyItem>(toShare));
+		
+		
+		//context.startActivity(Intent.createChooser(shareIntent, "Share notes with..."));
+		
+		
+		
 	}
 	
 	/**

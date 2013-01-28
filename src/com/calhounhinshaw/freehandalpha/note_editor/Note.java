@@ -2,6 +2,9 @@ package com.calhounhinshaw.freehandalpha.note_editor;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +21,10 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Bitmap.CompressFormat;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
@@ -26,6 +32,8 @@ public class Note {
 //*********************************** Member Variables ********************************************
 	
 	private static final int SAVE_FORMAT_VERSION = 1;
+	
+	private static final float TARGET_RATIO = (float) (11/8.5);
 	
 	private List<Stroke> imageList = new LinkedList<Stroke>();
 	private List<Stroke> stableList;
@@ -272,55 +280,116 @@ public class Note {
 			}
 		}
 	}
+
 	
-	
-	/**
-	 * @return a bitmap representation of the note or null if the note is empty
-	 */
-	public synchronized Bitmap getBitmap () {
-		if (imageList != null && imageList.size() > 0 && imageList.get(0) != null) {
-			RectF boundingRect = imageList.get(0).getBoundingRect();
-			RectF r;
-			
-			for (Stroke s : imageList) {
-				r = s.getBoundingRect();
-				
-				if (r.left < boundingRect.left) {
-					boundingRect.left = r.left;
-				} else if (r.right > boundingRect.right) {
-					boundingRect.right = r.right;
-				}
-				
-				if (r.top < boundingRect.top) {
-					boundingRect.top = r.top;
-				} else if (r.bottom > boundingRect.bottom) {
-					boundingRect.bottom = r.bottom;
-				}
-			}
-			
-			// Give the image a border
-			boundingRect.left -= 100;
-			boundingRect.right += 100;
-			boundingRect.top -= 100;
-			boundingRect.bottom += 100;
-			
-			// Make sure drawing the bitmap won't crash us (temporary fix)
-			long mem = Runtime.getRuntime().maxMemory();
-			mem = mem/8;
-			if (boundingRect.width() * boundingRect.height() > mem) {
-				return null;
-			}
-			
-			
-			Bitmap toDrawOn = Bitmap.createBitmap((int) boundingRect.width(), (int) boundingRect.height(), Bitmap.Config.ARGB_8888);
-			
-			Canvas c = new Canvas(toDrawOn);
-			drawNote(c, boundingRect.left, boundingRect.top, 1);
-			
-			return toDrawOn;
-		} else {
+	public synchronized List<Uri> getJpegUris (File jepgDestination) {
+		
+		// The note doesn't have anything in it.
+		if (imageList == null || imageList.size() <= 0 || imageList.get(0) == null) {
 			return null;
 		}
+					
+		ArrayList<Uri> uris = null;
+		try {
+			uris = new ArrayList<Uri>();
+			Rect boundingRect = getBoundingRect();
+			
+			// Check to see how many bitmaps it will take to represent the note
+			long maxMemory = (long) (Runtime.getRuntime().maxMemory() * 0.8f);						// Eighty percent of the maximum continuous memory the VM will try to allocate in bytes
+			long noteMemory = (long) (2 * (boundingRect.width()+1) * (boundingRect.height()+1));	// The size of the bitmap in bytes
+			int numJpegs = (int) ((noteMemory/maxMemory) + 1);
+			
+			Log.d("PEN", "maxMem == " + Long.toString(maxMemory) + "   noteMem == " + Long.toString(noteMemory));
+			
+			
+			ArrayList<Rect> rects = getSubRects(boundingRect, numJpegs);
+			Bitmap bmp = Bitmap.createBitmap(rects.get(0).width(), rects.get(0).height(), Bitmap.Config.RGB_565);
+			
+			for (int i = 0; i < rects.size(); i++) {
+				Rect r = rects.get(i);
+				
+				Canvas c = new Canvas(bmp);
+				drawNote(c, r.left, r.top, 1);
+				
+				File target = new File(jepgDestination, this.getName() + " " + Integer.toString(i+1) + ".jpeg");
+				
+				bmp.compress(CompressFormat.JPEG, 90, new FileOutputStream(target));			
+				uris.add(Uri.fromFile(target));
+			}
+			
+		} catch (FileNotFoundException e) {
+			Log.d("PEN", "Share Failed: writing JPEGs to disk failed");
+			e.printStackTrace();
+		}
+		
+		return uris;
+	}
+	
+	
+	private Rect getBoundingRect () {
+		// Find the note's bounding rectangle
+		RectF boundingRect = imageList.get(0).getBoundingRect();
+		RectF r;
+		
+		for (Stroke s : imageList) {
+			r = s.getBoundingRect();
+			
+			if (r.left < boundingRect.left) {
+				boundingRect.left = r.left;
+			} else if (r.right > boundingRect.right) {
+				boundingRect.right = r.right;
+			}
+			
+			if (r.top < boundingRect.top) {
+				boundingRect.top = r.top;
+			} else if (r.bottom > boundingRect.bottom) {
+				boundingRect.bottom = r.bottom;
+			}
+		}
+		
+		// Give the image a border
+		boundingRect.left -= 50;
+		boundingRect.right += 50;
+		boundingRect.top -= 50;
+		boundingRect.bottom += 50;
+		
+		return new Rect((int) boundingRect.left, (int) boundingRect.top, (int) boundingRect.right, (int) boundingRect.bottom);
+	}
+	
+	private ArrayList<Rect> getSubRects (Rect boundingRect, int numJpegs) {
+		
+		Log.d("PEN", "numJpegs == " + Integer.toString(numJpegs));
+		
+		int hCells = 1;
+		int vCells = 1;
+		
+		while (hCells * vCells < numJpegs) {
+			float width = boundingRect.width()/(hCells);
+			float height = boundingRect.height()/(vCells);
+			float ratio = width/height;
+			
+			if (ratio > TARGET_RATIO) {
+				hCells += 1;
+			} else {
+				vCells += 1;
+			}
+		}
+		
+		int cellWidth = (int) (boundingRect.width()/hCells + 1);
+		int cellHeight = (int) (boundingRect.height()/vCells +1);
+		
+		ArrayList<Rect> subRects = new ArrayList<Rect>(hCells*vCells);
+		
+		for (int h = 1; h <= hCells; h++) {
+			for (int v = 1; v <= vCells; v++) {
+				Rect toAdd = new Rect((h-1)*cellWidth+boundingRect.left, (v-1)*cellHeight+boundingRect.top, h*cellWidth+boundingRect.left, v*cellHeight+boundingRect.top);
+				subRects.add(toAdd);
+			}
+		}
+		
+		Log.d("PEN", Integer.toString(subRects.size()));
+		
+		return subRects;
 	}
 	
 	

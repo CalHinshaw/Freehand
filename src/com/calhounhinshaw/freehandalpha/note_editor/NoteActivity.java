@@ -1,10 +1,10 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import com.calhounroberthinshaw.freehand.R;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
-import com.calhounhinshaw.freehandalpha.share.Sharer;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -12,6 +12,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
@@ -398,9 +399,10 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 			ArrayList<Note> toShare = new ArrayList<Note>(1);
 			toShare.add(mNoteView.getNote());
 
-			if (Sharer.shareNotesAsJPEG(toShare, this) == false) {
-				Toast.makeText(this, "This note is too big to share, sorry for the inconvenience. I'm adding support for bigger notes in the next update.", Toast.LENGTH_LONG).show();
-			}
+//			if (Sharer.shareNotesAsJPEG(toShare, this) == false) {
+//				Toast.makeText(this, "This note is too big to share, sorry for the inconvenience. I'm adding support for bigger notes in the next update.", Toast.LENGTH_LONG).show();
+//			}
+			//TODO
 			return true;
 	   		 
 	   	default:
