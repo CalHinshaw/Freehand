@@ -13,19 +13,16 @@ public class AlphaPatternDrawable extends Drawable {
 	
 	private int mRectangleSize = 10;
 
-	private Paint mPaint = new Paint();
 	private Paint mPaintWhite = new Paint();
 	private Paint mPaintGray = new Paint();
 
 	private int numRectanglesHorizontal;
 	private int numRectanglesVertical;
 
-	private Bitmap		mBitmap;
+	private Bitmap mBitmap;
 	
 	int height = 0;
 	int width = 0;
-	
-	
 	
 	public AlphaPatternDrawable(int rectangleSize) {
 		mRectangleSize = rectangleSize;
@@ -35,7 +32,7 @@ public class AlphaPatternDrawable extends Drawable {
 
 	@Override
 	public void draw(Canvas canvas) {
-		canvas.drawBitmap(mBitmap, null, getBounds(), mPaint);
+		canvas.drawBitmap(mBitmap, null, getBounds(), null);
 	}
 
 	@Override
@@ -68,11 +65,7 @@ public class AlphaPatternDrawable extends Drawable {
 	}
 	
 	/**
-	 * This will generate a bitmap with the pattern 
-	 * as big as the rectangle we were allow to draw on.
-	 * We do this to chache the bitmap so we don't need to
-	 * recreate it each time draw() is called since it 
-	 * takes a few milliseconds.
+	 * Generate the checker board bitmap and cache it.
 	 */
 	private void generatePatternBitmap(){
 		
@@ -101,10 +94,6 @@ public class AlphaPatternDrawable extends Drawable {
 			}
 
 			verticalStartWhite = !verticalStartWhite;
-
 		}
-		
 	}
-	
 }
-
