@@ -31,7 +31,9 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 	
 	private boolean hasCheckedState = false;
 	
-	
+	/**
+	 * Listens for the second click that signals this button to open it's pen creator menu.
+	 */
 	private OnClickListener mClickListener = new OnClickListener () {	
 		public void onClick(View v) {
 			if (hasCheckedState) {
@@ -41,32 +43,11 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 				mRequestListener.requestNewPen(PenRadioButton.this, color, size);
 			}
 		}
-
 	};
-	
-	
-	
-	
-	
-	public PenRadioButton (Context context) {
-		super(context);
-		
-		init();
-	}
 	
 	public PenRadioButton (Context context, AttributeSet attrs) {
 		super(context, attrs);
 		
-		init();
-	}
-	
-	public PenRadioButton (Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		
-		init();
-	}
-	
-	private void init() {
 		mBackground = new AlphaPatternDrawable((int) (5*getContext().getResources().getDisplayMetrics().density));
 		
 		samplePaint.setColor(color);
@@ -84,6 +65,19 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 		this.setOnClickListener(mClickListener);
 	}
 	
+	/**
+	 * Usually called after a PenRadioButton object is created to set it's initial pen configuration from the app's settings
+	 * 
+	 * @param newColor the new pen's color
+	 * @param newSize the new pen's size
+	 */
+	public void setPen (int newColor, float newSize) {
+		color = newColor;
+		size = newSize;
+		
+		samplePaint.setColor(color);
+	}
+	
 	@Override
 	protected void onSizeChanged (int w, int h, int oldW, int oldH) {
 		mBackground.setBounds(new Rect(0, 0, w, h));
@@ -93,8 +87,6 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 		
 		selectedRect = new Rect(3, 3, w-3, h-3);
 	}
-	
-	
 	
 	@Override
 	protected void onDraw (Canvas canvas) {
@@ -116,12 +108,7 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 		mRequestListener = newRequestListener;
 	}
 	
-	public void setPen (int newColor, float newSize) {
-		color = newColor;
-		size = newSize;
-		
-		samplePaint.setColor(color);
-	}
+	
 	
 	@Override
 	public void toggle() {

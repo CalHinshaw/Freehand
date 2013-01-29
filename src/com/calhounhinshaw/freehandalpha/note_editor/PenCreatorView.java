@@ -391,26 +391,21 @@ class PenCreatorView extends View{
 		float width = rect.width();
 		float height = rect.height();
 		
-		if (x < rect.left){
+		if (x < rect.left) {
 			x = 0f;
-		}
-		else if(x > rect.right){
+		} else if (x > rect.right) {
 			x = width;
-		}
-		else{
+		} else {
 			x = x - rect.left;
 		}
 				
-		if (y < rect.top){
+		if (y < rect.top) {
 			y = 0f;
-		}
-		else if(y > rect.bottom){
+		} else if (y > rect.bottom) {
 			y = height;
-		}
-		else{
+		} else {
 			y = y - rect.top;
 		}
-		
 			
 		result[0] = 1.f / width * x;
 		result[1] = 1.f - (1.f / height * y);
@@ -419,22 +414,15 @@ class PenCreatorView extends View{
 	}
 	
 	private float pointToHue(float y){		
-		
-		final RectF rect = mHueRect;
-		
-		float height = rect.height();
-		
-		if (y < rect.top){
+		if (y < mHueRect.top){
 			y = 0f;
-		}
-		else if(y > rect.bottom){
-			y = height;
-		}
-		else{
-			y = y - rect.top;
+		} else if (y > mHueRect.bottom) {
+			y = mHueRect.height();
+		} else {
+			y = y - mHueRect.top;
 		}
 		
-		return 360f - (y * 360f / height);
+		return 360f - (y * 360f / mHueRect.height());
 	}
 	
 	private int pointToAlpha(int x){
@@ -442,18 +430,15 @@ class PenCreatorView extends View{
 		final RectF rect = mAlphaRect;
 		final int width = (int) rect.width();
 		
-		if(x < rect.left){
+		if (x < rect.left) {
 			x = 0;
-		}
-		else if(x > rect.right){
+		} else if (x > rect.right) {
 			x = width;
-		}
-		else{
+		} else {
 			x = x - (int)rect.left;
 		}
 		
 		return 0xff - (x * 0xff / width);
-		
 	}
 	
 	private float pointToSize (float x) {
@@ -478,7 +463,7 @@ class PenCreatorView extends View{
 		
 		boolean update = false;
 				
-		switch(event.getAction()){
+		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			mStartTouchPoint = new Point((int)event.getX(), (int)event.getY());
 			update = moveTrackersIfNeeded(event);

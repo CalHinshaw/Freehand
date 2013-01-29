@@ -14,6 +14,7 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -212,6 +213,7 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, OnP
 //****************************** Touch Handeling Methods *********************************************
 
 	public boolean onTouchEvent (MotionEvent event) {
+				
 		if (mTouchState == WAITING && event.getPointerCount() == 1) {
 			mTouchState = WORKING;
 		} else if ((mTouchState == WAITING || mTouchState == WORKING) && event.getPointerCount() == 2) {
