@@ -478,6 +478,4 @@ public class MainMenuPresenter {
 			isOpen = openStatus;
 		}
 	}
-	
-	
 }

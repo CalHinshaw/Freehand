@@ -12,7 +12,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RadioButton;
 
-public class PenRadioButton extends RadioButton implements OnPenChangedListener {
+public class PenRadioButton extends RadioButton implements IPenChangedListener {
+	
+	private NoteEditorPresenter mPresenter;
+	private NoteActivity mActivity;
+	
 	private int color = Color.BLACK;
 	private float size = 6.5f;
 	private Drawable mBackground;
@@ -26,9 +30,6 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 	
 	private Paint pressedPaint = new Paint();
 	
-	private OnPenChangedListener mListener = null;
-	private NewPenRequestListener mRequestListener = null;
-	
 	private boolean hasCheckedState = false;
 	
 	/**
@@ -40,10 +41,11 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
 			
-				mRequestListener.requestNewPen(PenRadioButton.this, color, size);
+				mActivity.requestNewPen(PenRadioButton.this, color, size);
 			}
 		}
 	};
+	
 	
 	public PenRadioButton (Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -78,6 +80,14 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 		samplePaint.setColor(color);
 	}
 	
+	public void setPresenter (NoteEditorPresenter newPresenter) {
+		mPresenter = newPresenter;
+	}
+	
+	public void setActivity (NoteActivity newActivity) {
+		mActivity = newActivity;
+	}
+	
 	@Override
 	protected void onSizeChanged (int w, int h, int oldW, int oldH) {
 		mBackground.setBounds(new Rect(0, 0, w, h));
@@ -101,42 +111,22 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 			canvas.drawPaint(pressedPaint);
 		}
 	}
-
-	
-	public void setListeners (OnPenChangedListener newListener, NewPenRequestListener newRequestListener) {
-		mListener = newListener;
-		mRequestListener = newRequestListener;
-	}
-	
-	
 	
 	@Override
-	public void toggle() {
-		setChecked(true);
-		
-		if (mListener != null) {
-			mListener.onPenChanged(color, size);
+	public void setChecked (boolean checked) {
+		if (checked == true && mPresenter != null) {
+			mPresenter.setPen(color, size);
 		}
+		
+		super.setChecked(checked);
 	}
-	
 	
 	public void onPenChanged(int newColor, float newSize) {
 		setPen(newColor, newSize);
 		
-		toggle();
-		invalidate();
-		
-		if (mListener != null) {
-			mListener.onPenChanged(color, size);
+		if (mPresenter != null) {
+			mPresenter.setPen(color, size);
 		}
-	}
-	
-	public int getColor() {
-		return color;
-	}
-	
-	public float getSize() {
-		return size;
 	}
 	
 	public boolean onTouchEvent (MotionEvent e) {
@@ -147,5 +137,13 @@ public class PenRadioButton extends RadioButton implements OnPenChangedListener 
 		}
 		
 		return super.onTouchEvent(e);
+	}
+	
+	public int getColor() {
+		return color;
+	}
+	
+	public float getSize() {
+		return size;
 	}
 }

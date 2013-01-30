@@ -20,7 +20,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Toast;
 
-public class NoteView extends SurfaceView implements SurfaceHolder.Callback, OnPenChangedListener {
+public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPenChangedListener {
 	private NoteViewThread myThread;
 	
 	

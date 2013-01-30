@@ -19,11 +19,11 @@ import android.view.MotionEvent;
 import android.view.View;
 
 
-class PenCreatorView extends View{
+class PenCreatorView extends View {
 	
 	public static final float HEIGHT_SCALAR = 1.144f;
 	
-    	/**
+    /**
 	 * The width in pixels of the border 
 	 * surrounding all color panels.
 	 */
@@ -82,7 +82,7 @@ class PenCreatorView extends View{
 	
 	private Point	mStartTouchPoint = null;
 	
-	private OnPenChangedListener mListener = null;
+	private IPenChangedListener mListener = null;
 	
 	
 	public PenCreatorView(Context context){
@@ -98,7 +98,7 @@ class PenCreatorView extends View{
 		init();
 	}
 	
-	public PenCreatorView(Context context, OnPenChangedListener newListener, int newColor, float newSize) {
+	public PenCreatorView(Context context, IPenChangedListener newListener, int newColor, float newSize) {
 		this(context);
 		
 		mListener = newListener;
@@ -117,7 +117,7 @@ class PenCreatorView extends View{
 	
 	
 		
-	public void setOnPenChangedListener (OnPenChangedListener temp) {
+	public void setOnPenChangedListener (IPenChangedListener temp) {
 		mListener = temp;
 	}
 	
@@ -592,7 +592,7 @@ class PenCreatorView extends View{
 		
 	}
 	
-	public OnPenChangedListener getListener () {
+	public IPenChangedListener getListener () {
 		return mListener;
 	}
 }

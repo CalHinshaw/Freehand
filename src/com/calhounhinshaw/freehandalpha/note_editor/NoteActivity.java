@@ -24,41 +24,42 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-public class NoteActivity extends Activity implements NewPenRequestListener {
+public class NoteActivity extends Activity {
 	private RelativeLayout mLayout;
+	
+	private NoteEditorPresenter mPresenter;
 	
 	private NoteView mNoteView;
 	private PenCreatorView mPenView;
 	
 	private RadioGroup mRadioGroup;
-	private PenRadioButton penOne;
-	private PenRadioButton penTwo;
-	private PenRadioButton penThree;
-	private PenRadioButton penFour;
-	private PenRadioButton penFive;
-	
+	private RadioButton mEraseButton;
+	private RadioButton mSelectButton;
+	private ArrayList<PenRadioButton> penButtons = new ArrayList<PenRadioButton>(5);
 	
 	private Button undoButton;
 	private Button redoButton;
 	
-	
-	
-	
-	private OnClickListener eraseButtonListener = new OnClickListener () {
-		public void onClick (View v) {
-			mNoteView.onErase();
+	private CompoundButton.OnCheckedChangeListener eraseButtonListener = new CompoundButton.OnCheckedChangeListener() {
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			if (isChecked == true) {
+				mNoteView.onErase();
+			}
 		}
 	};
 	
-	private OnClickListener selectButtonListener = new OnClickListener () {
-		public void onClick (View v) {
-			mNoteView.onSelect();
+	private CompoundButton.OnCheckedChangeListener selectButtonListener = new CompoundButton.OnCheckedChangeListener() {
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			if (isChecked == true) {
+				mNoteView.onSelect();
+			}
 		}
 	};
 	
@@ -89,11 +90,11 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 		mNoteView = (NoteView) findViewById(R.id.note);
 		mRadioGroup = (RadioGroup) findViewById(R.id.penSelectorRadioGroup);
 		
-		RadioButton eraseButton = (RadioButton) findViewById(R.id.erase);
-		eraseButton.setOnClickListener(eraseButtonListener);
+		mEraseButton = (RadioButton) findViewById(R.id.erase);
+		mEraseButton.setOnCheckedChangeListener(eraseButtonListener);
 		
-		RadioButton selectButton = (RadioButton) findViewById(R.id.select);
-		selectButton.setOnClickListener(selectButtonListener);
+		mSelectButton = (RadioButton) findViewById(R.id.select);
+		mSelectButton.setOnCheckedChangeListener(selectButtonListener);
 		
 		undoButton = (Button) findViewById(R.id.undo);
 		undoButton.setOnClickListener(undoButtonListener);
@@ -101,6 +102,8 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 		redoButton = (Button) findViewById(R.id.redo);
 		redoButton.setOnClickListener(redoButtonListener);
 		
+		mPresenter = new NoteEditorPresenter();
+		mPresenter.setNoteView(mNoteView);
 		
 		// setting up the note view
 		final Object oldData = getLastNonConfigurationInstance();
@@ -121,30 +124,27 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 		
 		SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
 		
-		try {
-			if (mPrefs.getBoolean("firstRun", true)) {
-				setDefaultPrefs(mPrefs);
-			}
-			
-			initPenButtons(mPrefs);
-		} catch (Error e) {
-			// error trapping should be improved
+		if (initPenButtons(mPrefs) == false) {
 			setDefaultPrefs(mPrefs);
 			initPenButtons(mPrefs);
 		}
-
-		if (penOne.isChecked()) {
-			penOne.toggle();
-		} else if (penTwo.isChecked()) {
-			penTwo.toggle();
-		} else if (penThree.isChecked()) {
-			penThree.toggle();
-		} else if (penFour.isChecked()) {
-			penFour.toggle();
-		} else if (penFive.isChecked()) {
-			penFive.toggle();
+		
+		// Reselect the correct item from the radio group
+		if (mEraseButton.isChecked()) {
+			mEraseButton.setChecked(true);
+		} else if (mSelectButton.isChecked()){
+			mSelectButton.setChecked(true);
 		} else {
-			penOne.toggle();
+			for (PenRadioButton button : penButtons) {
+				if (button.isChecked()) {
+					button.setChecked(true);
+				}
+			}
+		}
+		
+		// If none of the radio buttons are selected check the first pen
+		if (mRadioGroup.getCheckedRadioButtonId() == -1) {
+			penButtons.get(0).setChecked(true);
 		}
 	}
 	
@@ -158,7 +158,6 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 	@Override
 	public void onPause() {
 		super.onPause();
-		
 		mNoteView.saveNote();
 		
 		SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
@@ -166,133 +165,72 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 		
 		editor.clear();
 		
-		editor.putBoolean("firstRun", false);
-		
-		editor.putInt("PenOneColor", penOne.getColor());
-		editor.putFloat("PenOneSize", penOne.getSize());
-		
-		editor.putInt("PenTwoColor", penTwo.getColor());
-		editor.putFloat("PenTwoSize", penTwo.getSize());
-		
-		editor.putInt("PenThreeColor", penThree.getColor());
-		editor.putFloat("PenThreeSize", penThree.getSize());
-		
-		editor.putInt("PenFourColor", penFour.getColor());
-		editor.putFloat("PenFourSize", penFour.getSize());
-		
-		editor.putInt("PenFiveColor", penFive.getColor());
-		editor.putFloat("PenFiveSize", penFive.getSize());
+		for (int i = 0; i < penButtons.size(); i++) {
+			editor.putInt("Pen" + Integer.toString(i) + "Color", penButtons.get(i).getColor());
+			editor.putFloat("Pen" + Integer.toString(i) + "Size", penButtons.get(i).getSize());
+		}
 		
 		editor.commit();
 	}
-	
-	
-	
-	
-	
 	
 	private void setDefaultPrefs(SharedPreferences mPrefs) {
-		SharedPreferences.Editor editor = mPrefs.edit();
+		Log.d("PEN", "Setting default preferences");
 		
+		SharedPreferences.Editor editor = mPrefs.edit();
 		editor.clear();
 		
-		editor.putInt("PenOneColor", Color.BLACK);
-		editor.putFloat("PenOneSize", 6.5f);
+		editor.putInt("Pen0Color", Color.BLACK);
+		editor.putFloat("Pen0Size", 6.5f);
 		
-		editor.putInt("PenTwoColor", Color.BLUE);
-		editor.putFloat("PenTwoSize", 6.5f);
+		editor.putInt("Pen1Color", Color.BLUE);
+		editor.putFloat("Pen1Size", 6.5f);
 		
-		editor.putInt("PenThreeColor", Color.RED);
-		editor.putFloat("PenThreeSize", 6.5f);
+		editor.putInt("Pen2Color", Color.RED);
+		editor.putFloat("Pen2Size", 6.5f);
 		
-		editor.putInt("PenFourColor", Color.GREEN);
-		editor.putFloat("PenFourSize", 6.5f);
+		editor.putInt("Pen3Color", Color.GREEN);
+		editor.putFloat("Pen3Size", 6.5f);
 		
-		editor.putInt("PenFiveColor", 0x70FFFF0A);
-		editor.putFloat("PenFiveSize", 25.0f);
+		editor.putInt("Pen4Color", 0x70FFFF0A);
+		editor.putFloat("Pen4Size", 25.0f);
 		
 		editor.commit();
 	}
 	
-	// Potential recursive problem here - if not an issue won't worry about it for now
-	private void initPenButtons (SharedPreferences mPrefs) {
-		
-		penOne = (PenRadioButton) findViewById(R.id.pen1Button);
-		penTwo = (PenRadioButton) findViewById(R.id.pen2Button);
-		penThree = (PenRadioButton) findViewById(R.id.pen3Button);
-		penFour = (PenRadioButton) findViewById(R.id.pen4Button);
-		penFive = (PenRadioButton) findViewById(R.id.pen5Button);
+	private boolean initPenButtons (SharedPreferences mPrefs) {
+		penButtons.clear();
+		penButtons.add(0,(PenRadioButton) findViewById(R.id.pen1Button));
+		penButtons.add(1,(PenRadioButton) findViewById(R.id.pen2Button));
+		penButtons.add(2,(PenRadioButton) findViewById(R.id.pen3Button));
+		penButtons.add(3,(PenRadioButton) findViewById(R.id.pen4Button));
+		penButtons.add(4,(PenRadioButton) findViewById(R.id.pen5Button));
 		
 		try {
 			int tempColor;
 			float tempSize;
 			
-			
-			// Pen button one
-			tempColor = mPrefs.getInt("PenOneColor", 0);
-			tempSize = mPrefs.getFloat("PenOneSize", 0f);
-			
-			if (tempColor == 0 || tempSize == 0) {
-				throw new Error();
+			for (int i = 0; i < penButtons.size(); i++) {
+				tempColor = mPrefs.getInt("Pen" + Integer.toString(i) + "Color", 0);
+				tempSize = mPrefs.getFloat("Pen" + Integer.toString(i) + "Size", 0f);
+				
+				if (tempColor == 0 || tempSize == 0) {
+					Log.d("PEN", "pen SharedPreferences empty");
+					return false;
+				}
+				
+				penButtons.get(i).setPresenter(mPresenter);
+				penButtons.get(i).setPen(tempColor, tempSize);
+				penButtons.get(i).setActivity(this);
 			}
 			
-			penOne.setPen(tempColor, tempSize);
-			penOne.setListeners(mNoteView, this);
-			
-			
-			//Pen button two
-			tempColor = mPrefs.getInt("PenTwoColor", 0);
-			tempSize = mPrefs.getFloat("PenTwoSize", 0f);
-			
-			if (tempColor == 0 || tempSize == 0) {
-				throw new Error();
-			}
-			
-			penTwo.setPen(tempColor, tempSize);
-			penTwo.setListeners(mNoteView, this);
-			
-			
-			//Pen button three
-			tempColor = mPrefs.getInt("PenThreeColor", 0);
-			tempSize = mPrefs.getFloat("PenThreeSize", 0f);
-			
-			if (tempColor == 0 || tempSize == 0) {
-				throw new Error();
-			}
-			
-			penThree.setPen(tempColor, tempSize);
-			penThree.setListeners(mNoteView, this);
-			
-			
-			//Pen button four
-			tempColor = mPrefs.getInt("PenFourColor", 0);
-			tempSize = mPrefs.getFloat("PenFourSize", 0f);
-			
-			if (tempColor == 0 || tempSize == 0) {
-				throw new Error();
-			}
-			
-			penFour.setPen(tempColor, tempSize);
-			penFour.setListeners(mNoteView, this);
-			
-			
-			//Pen button five
-			tempColor = mPrefs.getInt("PenFiveColor", 0);
-			tempSize = mPrefs.getFloat("PenFiveSize", 0f);
-			
-			if (tempColor == 0 || tempSize == 0) {
-				throw new Error();
-			}
-			
-			penFive.setPen(tempColor, tempSize);
-			penFive.setListeners(mNoteView, this);
-			
+			return true;
 		} catch (ClassCastException e) {
-			throw e;
+			Log.d("PEN", "Something is wrong with one of the PenRadioButton's SharedPreferences entries.");
+			return false;
 		}
 	}
 
-	public void requestNewPen(OnPenChangedListener listener, int startColor, float startSize) {
+	public void requestNewPen(IPenChangedListener listener, int startColor, float startSize) {
 		if (mPenView != null && listener == mPenView.getListener()) {
 			mLayout.removeView(mPenView);
 			mPenView = null;
@@ -310,23 +248,12 @@ public class NoteActivity extends Activity implements NewPenRequestListener {
 		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(newPenViewWidth, (int) (newPenViewWidth * PenCreatorView.HEIGHT_SCALAR));
 		params.addRule(RelativeLayout.BELOW, undoButton.getId());
 		
-		if (listener == penOne) {
-			int leftMargin = 0;
-			params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
-		} else if (listener == penTwo) {
-			int leftMargin = buttonWidth*1;
-			params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
-		} else if (listener == penThree) {
-			int leftMargin = buttonWidth*2;
-			params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
-		} else if (listener == penFour) {
-			int leftMargin = buttonWidth*3;
-			params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
-		} else if (listener == penFive) {
-			int leftMargin = buttonWidth*4;
-			params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
-		} else {
-			Log.d("PEN", "requestNewPen's listener must be one of the pen buttons. it is not. you fucked up.");
+		for (int i = 0; i < penButtons.size(); i++) {
+			if (listener == penButtons.get(i)) {
+				int leftMargin = i * buttonWidth;
+				params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
+				break;
+			}
 		}
 		
 		mPenView = new PenCreatorView(this, listener, startColor, startSize);
