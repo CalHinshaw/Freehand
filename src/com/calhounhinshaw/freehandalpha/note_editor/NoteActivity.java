@@ -50,7 +50,7 @@ public class NoteActivity extends Activity {
 	private CompoundButton.OnCheckedChangeListener eraseButtonListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
-				mNoteView.onErase();
+				mPresenter.setEraser();
 			}
 		}
 	};
@@ -58,20 +58,20 @@ public class NoteActivity extends Activity {
 	private CompoundButton.OnCheckedChangeListener selectButtonListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
-				mNoteView.onSelect();
+				mPresenter.setSelector();
 			}
 		}
 	};
 	
 	private OnClickListener undoButtonListener = new OnClickListener () {
 		public void onClick (View v) {
-			mNoteView.onUndo();
+			mPresenter.undo();
 		}
 	};
 	
 	private OnClickListener redoButtonListener = new OnClickListener () {
 		public void onClick (View v) {
-			mNoteView.onRedo();
+			mPresenter.redo();
 		}
 	};
 	
