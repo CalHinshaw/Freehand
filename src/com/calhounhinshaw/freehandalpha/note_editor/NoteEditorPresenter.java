@@ -4,6 +4,13 @@ class NoteEditorPresenter {
 	private NoteView mNoteView;
 	
 	
+	// The zoom scalar that all values going into and out of the note are multiplied by after translation by windowX and windowY
+	private float zoomMultiplier = 1;
+	
+	// The x and y values of the upper left corner of the screen relative to the note data
+	private float windowX = 0;
+	private float windowY = 0;
+	
 	public void setNoteView (NoteView newNoteView) {
 		mNoteView = newNoteView;
 	}
@@ -30,4 +37,8 @@ class NoteEditorPresenter {
 		mNoteView.onRedo();
 	}
 	
+	
+	public void panZoom (float dx, float dy, float dz, float x, float y) {
+		
+	} 
 }

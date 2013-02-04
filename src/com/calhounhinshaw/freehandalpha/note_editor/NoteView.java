@@ -18,12 +18,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.Toast;
 
-public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPenChangedListener {
-	private NoteViewThread myThread;
-	
-	
+public class NoteView extends View implements IPenChangedListener {
 	private static final int WAITING = 0;
 	private static final int WORKING = 1;
 	private static final int MOVING = 2;
@@ -40,7 +38,7 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 	private int currentPaintColor = Color.BLUE;
 	private float currentPaintSize = 4.5F;
 	
-	// The ammount values on the screen are multiplied by to keep the data in the note consistant with the ammount of zoom
+	// The amount values on the screen are multiplied by to keep the data in the note consistent with the amount of zoom
 	private float zoomMultiplier = 1;
 	
 	// The x and y values of the upper left corner of the screen
@@ -70,9 +68,6 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 	
 //************************************* Constructors ************************************************
 	private void init() {
-		getHolder().addCallback(this);
-		myThread = new NoteViewThread (getHolder(), this);
-		
 		mNote = new Note();
 	}
 
@@ -95,35 +90,6 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 	
 
 
-// ******************************** SurfaceHolder.Callback methods *****************************************
-	
-// Sets windowWidth and windowHeight to the new value.
-	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-		myThread.invalidate();
-	}
-	
-	// Starts myThread;
-	public void surfaceCreated(SurfaceHolder holder) {
-		myThread.invalidate();
-	}
-	
-	// Stops myThread in a safe way.
-	public void surfaceDestroyed(SurfaceHolder holder) {
-		boolean retry = true;
-		//myThread.setRunning(false);	// Tell thread to stop looping.
-		// Wait for thread to finish last pass (we know it's done when we can join it without throwing an exception).
-		while (retry) {
-		try {
-			myThread.join();
-			retry = false;
-		} catch (InterruptedException e) {
-			// This is fine, we will keep trying until it works.
-			}
-		}
-	}
-//-----------------------------------------------------------------------------------------
-
-
 	
 //******************************* Tool Changer Methods ************************************
 	
@@ -132,47 +98,45 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 		currentPaintSize = size;
 		mWorkState = DRAWING;
 		mNote.cancleSelection();
-		
-		myThread.invalidate();
-		
+
 		currentStroke = new Vector<PointF>();
+		
+		invalidate();
 	}
 	
 	public void onErase () {
 		mWorkState = ERASING;
 		mNote.cancleSelection();
-		myThread.invalidate();
+
 		currentStroke = new Vector<PointF>();
+		invalidate();
 	}
 	
 	public void onSelect() {
 		mWorkState = SELECTING;
 		mNote.cancleSelection();
-		myThread.invalidate();
 	}
 	
 	public void onUndo () {
 		if (mNote.isSelection()) {
 			mNote.cancleSelection();
-			myThread.invalidate();
 			currentStroke = new Vector<PointF>();
 		} else {
 			mNote.undo();
 		}
 		
-		myThread.invalidate();
+		invalidate();
 	}
 	
 	public void onRedo () {
 		if (mNote.isSelection()) {
 			mNote.cancleSelection();
-			myThread.invalidate();
 			currentStroke = new Vector<PointF>();
 		} else {
 			mNote.redo();
 		}
 		
-		myThread.invalidate();
+		invalidate();
 	}
 	
 	
@@ -180,12 +144,12 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 	public void openNote (INoteHierarchyItem note) {
 		mNote = new Note(note);
 		
-		myThread.invalidate();
+		invalidate();
 	}
 	
 	public void openNote (Note newNote) {
 		mNote = newNote;
-		myThread.invalidate();
+		invalidate();
 	}
 	
 	public void saveNote () {
@@ -287,7 +251,7 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 			
 			
 			boundingRect.inset((int) (-1*currentPaintSize/zoomMultiplier) - 10, (int) (-1*currentPaintSize/zoomMultiplier) - 10);
-			myThread.invalidate(boundingRect);
+			invalidate(boundingRect);
 			
 			
 			break;
@@ -313,7 +277,7 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 			mTouchState = WAITING;
 			
 			boundingRect.inset((int) (-1*currentPaintSize/zoomMultiplier) - 10, (int) (-1*currentPaintSize/zoomMultiplier) - 10);
-			myThread.invalidate(boundingRect);
+			invalidate(boundingRect);
 			
 			break;
 		}
@@ -343,7 +307,7 @@ public class NoteView extends SurfaceView implements SurfaceHolder.Callback, IPe
 			break;
 		}
 		
-		myThread.invalidate();
+		invalidate();
 	}
 	
 	private void select(MotionEvent event) {
@@ -376,7 +340,7 @@ Rect boundingRect = new Rect((int) lastScreenX, (int) lastScreenY, (int) lastScr
 			}
 			
 			boundingRect.inset((int) (-1*currentPaintSize/zoomMultiplier) - 10, (int) (-1*currentPaintSize/zoomMultiplier) - 10);
-			myThread.invalidate(boundingRect);
+			invalidate(boundingRect);
 			
 			
 			break;
@@ -396,7 +360,7 @@ Rect boundingRect = new Rect((int) lastScreenX, (int) lastScreenY, (int) lastScr
 
 			mTouchState = WAITING;
 			
-			myThread.invalidate();
+			invalidate();
 			
 			break;
 		}
@@ -431,7 +395,7 @@ Rect boundingRect = new Rect((int) lastScreenX, (int) lastScreenY, (int) lastScr
 			mNote.finalizeMove();
 		}
 		
-		myThread.invalidate();
+		invalidate();
 	}
 	
 	private void move (MotionEvent event) {
@@ -493,7 +457,7 @@ Rect boundingRect = new Rect((int) lastScreenX, (int) lastScreenY, (int) lastScr
 			mTouchState = WAITING;
 		}
 		
-		myThread.invalidate();
+		invalidate();
 	}
 	
 	private void initMove (MotionEvent event) {
@@ -574,78 +538,6 @@ Rect boundingRect = new Rect((int) lastScreenX, (int) lastScreenY, (int) lastScr
 	}
 
 //------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//*********************** STOP!!!! THREAD RUNNING THIS VIEW IS BELOW - DON'T FUCK WITH IT **********************
 	
-	// Thread that draws NoteView to it's surface holder.
-	private class NoteViewThread extends Thread {
-		private SurfaceHolder mySurfaceHolder;	// The surface holder we are drawing myNoteView to.
-		private NoteView myNoteView;			// The view that will run in this thread.
-		
-		private Canvas c = null;
-		
-		// CONSTRUCTOR: gets passed the SurfaceHolder and NoteView it will be running and
-		// 	stores them in class variables.
-		public NoteViewThread (SurfaceHolder tempSurfaceHolder, NoteView tempNoteView) {
-			mySurfaceHolder = tempSurfaceHolder;
-			myNoteView = tempNoteView;
-		}
-
-		public void invalidate() {
-			c = null;
-		
-			try {
-				c = mySurfaceHolder.lockCanvas(null);
-				synchronized (mySurfaceHolder) {
-					myNoteView.onDraw(c);	// Pass c to myNoteView to be drawn on
-				}
-			} finally {
-				if (c != null) {
-					mySurfaceHolder.unlockCanvasAndPost(c);
-				}
-			}
-		}
-		
-		public void invalidate(Rect r) {
-			c = null;
-			
-			try {
-				c = mySurfaceHolder.lockCanvas(r);
-				synchronized (mySurfaceHolder) {
-					myNoteView.onDraw(c);	// Pass c to myNoteView to be drawn on
-				}
-			} finally {
-				if (c != null) {
-					mySurfaceHolder.unlockCanvasAndPost(c);
-				}
-			}
-		}
-		 		
-	}
-//--------------------------------------------------------------------------------------------------------------
-
 }
 	

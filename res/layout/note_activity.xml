@@ -4,12 +4,14 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id = "@+id/note_activity_layout"
     android:layout_width = "fill_parent"
-    android:layout_height = "fill_parent" >
+    android:layout_height = "fill_parent" 
+    android:background="@color/dkgray" >"
     
     <Button
         android:id="@+id/undo"
         android:layout_width = "40dip"
         android:layout_height = "40dip"
+        android:layout_marginTop="5dip"
         android:background="@drawable/undo_button_selector" />
     
     <Button 
@@ -20,7 +22,7 @@
         android:layout_toRightOf="@id/undo"
         android:layout_marginRight="5dip"
         android:layout_marginLeft="5dip"
-        />
+        android:layout_marginTop="5dip" />
     
 
     
@@ -29,7 +31,8 @@
         android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/redo" >
+        android:layout_toRightOf="@id/redo"
+        android:layout_marginTop="5dip" >
         
         <RadioButton 
         	android:id="@+id/erase"
@@ -89,11 +92,7 @@
 	    android:layout_width = "fill_parent"
 	    android:layout_below = "@id/undo"
 	    android:layout_height="fill_parent"
-	    android:layout_marginTop="10dip"
+	    android:layout_marginTop="5dip"
 	    />
-	
-	
-	
-	
-	
+
 </RelativeLayout>
