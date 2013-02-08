@@ -105,6 +105,8 @@ public class NoteActivity extends Activity {
 		mPresenter = new NoteEditorPresenter();
 		mPresenter.setNoteView(mNoteView);
 		
+		mNoteView.setPresenter(mPresenter);
+		
 		// setting up the note view
 		final Object oldData = getLastNonConfigurationInstance();
 		if (oldData == null) {

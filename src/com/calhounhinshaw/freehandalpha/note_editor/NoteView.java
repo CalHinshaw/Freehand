@@ -1,6 +1,7 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
@@ -66,6 +67,14 @@ public class NoteView extends View implements IPenChangedListener {
 	private float lastScreenX = 0;
 	private float lastScreenY = 0;
 	
+	
+	private NoteEditorPresenter mPresenter;
+	
+	private LinkedList<Long> times = new LinkedList<Long>();
+	private LinkedList<Float> xs = new LinkedList<Float>();
+	private LinkedList<Float> ys = new LinkedList<Float>();
+	private LinkedList<Float> pressures = new LinkedList<Float>();
+	
 //************************************* Constructors ************************************************
 	private void init() {
 		mNote = new Note();
@@ -89,6 +98,10 @@ public class NoteView extends View implements IPenChangedListener {
 //---------------------------------------------------------------------------------------	
 	
 
+	public void setPresenter (NoteEditorPresenter newPresenter) {
+		mPresenter = newPresenter;
+	}
+	
 
 	
 //******************************* Tool Changer Methods ************************************
@@ -174,33 +187,92 @@ public class NoteView extends View implements IPenChangedListener {
 	}
 	
 
-//****************************** Touch Handeling Methods *********************************************
+//****************************** Touch Handling Methods *********************************************
 
+	@Override
 	public boolean onTouchEvent (MotionEvent event) {
-				
-		if (mTouchState == WAITING && event.getPointerCount() == 1) {
-			mTouchState = WORKING;
-		} else if ((mTouchState == WAITING || mTouchState == WORKING) && event.getPointerCount() == 2) {
-			mTouchState = MOVING;
+		
+//		if (event.getAction() == MotionEvent.ACTION_MOVE) {
+//			if (event.getHistorySize() == 0) {
+//				Log.d("PEN", "no history   " + Float.toString(event.getX()));
+//			} else {
+//				Log.d("PEN", Float.toString(event.getX()) + "     " + Float.toString(event.getHistoricalX(event.getHistorySize()-1)));
+//			}
+//			
+//		}
+		
+		
+		if (event.getPointerCount() == 1) {
+			times.clear();
+			xs.clear();
+			ys.clear();
+			pressures.clear();
+			
+			for(int i = 0; i < event.getHistorySize(); i++) {
+				times.add(event.getHistoricalEventTime(i));
+				xs.add(event.getHistoricalX(i));
+				ys.add(event.getHistoricalY(i));
+				pressures.add(event.getHistoricalPressure(i));
+			}
+			
+			times.add(event.getEventTime());
+			xs.add(event.getX());
+			ys.add(event.getY());
+			pressures.add(event.getPressure());
+			
+			mPresenter.penAction(times, xs, ys, pressures);
 		}
 		
-		if (mTouchState == WORKING) {
-			if (mWorkState == DRAWING)
-				draw(event);
-			else if (mWorkState == ERASING)
-				erase(event);
-			else if (mWorkState == SELECTING)
-				select(event);
-		} else if (mTouchState == MOVING) {
-			if (mWorkState == SELECTING && mNote.isSelection())
-				moveSelection(event);
-			else
-				move(event);
-		}
+		invalidate();
+				
+//		if (mTouchState == WAITING && event.getPointerCount() == 1) {
+//			mTouchState = WORKING;
+//		} else if ((mTouchState == WAITING || mTouchState == WORKING) && event.getPointerCount() == 2) {
+//			mTouchState = MOVING;
+//		}
+//		
+//		if (mTouchState == WORKING) {
+//			if (mWorkState == DRAWING)
+//				draw(event);
+//			else if (mWorkState == ERASING)
+//				erase(event);
+//			else if (mWorkState == SELECTING)
+//				select(event);
+//		} else if (mTouchState == MOVING) {
+//			if (mWorkState == SELECTING && mNote.isSelection())
+//				moveSelection(event);
+//			else
+//				move(event);
+//		}
 		
 		return true;
 	}
 	
+	
+	@Override
+	public boolean onHoverEvent (MotionEvent event) {
+		
+		times.clear();
+		xs.clear();
+		ys.clear();
+		pressures.clear();
+		
+		for(int i = 0; i < event.getHistorySize(); i++) {
+			times.add(event.getHistoricalEventTime(i));
+			xs.add(event.getHistoricalX(i));
+			ys.add(event.getHistoricalY(i));
+			pressures.add(-1.0f);
+		}
+		
+		times.add(event.getEventTime());
+		xs.add(event.getX());
+		ys.add(event.getY());
+		pressures.add(-1.0f);
+		
+		mPresenter.penAction(times, xs, ys, pressures);
+		
+		return true;
+	}
 	
 	private void draw (MotionEvent event) {
 		Rect boundingRect = new Rect((int) lastScreenX, (int) lastScreenY, (int) lastScreenX, (int) lastScreenY);;
@@ -477,15 +549,19 @@ Rect boundingRect = new Rect((int) lastScreenX, (int) lastScreenY, (int) lastScr
 //********************************* onDraw Methods *************************************************************
 	@Override
 	public void onDraw (Canvas c) {
-		mNote.drawNote(c, windowX, windowY, 1/zoomMultiplier);
+//		mNote.drawNote(c, windowX, windowY, 1/zoomMultiplier);
+//		
+//		if (mWorkState != ERASING) {
+//			drawCurrentActivity(c);
+//		}
+//		
+//		while (toAdd.size()>0) {
+//			mNote.addDrawingStroke(currentPaintColor, currentPaintSize, toAdd.poll());
+//		}
 		
-		if (mWorkState != ERASING) {
-			drawCurrentActivity(c);
-		}
 		
-		while (toAdd.size()>0) {
-			mNote.addDrawingStroke(currentPaintColor, currentPaintSize, toAdd.poll());
-		}
+		mPresenter.drawNote(c);
+		
 	}
 	
 	private void drawCurrentActivity (Canvas c) {
