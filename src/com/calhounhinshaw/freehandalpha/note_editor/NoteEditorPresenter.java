@@ -84,28 +84,51 @@ class NoteEditorPresenter {
 			rawPoints.clear();
 			rawPressure.clear();
 		} else {
+			
+			// Add new pen data to raw lists
 			for (int i = 0; i < times.size(); i++) {
 				rawPoints.addLast(new Point(xs.get(i), ys.get(i)));
 				rawPressure.add(pressures.get(i));
 			}
 			
+			// Construct the polygon that represents the stroke.
 			if (rawPoints.size() >= 2) {
 				currentPolygon.clear();
 				
-				Point oldPoint = rawPoints.get(0);
-				Float oldPressure = rawPressure.get(0);
-				
-				for (int i = 1; i < rawPoints.size(); i++) {					
-					Point[] toAdd = getLines(penSize*oldPressure, penSize*rawPressure.get(i), oldPoint, rawPoints.get(i));
+				for (int i = 1; i < rawPoints.size(); i++) {
+					Point[] toAdd = getLines(penSize*rawPressure.get(i-1), penSize*rawPressure.get(i), rawPoints.get(i-1), rawPoints.get(i));
 					
 					if (toAdd != null) {
-						currentPolygon.addFirst(toAdd[1]);
-						currentPolygon.addFirst(toAdd[0]);
-						currentPolygon.addLast(toAdd[2]);
-						currentPolygon.addLast(toAdd[3]);
 						
-						oldPoint = rawPoints.get(i);
-						oldPressure = rawPressure.get(i);
+						// Only remove intersections if the line being added isn't the first
+						if (currentPolygon.size() >= 4) {
+							Point leftIntersection = calcIntersection(currentPolygon.get(0), currentPolygon.get(1), toAdd[0], toAdd[1]);
+							Point rightIntersection = calcIntersection(currentPolygon.get(currentPolygon.size()-2), currentPolygon.get(currentPolygon.size()-1), toAdd[2], toAdd[3]);
+							
+							if (leftIntersection == null) {
+								currentPolygon.addFirst(toAdd[0]);
+								currentPolygon.addFirst(toAdd[1]);
+							} else {
+								currentPolygon.removeFirst();
+								currentPolygon.addFirst(leftIntersection);
+								currentPolygon.addFirst(toAdd[1]);
+							}
+							
+							if (rightIntersection == null) {
+								currentPolygon.addLast(toAdd[2]);
+								currentPolygon.addLast(toAdd[3]);
+							} else {
+								currentPolygon.removeLast();
+								currentPolygon.addLast(rightIntersection);
+								currentPolygon.addLast(toAdd[3]);
+							}
+							
+						} else {
+							currentPolygon.addFirst(toAdd[0]);
+							currentPolygon.addFirst(toAdd[1]);
+							currentPolygon.addLast(toAdd[2]);
+							currentPolygon.addLast(toAdd[3]);
+						}
 					}
 				}
 			}
@@ -122,7 +145,7 @@ class NoteEditorPresenter {
 	 * 
 	 * @return a 4 element array of points - the first two are the left-handed line (think Greene's theorem). If the points are equal returns null.
 	 */
-	private Point[] getLines (float w1, float w2, Point p1, Point p2) {
+	private static Point[] getLines (float w1, float w2, Point p1, Point p2) {
 		
 		// if the pen didn't move return null
 		if (p1.x == p2.x && p1.y == p2.y) {
@@ -196,10 +219,32 @@ class NoteEditorPresenter {
 		return lines;
 	}
 	
+	/**
+	 * Calculates the intersection of the two line segments. The line segments are considered open.
+	 * 
+	 * @return The point of intersection if it exists, null otherwise.
+	 */
+	private static Point calcIntersection (Point a, Point b, Point c, Point d) {
+
+		// Test using floating point calculations
+		float denominator = (d.y-c.y)*(b.x-a.x)-(d.x-c.x)*(b.y-a.y);
+
+		if (Math.abs(denominator) < 0.00001) {
+			return null;
+		}
+
+		float Ta = ((d.x-c.x)*(a.y-c.y)-(d.y-c.y)*(a.x-c.x))/denominator;
+		float Tc = ((b.x-a.x)*(a.y-c.y)-(b.y-a.y)*(a.x-c.x))/denominator;
+
+		if (Ta < 1 && Ta > 0 && Tc < 1 && Tc > 0) {
+			return new Point(a.x + Ta*(b.x - a.x), a.y + Ta*(b.y - a.y));
+		} else {
+			return null;
+		}
+	}
 	
-	private boolean segmentIntersectionTest (Point a, Point b, Point c, Point d) {
-		
-		// Exclusion criteria
+	// If intersections are rare only calling calcIntersection if intersectionPossible returns true speeds collision detection.
+	private static boolean intersectionPossible (Point a, Point b, Point c, Point d) {
 		boolean aHigher = (a.y < b.y);
 		boolean aLefter = (a.x < b.x);
 		boolean cHigher = (c.y < d.y);
@@ -207,26 +252,10 @@ class NoteEditorPresenter {
 		
 		if (  !(  ( (aHigher ? a.y : b.y) <= (cHigher ? d.y : c.y) ) && ( (aHigher ? b.y : a.y) >= (cHigher ? c.y : d.y) )  )  ) {
 			return false;
-		}
-		
-		if (  !(  ( (cLefter ? c.x : d.x) <= (aLefter ? b.x : a.x) ) && ( (cLefter ? d.x : c.x) >= (aLefter ? a.x : b.x) )  )  ) {
+		} else if (  !(  ( (cLefter ? c.x : d.x) <= (aLefter ? b.x : a.x) ) && ( (cLefter ? d.x : c.x) >= (aLefter ? a.x : b.x) )  )  ) {
 			return false;
-		}
-		
-		// Test using floating point calculations
-		float denominator = (d.y-c.y)*(b.x-a.x)-(d.x-c.x)*(b.y-a.y);
-
-		if (denominator == 0) {
-			denominator+= 0.001f;
-		}
-
-		float Ta = ((d.x-c.x)*(a.y-c.y)-(d.y-c.y)*(a.x-c.x))/denominator;
-		float Tb = ((b.x-a.x)*(a.y-c.y)-(b.y-a.y)*(a.x-c.x))/denominator;
-
-		if (Ta <= 1 && Ta >= 0 && Tb <= 1 && Tb >= 0) {
-			return true;
 		} else {
-			return false;
+			return true;
 		}
 	}
 	
@@ -257,7 +286,7 @@ class NoteEditorPresenter {
 		}
 		
 		for (Point p : debugDots) {
-			c.drawCircle(p.x, p.y, 1, debugPaint);
+			c.drawCircle(p.x, p.y, 5, debugPaint);
 		}
 	}
 	
