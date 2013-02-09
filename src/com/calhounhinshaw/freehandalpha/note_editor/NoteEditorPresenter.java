@@ -5,8 +5,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.util.Log;
 
 class NoteEditorPresenter {
@@ -32,6 +34,9 @@ class NoteEditorPresenter {
 	
 	private int penColor = 0xff000000;
 	private float penSize = 6.5f;
+	
+	private LinkedList<Point> debugDots = new LinkedList<Point>();
+	private Paint debugPaint = new Paint(Color.RED);
 	
 	
 	public NoteEditorPresenter () {
@@ -90,33 +95,14 @@ class NoteEditorPresenter {
 				Point oldPoint = rawPoints.get(0);
 				Float oldPressure = rawPressure.get(0);
 				
-				// True if the last movement was in the positive X direction
-				boolean lastXPositive = true;
-				boolean topFirst = true;
-				
-				for (int i = 1; i < rawPoints.size(); i++) {
-					
-					// Check to see if the direction of the stroke in X changed
-					if ((rawPoints.get(i).x - oldPoint.x > 0 && lastXPositive == false) || (rawPoints.get(i).x - oldPoint.x < 0 && lastXPositive == true)) {
-						topFirst = !topFirst;
-						lastXPositive = rawPoints.get(i).x - oldPoint.x > 0;
-					}
-					
+				for (int i = 1; i < rawPoints.size(); i++) {					
 					Point[] toAdd = getLines(penSize*oldPressure, penSize*rawPressure.get(i), oldPoint, rawPoints.get(i));
 					
 					if (toAdd != null) {
-						if (topFirst == true) {
-							currentPolygon.addFirst(toAdd[1]);
-							currentPolygon.addFirst(toAdd[0]);
-							currentPolygon.addLast(toAdd[2]);
-							currentPolygon.addLast(toAdd[3]);
-						} else {
-							currentPolygon.addLast(toAdd[1]);
-							currentPolygon.addLast(toAdd[0]);
-							currentPolygon.addFirst(toAdd[2]);
-							currentPolygon.addFirst(toAdd[3]);
-						}
-						
+						currentPolygon.addFirst(toAdd[1]);
+						currentPolygon.addFirst(toAdd[0]);
+						currentPolygon.addLast(toAdd[2]);
+						currentPolygon.addLast(toAdd[3]);
 						
 						oldPoint = rawPoints.get(i);
 						oldPressure = rawPressure.get(i);
@@ -134,7 +120,7 @@ class NoteEditorPresenter {
 	 * @param p1 the first point of the line segment
 	 * @param p2 the second point of the line segment
 	 * 
-	 * @return a 4 element array of points - the first two are the upper line and the second two are the lower. If the points are equal returns null.
+	 * @return a 4 element array of points - the first two are the left-handed line (think Greene's theorem). If the points are equal returns null.
 	 */
 	private Point[] getLines (float w1, float w2, Point p1, Point p2) {
 		
@@ -163,21 +149,85 @@ class NoteEditorPresenter {
 		Point p2a = new Point(p2.x + scalar2*perpVect.x, p2.y + scalar2*perpVect.y);
 		Point p2b = new Point(p2.x - scalar2*perpVect.x, p2.y - scalar2*perpVect.y);
 		
-		// Add the points to lines in order
+		// Put the left handed points first in the array
 		Point[] lines = new Point[4];
-		if (p1a.y >= p1.y) {
+		int aOnLeft = 0;
+		if (p1.y < p2.y) {				// Up
+			if (p1a.x < p1.x) {			// a on left
+				aOnLeft = 1;
+			} else {					// b on left
+				aOnLeft = -1;
+			}
+		} else if (p1.y > p2.y) {		// Down
+			if (p1a.x > p1.x) {			// a on left
+				aOnLeft = 1;
+			} else {					// b on left
+				aOnLeft = -1;
+			}
+		} else if (p1.x < p2.x) {		// Straight right
+			if (p1a.y > p1.y) {
+				aOnLeft = 1;
+			} else {					// b on left
+				aOnLeft = -1;
+			}
+		} else if (p1.x > p2.x) {		// Straight left
+			if (p1a.y < p1.y) {
+				aOnLeft = 1;
+			} else {					// b on left
+				aOnLeft = -1;
+			}
+		}
+		
+		if (aOnLeft > 0) {			// a on left
 			lines[0] = p1a;
 			lines[1] = p2a;
 			lines[2] = p1b;
 			lines[3] = p2b;
-		} else {
+		} else if (aOnLeft < 0){					// b on left
 			lines[0] = p1b;
 			lines[1] = p2b;
 			lines[2] = p1a;
 			lines[3] = p2a;
+		} else {
+			Log.d("PEN", "Couldn't determine which segment was on the left handed side");
+			return null;
 		}
 
 		return lines;
+	}
+	
+	
+	private boolean segmentIntersectionTest (Point a, Point b, Point c, Point d) {
+		
+		// Exclusion criteria
+		boolean aHigher = (a.y < b.y);
+		boolean aLefter = (a.x < b.x);
+		boolean cHigher = (c.y < d.y);
+		boolean cLefter = (c.x < d.x);
+		
+		if (  !(  ( (aHigher ? a.y : b.y) <= (cHigher ? d.y : c.y) ) && ( (aHigher ? b.y : a.y) >= (cHigher ? c.y : d.y) )  )  ) {
+			return false;
+		}
+		
+		if (  !(  ( (cLefter ? c.x : d.x) <= (aLefter ? b.x : a.x) ) && ( (cLefter ? d.x : c.x) >= (aLefter ? a.x : b.x) )  )  ) {
+			return false;
+		}
+		
+		// Test using floating point calculations
+		float denominator = (d.y-c.y)*(b.x-a.x)-(d.x-c.x)*(b.y-a.y);
+
+		if (denominator == 0) {
+			denominator+= 0.001f;
+		}
+
+		float Ta = ((d.x-c.x)*(a.y-c.y)-(d.y-c.y)*(a.x-c.x))/denominator;
+		float Tb = ((b.x-a.x)*(a.y-c.y)-(b.y-a.y)*(a.x-c.x))/denominator;
+
+		if (Ta <= 1 && Ta >= 0 && Tb <= 1 && Tb >= 0) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	
@@ -204,6 +254,10 @@ class NoteEditorPresenter {
 			currentPath.lineTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
 			
 			c.drawPath(currentPath, currentPaint);
+		}
+		
+		for (Point p : debugDots) {
+			c.drawCircle(p.x, p.y, 1, debugPaint);
 		}
 	}
 	

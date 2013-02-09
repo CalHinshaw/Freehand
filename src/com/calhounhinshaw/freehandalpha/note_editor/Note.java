@@ -950,7 +950,7 @@ public class Note {
 		
 		
 		
-		// There are severe performance issues, so this is as optomized (unreadible) as possible
+		// There are severe performance issues, so this is as optimized (unreadable) as possible
 		private boolean isSegmentIntersection (PointF a, PointF b, PointF c, PointF d) {
 			boolean aHigher = (a.y < b.y);
 			boolean aLefter = (a.x < b.x);
