@@ -108,112 +108,71 @@ public class NoteView extends View {
 	
 	private boolean canDraw = true;
 	
-	
 
-	private void initMoveVars (MotionEvent e) {
-		previousX = (e.getX(0)+e.getX(1)) / 2;
-		previousY = (e.getY(0)+e.getY(1)) / 2;
-		previousDistance = distance(e.getX(0), e.getY(0), e.getX(1), e.getY(1));
-	}
-	
-	
-	
-	
 	@Override
 	public boolean onTouchEvent (MotionEvent event) {
 		
-		switch (event.getActionMasked()) {
-			case MotionEvent.ACTION_POINTER_UP: {
-				if (event.getPointerCount() >= 2) {
-					initMoveVars(event);
-				} else {
-					previousX = Float.NaN;
-					previousY = Float.NaN;
-					previousDistance = Float.NaN;
-				}
-				
-				break;
-			}
-			
-			case MotionEvent.ACTION_CANCEL:
-			case MotionEvent.ACTION_UP: {
-				previousX = Float.NaN;
-				previousY = Float.NaN;
-				previousDistance = Float.NaN;
-				
-				break;
-			}
+		// If the user has lifted a finger invalidate all of the pan/zoom variables
+		if (event.getAction() == MotionEvent.ACTION_POINTER_UP || event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
+			previousX = Float.NaN;
+			previousY = Float.NaN;
+			previousDistance = Float.NaN;
 		}
 		
-		// Pen Event
 		if (event.getPointerCount() == 1 && canDraw == true) {
-			times.clear();
-			xs.clear();
-			ys.clear();
-			pressures.clear();
-			
-			for(int i = 0; i < event.getHistorySize(); i++) {
-				times.add(event.getHistoricalEventTime(i));
-				xs.add(event.getHistoricalX(i));
-				ys.add(event.getHistoricalY(i));
-				pressures.add(event.getHistoricalPressure(i));
-			}
-			
-			times.add(event.getEventTime());
-			xs.add(event.getX());
-			ys.add(event.getY());
-			pressures.add(event.getPressure());
-			
-			mPresenter.penAction(times, xs, ys, pressures);
-			
-		// Pan/Zoom event
+			processDraw(event);
 		} else if (event.getPointerCount() >= 2) {
-			
-			float currentDistance = distance(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
-			float currentX = (event.getX(0)+event.getX(1)) / 2;
-			float currentY = (event.getY(0)+event.getY(1)) / 2;
-			
-			if (Float.isNaN(previousX) == false && Float.isNaN(previousY) == false && Float.isNaN(previousDistance) == false) {
-				Log.d("PEN", "currentX: " + Float.toString(currentX) + "  currentY: " + Float.toString(currentY) + "  currentDistance: " + Float.toString(currentDistance));
-				Log.d("PEN", "previousX: " + Float.toString(previousX) + "  previousY: " + Float.toString(previousY) + "  previousDistance: " + Float.toString(previousDistance));
-				
-				float dZoom = currentDistance / previousDistance;
-				
-				float dx = previousX - currentX/dZoom;
-				float dy = previousY - currentY/dZoom;
-				
-				mPresenter.panZoomAction(currentX, currentY, dx, dy, dZoom);
-			}
-			
-			previousDistance = currentDistance;
-			previousX = currentX;
-			previousY = currentY;
+			canDraw = false;
+			processPanZoom(event);
 		}
 		
-		// Store and update all of the information needed to calculate the deltas for panning and zooming
-		switch (event.getActionMasked()) {			
-			case MotionEvent.ACTION_POINTER_DOWN: {
-				if (event.getPointerCount() == 1) {
-					initMoveVars(event);
-				}
-				
-				canDraw = false;
-				break;
-			}
-			
-			case MotionEvent.ACTION_CANCEL:
-			case MotionEvent.ACTION_UP: {
-				previousX = Float.NaN;
-				previousY = Float.NaN;
-				previousDistance = Float.NaN;
-				canDraw = true;
-				
-				break;
-			}
+		// If a pan/zoom action has ended make sure the user can draw during the next touch event
+		if (event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
+			canDraw = true;
 		}
 		
 		invalidate();
 		return true;
+	}
+	
+	private void processDraw (MotionEvent event) {
+		times.clear();
+		xs.clear();
+		ys.clear();
+		pressures.clear();
+		
+		for(int i = 0; i < event.getHistorySize(); i++) {
+			times.add(event.getHistoricalEventTime(i));
+			xs.add(event.getHistoricalX(i));
+			ys.add(event.getHistoricalY(i));
+			pressures.add(event.getHistoricalPressure(i));
+		}
+		
+		times.add(event.getEventTime());
+		xs.add(event.getX());
+		ys.add(event.getY());
+		pressures.add(event.getPressure());
+		
+		mPresenter.penAction(times, xs, ys, pressures);
+	}
+	
+	private void processPanZoom (MotionEvent event) {
+		float currentDistance = distance(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
+		float currentX = (event.getX(0)+event.getX(1)) / 2;
+		float currentY = (event.getY(0)+event.getY(1)) / 2;
+		
+		if (Float.isNaN(previousX) == false && Float.isNaN(previousY) == false && Float.isNaN(previousDistance) == false) {
+			float dZoom = currentDistance / previousDistance;
+			
+			float dx = previousX - currentX/dZoom;
+			float dy = previousY - currentY/dZoom;
+			
+			mPresenter.panZoomAction(currentX, currentY, dx, dy, dZoom);
+		}
+		
+		previousDistance = currentDistance;
+		previousX = currentX;
+		previousY = currentY;
 	}
 	
 	

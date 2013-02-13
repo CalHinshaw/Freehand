@@ -275,12 +275,8 @@ class NoteEditorPresenter {
 	
 	
 	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom) {
-		//Log.d("PEN", "dx: " + Float.toString(screenDx) + "  dy: " + Float.toString(screenDy) + "  dZoom: " + Float.toString(dZoom));
-		
-		
 		windowX += screenDx/zoomMultiplier;
 		windowY += screenDy/zoomMultiplier;
-		
 		zoomMultiplier *= dZoom;
 	}
 	
