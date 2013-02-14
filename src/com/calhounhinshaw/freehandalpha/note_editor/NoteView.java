@@ -164,8 +164,8 @@ public class NoteView extends View {
 		if (Float.isNaN(previousX) == false && Float.isNaN(previousY) == false && Float.isNaN(previousDistance) == false) {
 			float dZoom = currentDistance / previousDistance;
 			
-			float dx = previousX - currentX/dZoom;
-			float dy = previousY - currentY/dZoom;
+			float dx = currentX/dZoom - previousX;
+			float dy = currentY/dZoom - previousY;
 			
 			mPresenter.panZoomAction(currentX, currentY, dx, dy, dZoom);
 		}

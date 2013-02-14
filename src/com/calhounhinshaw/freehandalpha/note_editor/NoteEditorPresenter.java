@@ -8,9 +8,9 @@ import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PointF;
 import android.util.Log;
 
 class NoteEditorPresenter {
@@ -39,6 +39,10 @@ class NoteEditorPresenter {
 	
 	private LinkedList<Point> debugDots = new LinkedList<Point>();
 	private Paint debugPaint = new Paint(Color.RED);
+	
+	private Matrix transformMatrix = new Matrix();
+	
+	private float[] matVals = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 	
 	
 	public NoteEditorPresenter () {
@@ -101,7 +105,7 @@ class NoteEditorPresenter {
 			
 			// Add new pen data to raw lists
 			for (int i = 0; i < times.size(); i++) {
-				rawPoints.addLast(new Point(windowX + zoomMultiplier*xs.get(i), windowY + zoomMultiplier*ys.get(i)));
+				rawPoints.addLast(new Point(windowX + xs.get(i)/zoomMultiplier, windowY + ys.get(i)/zoomMultiplier));
 				rawPressure.add(pressures.get(i));
 			}
 			
@@ -278,9 +282,19 @@ class NoteEditorPresenter {
 		windowX += screenDx/zoomMultiplier;
 		windowY += screenDy/zoomMultiplier;
 		zoomMultiplier *= dZoom;
+		
+		matVals[0] = zoomMultiplier;
+		matVals[2] = windowX*zoomMultiplier;
+		matVals[4] = zoomMultiplier;
+		matVals[5] = windowY*zoomMultiplier;
+		
+		transformMatrix.setValues(matVals);
 	}
 	
 	public void drawNote (Canvas c) {
+		
+		c.setMatrix(transformMatrix);
+		
 		c.drawColor(0xffffffff); 
 		
 		for (Stroke s : mStrokes) {
@@ -291,18 +305,18 @@ class NoteEditorPresenter {
 			currentPaint.setColor(penColor);
 			currentPath.reset();
 			
-			currentPath.moveTo((currentPolygon.get(0).x - windowX)*zoomMultiplier, (currentPolygon.get(0).y - windowY)*zoomMultiplier);
+			currentPath.moveTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
 			for (int i = 1; i < currentPolygon.size(); i++) {
-				currentPath.lineTo((currentPolygon.get(i).x - windowX)*zoomMultiplier, (currentPolygon.get(i).y - windowY)*zoomMultiplier);
+				currentPath.lineTo(currentPolygon.get(i).x, currentPolygon.get(i).y);
 			}
-			currentPath.lineTo((currentPolygon.get(0).x - windowX)*zoomMultiplier, (currentPolygon.get(0).y - windowY)*zoomMultiplier);
+			currentPath.lineTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
 			
 			c.drawPath(currentPath, currentPaint);
 		}
 		
-		for (Point p : debugDots) {
-			c.drawCircle((p.x-windowX)*zoomMultiplier, (p.y-windowY)*zoomMultiplier, 5, debugPaint);
-		}
+//		for (Point p : debugDots) {
+//			c.drawCircle((p.x-windowX)*zoomMultiplier, (p.y-windowY)*zoomMultiplier, 5, debugPaint);
+//		}
 	}
 	
 }
