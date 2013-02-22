@@ -102,9 +102,7 @@ public class NoteActivity extends Activity {
 		redoButton = (Button) findViewById(R.id.redo);
 		redoButton.setOnClickListener(redoButtonListener);
 		
-		mPresenter = new NoteEditorPresenter();
-		mPresenter.setNoteView(mNoteView);
-		
+		mPresenter = new NoteEditorPresenter();		
 		mNoteView.setPresenter(mPresenter);
 		
 		// setting up the note view
