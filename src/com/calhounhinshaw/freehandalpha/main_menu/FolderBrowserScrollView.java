@@ -1,6 +1,5 @@
 package com.calhounhinshaw.freehandalpha.main_menu;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.LinearGradient;
@@ -210,7 +209,6 @@ public class FolderBrowserScrollView extends HorizontalScrollView {
 		
 	}
 	
-	@SuppressLint("DrawAllocation")
 	@Override
 	protected void onDraw (Canvas canvas) {
 		//super.onDraw(canvas);

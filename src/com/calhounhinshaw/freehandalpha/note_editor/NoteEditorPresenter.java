@@ -44,6 +44,11 @@ class NoteEditorPresenter {
 	
 	private float[] matVals = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 	
+	// The transformation matrix transforms the stuff drawn to the canvas as if (0, 0) is the upper left hand corner of the screen,
+	// not the View the canvas is drawing to.
+	private float canvasYOffset = -1;
+	private float canvasXOffset = -1;
+	
 	
 	public NoteEditorPresenter () {
 		currentPaint.setColor(penColor);
@@ -105,7 +110,7 @@ class NoteEditorPresenter {
 			
 			// Add new pen data to raw lists
 			for (int i = 0; i < times.size(); i++) {
-				rawPoints.addLast(new Point(windowX + xs.get(i)/zoomMultiplier, windowY + ys.get(i)/zoomMultiplier));
+				rawPoints.addLast(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
 				rawPressure.add(pressures.get(i));
 			}
 			
@@ -283,17 +288,29 @@ class NoteEditorPresenter {
 		windowY += screenDy/zoomMultiplier;
 		zoomMultiplier *= dZoom;
 		
-		matVals[0] = zoomMultiplier;
-		matVals[2] = windowX*zoomMultiplier;
-		matVals[4] = zoomMultiplier;
-		matVals[5] = windowY*zoomMultiplier;
 		
-		transformMatrix.setValues(matVals);
 	}
 	
 	public void drawNote (Canvas c) {
 		
+		// Set the transformMatrix's offsets if they haven't been set yet
+		if (canvasYOffset < 0 || canvasXOffset < 0) {
+			float[] values = new float[9];
+			c.getMatrix().getValues(values);
+			canvasXOffset = values[2];
+			canvasYOffset = values[5];
+		}
+		
+		matVals[0] = zoomMultiplier;
+		matVals[2] = windowX*zoomMultiplier + canvasXOffset;
+		matVals[4] = zoomMultiplier;
+		matVals[5] = windowY*zoomMultiplier + canvasYOffset;
+		
+		transformMatrix.setValues(matVals);
 		c.setMatrix(transformMatrix);
+		
+		//Log.d("PEN", c.getMatrix().toString());
+		
 		
 		c.drawColor(0xffffffff); 
 		
