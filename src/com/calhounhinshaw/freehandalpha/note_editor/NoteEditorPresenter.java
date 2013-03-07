@@ -89,6 +89,10 @@ class NoteEditorPresenter {
 	
 	
 	public void penAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures) {
+		
+		//TODO: I should probably split hover events and draw events into their own methods, but I'm not sure...
+		
+		// Hover event
 		if (pressures.get(0) == -1) {
 			if (currentPolygon.size() >= 3) {
 				mStrokes.add(new Stroke(penColor, new ArrayList<Point>(currentPolygon)));
@@ -98,55 +102,16 @@ class NoteEditorPresenter {
 			
 			rawPoints.clear();
 			rawPressure.clear();
-		} else {
 			
-			// Add new pen data to raw lists
+		// Draw event
+		} else {
+			// Translate and scale new pen data then add it to raw lists
 			for (int i = 0; i < times.size(); i++) {
 				rawPoints.addLast(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
-				rawPressure.add(pressures.get(i));
+				rawPressure.addLast(pressures.get(i));
 			}
 			
-			// Construct the polygon that represents the stroke.
-			if (rawPoints.size() >= 2) {
-				currentPolygon.clear();
-				
-				for (int i = 1; i < rawPoints.size(); i++) {
-					Point[] toAdd = Geometry.getLines(penSize*rawPressure.get(i-1), penSize*rawPressure.get(i), rawPoints.get(i-1), rawPoints.get(i));
-					
-					if (toAdd != null) {
-						
-						// Only remove intersections if the line being added isn't the first
-						if (currentPolygon.size() >= 4) {
-							Point leftIntersection = Geometry.calcIntersection(currentPolygon.get(0), currentPolygon.get(1), toAdd[0], toAdd[1]);
-							Point rightIntersection = Geometry.calcIntersection(currentPolygon.get(currentPolygon.size()-2), currentPolygon.get(currentPolygon.size()-1), toAdd[2], toAdd[3]);
-							
-							if (leftIntersection == null) {
-								currentPolygon.addFirst(toAdd[0]);
-								currentPolygon.addFirst(toAdd[1]);
-							} else {
-								currentPolygon.removeFirst();
-								currentPolygon.addFirst(leftIntersection);
-								currentPolygon.addFirst(toAdd[1]);
-							}
-							
-							if (rightIntersection == null) {
-								currentPolygon.addLast(toAdd[2]);
-								currentPolygon.addLast(toAdd[3]);
-							} else {
-								currentPolygon.removeLast();
-								currentPolygon.addLast(rightIntersection);
-								currentPolygon.addLast(toAdd[3]);
-							}
-							
-						} else {
-							currentPolygon.addFirst(toAdd[0]);
-							currentPolygon.addFirst(toAdd[1]);
-							currentPolygon.addLast(toAdd[2]);
-							currentPolygon.addLast(toAdd[3]);
-						}
-					}
-				}
-			}
+			currentPolygon = Geometry.buildIntermediatePoly(rawPoints, rawPressure, penSize);
 		}
 	}
 	
@@ -157,8 +122,6 @@ class NoteEditorPresenter {
 		windowX += screenDx/zoomMultiplier;
 		windowY += screenDy/zoomMultiplier;
 		zoomMultiplier *= dZoom;
-		
-		
 	}
 	
 	public void drawNote (Canvas c) {

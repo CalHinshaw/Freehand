@@ -1,5 +1,8 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import android.util.Log;
 
 public class Geometry {
@@ -10,7 +13,7 @@ public class Geometry {
 	}
 	
 	/**
-	 * Calculates the two line segments that represent the line segment passed using p1 and p2 in the polygon.
+	 * Calculates the two line segments that represent the polygon from p1 to p2.
 	 * 
 	 * @param w1 the width of the stroke at p1
 	 * @param w2 the width of the stroke at p2
@@ -19,7 +22,7 @@ public class Geometry {
 	 * 
 	 * @return a 4 element array of points - the first two are the left-handed line (think Greene's theorem). If the points are equal returns null.
 	 */
-	public static Point[] getLines (float w1, float w2, Point p1, Point p2) {
+	public static Point[] buildPolyLines (float w1, float w2, Point p1, Point p2) {
 		
 		// if the pen didn't move return null
 		if (p1.x == p2.x && p1.y == p2.y) {
@@ -67,31 +70,86 @@ public class Geometry {
 		return lines;
 	}
 	
+	public static LinkedList<Point> buildIntermediatePoly (List<Point> rawPoints, List<Float> rawPressure, float penSize) {
+		LinkedList<Point> poly = new LinkedList<Point>();
+		
+		if (rawPoints.size() >= 2) {
+			for (int i = 1; i < rawPoints.size(); i++) {
+				Point[] toAdd = Geometry.buildPolyLines(penSize*rawPressure.get(i-1), penSize*rawPressure.get(i), rawPoints.get(i-1), rawPoints.get(i));
+				
+				if (toAdd != null) {
+					
+					// Only remove intersections if the line being added isn't the first
+					if (poly.size() >= 4) {
+						Point leftIntersection = Geometry.calcIntersection(poly.get(0), poly.get(1), toAdd[0], toAdd[1]);
+						Point rightIntersection = Geometry.calcIntersection(poly.get(poly.size()-2), poly.get(poly.size()-1), toAdd[2], toAdd[3]);
+						
+						if (leftIntersection == null) {
+							poly.addFirst(toAdd[0]);
+							poly.addFirst(toAdd[1]);
+						} else {
+							poly.removeFirst();
+							poly.addFirst(leftIntersection);
+							poly.addFirst(toAdd[1]);
+						}
+						
+						if (rightIntersection == null) {
+							poly.addLast(toAdd[2]);
+							poly.addLast(toAdd[3]);
+						} else {
+							poly.removeLast();
+							poly.addLast(rightIntersection);
+							poly.addLast(toAdd[3]);
+						}
+						
+					} else {
+						poly.addFirst(toAdd[0]);
+						poly.addFirst(toAdd[1]);
+						poly.addLast(toAdd[2]);
+						poly.addLast(toAdd[3]);
+					}
+				}
+			}
+		}
+		
+		return poly;
+	}
+	
+	
 	/**
-	 * Calculates the intersection of the two line segments. The line segments are considered open.
+	 * Calculates the intersection of the two line segments. The line segments are considered closed.
 	 * 
 	 * @return The point of intersection if it exists, null otherwise.
 	 */
 	public static Point calcIntersection (Point a, Point b, Point c, Point d) {
-
-		// Test using floating point calculations
+		
+		if (intersectionPossible(a, b, c, d) == false) {
+			return null;
+		}
+		
 		float denominator = (d.y-c.y)*(b.x-a.x)-(d.x-c.x)*(b.y-a.y);
 
 		if (Math.abs(denominator) < 0.00001) {
 			return null;
 		}
 
+		// Note: I tried adding the divisions into the if statement but that actually slowed the benchmarks down. I think it might be a branch prediction
+		// issue.
 		float Ta = ((d.x-c.x)*(a.y-c.y)-(d.y-c.y)*(a.x-c.x))/denominator;
 		float Tc = ((b.x-a.x)*(a.y-c.y)-(b.y-a.y)*(a.x-c.x))/denominator;
 
-		if (Ta < 1 && Ta > 0 && Tc < 1 && Tc > 0) {
+		if (Ta <= 1 && Ta >= 0 && Tc <= 1 && Tc >= 0) {
 			return new Point(a.x + Ta*(b.x - a.x), a.y + Ta*(b.y - a.y));
 		} else {
 			return null;
 		}
 	}
 	
-	// If intersections are rare only calling calcIntersection if intersectionPossible returns true speeds collision detection.
+	/**
+	 * Determines whether it's possible for two line segments to intersect by checking their bounding rectangles.
+
+	 * @return true if the line segments can intersect, false if they can't.
+	 */
 	public static boolean intersectionPossible (Point a, Point b, Point c, Point d) {
 		boolean aHigher = (a.y < b.y);
 		boolean aLefter = (a.x < b.x);
