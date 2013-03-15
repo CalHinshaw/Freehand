@@ -72,7 +72,7 @@ public class NoteView extends View {
 			previousDistance = Float.NaN;
 		}
 		
-		if (event.getPointerCount() == 1 && canDraw == true) {
+		if (event.getPointerCount() == 1 && canDraw == true && event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
 			processDraw(event);
 		} else if (event.getPointerCount() >= 2) {
 			canDraw = false;
@@ -158,6 +158,5 @@ public class NoteView extends View {
 	@Override
 	public void onDraw (Canvas c) {
 		mPresenter.drawNote(c);
-		
 	}
 }
