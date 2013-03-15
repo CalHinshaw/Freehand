@@ -70,7 +70,7 @@ public class Geometry {
 		return lines;
 	}
 	
-	public static LinkedList<Point> buildIntermediatePoly (List<Point> rawPoints, List<Float> rawPressure, float penSize) {
+	public static LinkedList<Point> buildIntermediatePoly (LinkedList<Point> rawPoints, LinkedList<Float> rawPressure, float penSize) {
 		LinkedList<Point> poly = new LinkedList<Point>();
 		
 		// Short circuit if we were passed nothing or a point
@@ -117,8 +117,10 @@ public class Geometry {
 				poly.addFirst(leftIntersection);
 				poly.addFirst(toAdd[1]);
 			}
-
 		}
+		
+		// Add cap to the end of the stroke polygon
+		poly.addAll(Geometry.traceCircularPath(rawPoints.getLast(), penSize*rawPressure.getLast()*0.5f, true, poly.getLast(), poly.getFirst()));
 		
 		return poly;
 	}
