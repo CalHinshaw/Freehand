@@ -97,11 +97,21 @@ public class Geometry {
 			}
 			
 			// Handle normal polygon construction
-			Point rightIntersection = intersectLineIntoSegment(poly.get(poly.size()-2), poly.get(poly.size()-1), toAdd[2], toAdd[3]);
-			Point leftIntersection = intersectLineIntoSegment(poly.get(0), poly.get(1), toAdd[0], toAdd[1]);
+			
+			Point rightIntersection, leftIntersection;
+			
+			if (rawPressure.get(i) <= rawPressure.get(i-1)) {		// Stroke getting thinner or staying the same
+				rightIntersection = intersectLineIntoSegment(poly.get(poly.size()-2), poly.get(poly.size()-1), toAdd[2], toAdd[3]);
+				leftIntersection = intersectLineIntoSegment(poly.get(0), poly.get(1), toAdd[0], toAdd[1]);
+			} else {												// Stroke getting thicker
+				rightIntersection = intersectLineIntoSegment(toAdd[2], toAdd[3], poly.get(poly.size()-2), poly.get(poly.size()-1));
+				leftIntersection = intersectLineIntoSegment(toAdd[0], toAdd[1], poly.get(0), poly.get(1));
+			}
+			
+			
 			
 			if (rightIntersection == null) {
-				//poly.addLast(toAdd[2]);
+				poly.addLast(toAdd[2]);
 				poly.addLast(toAdd[3]);
 			} else {
 				poly.removeLast();
@@ -110,7 +120,7 @@ public class Geometry {
 			}
 			
 			if (leftIntersection == null) {
-				//poly.addFirst(toAdd[0]);
+				poly.addFirst(toAdd[0]);
 				poly.addFirst(toAdd[1]);
 			} else {
 				poly.removeFirst();
@@ -120,7 +130,10 @@ public class Geometry {
 		}
 		
 		// Add cap to the end of the stroke polygon
-		poly.addAll(Geometry.traceCircularPath(rawPoints.getLast(), penSize*rawPressure.getLast()*0.5f, true, poly.getLast(), poly.getFirst()));
+		if (poly.size() >= 2) {
+			poly.addAll(Geometry.traceCircularPath(rawPoints.getLast(), penSize*rawPressure.getLast()*0.5f, true, poly.getLast(), poly.getFirst()));
+		}
+		
 		
 		return poly;
 	}
