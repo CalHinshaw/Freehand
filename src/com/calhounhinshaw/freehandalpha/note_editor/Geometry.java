@@ -108,9 +108,12 @@ public class Geometry {
 				leftIntersection = intersectLineIntoSegment(toAdd[0], toAdd[1], poly.get(0), poly.get(1));
 			}
 			
-			
-			
 			if (rightIntersection == null) {
+				if (Geometry.checkClockwise(rawPoints.get(i), rawPoints.get(i-2), rawPoints.get(i-1)) == -1) {
+					for (Point p : Geometry.traceCircularPath(rawPoints.get(i-1), penSize*rawPressure.get(i-1)*0.5f, true, poly.getLast(), toAdd[2])) {
+						poly.addLast(p);
+					}
+				}
 				poly.addLast(toAdd[2]);
 				poly.addLast(toAdd[3]);
 			} else {
@@ -120,6 +123,11 @@ public class Geometry {
 			}
 			
 			if (leftIntersection == null) {
+				if (Geometry.checkClockwise(rawPoints.get(i), rawPoints.get(i-2), rawPoints.get(i-1)) == 1) {
+					for (Point p : Geometry.traceCircularPath(rawPoints.get(i-1), penSize*rawPressure.get(i-1)*0.5f, false, poly.getFirst(), toAdd[0])) {
+						poly.addFirst(p);
+					}
+				}
 				poly.addFirst(toAdd[0]);
 				poly.addFirst(toAdd[1]);
 			} else {
@@ -133,7 +141,6 @@ public class Geometry {
 		if (poly.size() >= 2) {
 			poly.addAll(Geometry.traceCircularPath(rawPoints.getLast(), penSize*rawPressure.getLast()*0.5f, true, poly.getLast(), poly.getFirst()));
 		}
-		
 		
 		return poly;
 	}
@@ -263,6 +270,12 @@ public class Geometry {
 		// Find the indexes of the points on the circle the path is starting and ending at
 		int fromIndex = findAdjacentCircleIndex(from, center, clockwise);
 		int toIndex = findAdjacentCircleIndex(to, center, !clockwise);
+		
+		//TODO: doesn't handle the edge cases
+		if ((fromIndex == toIndex+1 && clockwise == false) || (fromIndex == 0 && toIndex == CIRCLE.length-1 && clockwise == false ) ||
+			(fromIndex == toIndex-1 && clockwise == true) || (fromIndex == CIRCLE.length-1 && toIndex == 0 && clockwise == true)) {
+			return path;
+		}
 		
 		Point[] scaledCircle = new Point[CIRCLE.length];
 		for (int i = 0; i < scaledCircle.length; i++) {
