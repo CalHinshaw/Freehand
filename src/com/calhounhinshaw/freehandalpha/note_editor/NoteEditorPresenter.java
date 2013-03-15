@@ -108,7 +108,7 @@ class NoteEditorPresenter {
 			// Translate and scale new pen data then add it to raw lists
 			for (int i = 0; i < times.size(); i++) {
 				rawPoints.addLast(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
-				rawPressure.addLast(pressures.get(i));
+				rawPressure.addLast(0.333333f + pressures.get(i)*0.6666667f);
 			}
 			
 			currentPolygon = Geometry.buildIntermediatePoly(rawPoints, rawPressure, penSize);

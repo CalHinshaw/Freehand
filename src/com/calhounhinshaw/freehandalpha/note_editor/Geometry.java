@@ -57,13 +57,13 @@ public class Geometry {
 			lines[1] = p2a;
 			lines[2] = p1b;
 			lines[3] = p2b;
-		} else if (aOnLeft < 0){					// b on left
+		} else if (aOnLeft < 0){	// b on left
 			lines[0] = p1b;
 			lines[1] = p2b;
 			lines[2] = p1a;
 			lines[3] = p2a;
 		} else {
-			Log.d("PEN", "Couldn't determine which segment was on the left handed side");
+			Log.d("PEN", "Thickness is zero.");
 			return null;
 		}
 
@@ -73,43 +73,51 @@ public class Geometry {
 	public static LinkedList<Point> buildIntermediatePoly (List<Point> rawPoints, List<Float> rawPressure, float penSize) {
 		LinkedList<Point> poly = new LinkedList<Point>();
 		
-		if (rawPoints.size() >= 2) {
-			for (int i = 1; i < rawPoints.size(); i++) {
-				Point[] toAdd = Geometry.buildPolyLines(penSize*rawPressure.get(i-1), penSize*rawPressure.get(i), rawPoints.get(i-1), rawPoints.get(i));
+		// Short circuit if we were passed nothing or a point
+		if (rawPoints.size() < 2) {
+			return poly;
+		}
+			
+		for (int i = 1; i < rawPoints.size(); i++) {
+			Point[] toAdd = Geometry.buildPolyLines(penSize*rawPressure.get(i-1), penSize*rawPressure.get(i), rawPoints.get(i-1), rawPoints.get(i));
+			
+			// Handle edge cases
+			if (toAdd == null) {	// The points at i-1 and i are the same, do nothing
+				continue;
+			} else if (poly.size() < 4 || i < 2) {	// Add the first raw line segment's polygon segments without further processing
+				poly.addFirst(toAdd[0]);
+				poly.addFirst(toAdd[1]);
 				
-				if (toAdd != null) {
-					
-					// Only remove intersections if the line being added isn't the first
-					if (poly.size() >= 4) {
-						Point leftIntersection = Geometry.calcIntersection(poly.get(0), poly.get(1), toAdd[0], toAdd[1]);
-						Point rightIntersection = Geometry.calcIntersection(poly.get(poly.size()-2), poly.get(poly.size()-1), toAdd[2], toAdd[3]);
-						
-						if (leftIntersection == null) {
-							poly.addFirst(toAdd[0]);
-							poly.addFirst(toAdd[1]);
-						} else {
-							poly.removeFirst();
-							poly.addFirst(leftIntersection);
-							poly.addFirst(toAdd[1]);
-						}
-						
-						if (rightIntersection == null) {
-							poly.addLast(toAdd[2]);
-							poly.addLast(toAdd[3]);
-						} else {
-							poly.removeLast();
-							poly.addLast(rightIntersection);
-							poly.addLast(toAdd[3]);
-						}
-						
-					} else {
-						poly.addFirst(toAdd[0]);
-						poly.addFirst(toAdd[1]);
-						poly.addLast(toAdd[2]);
-						poly.addLast(toAdd[3]);
-					}
-				}
+				LinkedList<Point> cap = Geometry.traceCircularPath(rawPoints.get(i-1), penSize*rawPressure.get(i-1)*0.5f, true, toAdd[0], toAdd[2]);
+				poly.addAll(cap);				
+				
+				poly.addLast(toAdd[2]);
+				poly.addLast(toAdd[3]);
+				continue;
 			}
+			
+			// Handle normal polygon construction
+			Point rightIntersection = intersectLineIntoSegment(poly.get(poly.size()-2), poly.get(poly.size()-1), toAdd[2], toAdd[3]);
+			Point leftIntersection = intersectLineIntoSegment(poly.get(0), poly.get(1), toAdd[0], toAdd[1]);
+			
+			if (rightIntersection == null) {
+				//poly.addLast(toAdd[2]);
+				poly.addLast(toAdd[3]);
+			} else {
+				poly.removeLast();
+				poly.addLast(rightIntersection);
+				poly.addLast(toAdd[3]);
+			}
+			
+			if (leftIntersection == null) {
+				//poly.addFirst(toAdd[0]);
+				poly.addFirst(toAdd[1]);
+			} else {
+				poly.removeFirst();
+				poly.addFirst(leftIntersection);
+				poly.addFirst(toAdd[1]);
+			}
+
 		}
 		
 		return poly;
@@ -129,6 +137,7 @@ public class Geometry {
 		
 		float denominator = (d.y-c.y)*(b.x-a.x)-(d.x-c.x)*(b.y-a.y);
 
+		// Close enough to parallel that we might as well just call them parallel.
 		if (Math.abs(denominator) < 0.00001) {
 			return null;
 		}
@@ -140,6 +149,31 @@ public class Geometry {
 
 		if (Ta <= 1 && Ta >= 0 && Tc <= 1 && Tc >= 0) {
 			return new Point(a.x + Ta*(b.x - a.x), a.y + Ta*(b.y - a.y));
+		} else {
+			return null;
+		}
+	}
+	
+	
+	/**
+	 * Calculate the intersection point of the line defined by l1 and l2 with the segment defined by s1 and s2.
+	 *
+	 * @return the intersection point, or null if it doesn't exist.
+	 */
+	public static Point intersectLineIntoSegment(Point l1, Point l2, Point s1, Point s2) {
+		float denominator = (s2.y-s1.y)*(l2.x-l1.x)-(s2.x-s1.x)*(l2.y-l1.y);
+
+		// Close enough to parallel that we might as well just call them parallel.
+		if (Math.abs(denominator) < 0.00001) {
+			return null;
+		}
+
+		// Note: I tried moving the division into the if statement but that actually slowed the benchmarks down. I think it might be a branch prediction
+		// issue.
+		float t = ((l2.x-l1.x)*(l1.y-s1.y)-(l2.y-l1.y)*(l1.x-s1.x))/denominator;
+
+		if (t <= 1 && t >= 0) {
+			return new Point(s1.x + t*(s2.x - s1.x), s1.y + t*(s2.y - s1.y));
 		} else {
 			return null;
 		}
@@ -165,8 +199,16 @@ public class Geometry {
 		}
 	}
 	
-	public static int checkClockwise(Point c, Point a, Point b) {
-		float cross = (b.x - a.x)*(c.y - a.y) - (c.x - a.x)*(b.y - a.y);
+	/**
+	 * Check to see if check is counter-clockwise of ref based on origin.
+	 * 
+	 * @param check		The Point who's orientation is being checked
+	 * @param origin	The shared origin point
+	 * @param ref		The reference point
+	 * @return -1 if counter-clockwise, 1 if clockwise, 0 if co-linear
+	 */
+	public static int checkClockwise(Point check, Point origin, Point ref) {
+		float cross = (ref.x - origin.x)*(check.y - origin.y) - (check.x - origin.x)*(ref.y - origin.y);
 		
 		if (cross > 0) {
 			return -1;
@@ -178,7 +220,98 @@ public class Geometry {
 	}
 	
 	
+	/**
+	 * An array of evenly spaced points on the unit circle going counter-clockwise starting at theta == 0;
+	 */
+	private static final Point[] CIRCLE ={	new Point ((float) Math.cos(0 * Math.PI/6), (float) Math.sin(0 * Math.PI/6)),
+											new Point ((float) Math.cos(1 * Math.PI/6), (float) Math.sin(1 * Math.PI/6)),
+											new Point ((float) Math.cos(2 * Math.PI/6), (float) Math.sin(2 * Math.PI/6)),
+											new Point ((float) Math.cos(3 * Math.PI/6), (float) Math.sin(3 * Math.PI/6)),
+											new Point ((float) Math.cos(4 * Math.PI/6), (float) Math.sin(4 * Math.PI/6)),
+											new Point ((float) Math.cos(5 * Math.PI/6), (float) Math.sin(5 * Math.PI/6)),
+											new Point ((float) Math.cos(6 * Math.PI/6), (float) Math.sin(6 * Math.PI/6)),
+											new Point ((float) Math.cos(7 * Math.PI/6), (float) Math.sin(7 * Math.PI/6)),
+											new Point ((float) Math.cos(8 * Math.PI/6), (float) Math.sin(8 * Math.PI/6)),
+											new Point ((float) Math.cos(9 * Math.PI/6), (float) Math.sin(9 * Math.PI/6)),
+											new Point ((float) Math.cos(10 * Math.PI/6), (float) Math.sin(10 * Math.PI/6)),
+											new Point ((float) Math.cos(11 * Math.PI/6), (float) Math.sin(11 * Math.PI/6)),
+										   };
 	
+	private static final double STEP_SIZE = (2 * Math.PI) / CIRCLE.length;
+	
+	/**
+	 * Only guaranteed to work if from and to are within 1 ulp of being on the circle. Will almost definitely work if they're close, though. I think...
+	 */
+	public static LinkedList<Point> traceCircularPath (final Point center, final float radius, final boolean clockwise, final Point from, final Point to) {
+		LinkedList<Point> path = new LinkedList<Point>();
+		
+		// Find the indexes of the points on the circle the path is starting and ending at
+		int fromIndex = findAdjacentCircleIndex(from, center, clockwise);
+		int toIndex = findAdjacentCircleIndex(to, center, !clockwise);
+		
+		Point[] scaledCircle = new Point[CIRCLE.length];
+		for (int i = 0; i < scaledCircle.length; i++) {
+			scaledCircle[i] = new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y);
+		}
+		
+		int step;
+		if (clockwise == true) {
+			step = -1;
+		} else {
+			step = 1;
+		}
+		
+		int counter = fromIndex;
+		while (true) {
+			path.add(scaledCircle[counter]);
+			
+			if (counter == toIndex) {
+				break;
+			}
+			
+			counter += step;
+			
+			if (counter >= scaledCircle.length) {
+				counter = 0;
+			} else if (counter < 0) {
+				counter = scaledCircle.length - 1;
+			}
+		}
+		
+		return path;
+	}
+	
+	/**
+	 * @param p The point on the circle you're trying to find the adjacent point to
+	 * @param center The center of the circle
+	 * @param clockwise	if true, return the index of the point directly clockwise. if false return the index of the point directly counterclockwise.
+	 * @return The index of the point in circle that's next to p in the direction specified by clockwise or -1 if something went wrong.
+	 */
+	public static int findAdjacentCircleIndex (Point p, Point center, boolean clockwise) {
+		
+		float mag = Geometry.distance(p.x, p.y, center.x, center.y);
+		
+		double angle;
+		if (p.y - center.y >= 0) {
+			angle = Math.acos((p.x-center.x)/mag);
+		} else {
+			angle = 2*Math.PI - Math.acos((p.x-center.x)/mag);
+		}
+		double continuousIndex = angle/STEP_SIZE;
+
+		int toReturn;
+		
+		if (clockwise == true) {
+			toReturn = (int) Math.floor(continuousIndex);
+		} else {
+			toReturn = (int) Math.ceil(continuousIndex);
+			if (toReturn >= CIRCLE.length) {
+				toReturn = 0;
+			}
+		}
+
+		return toReturn;
+	}
 	
 	
 	
