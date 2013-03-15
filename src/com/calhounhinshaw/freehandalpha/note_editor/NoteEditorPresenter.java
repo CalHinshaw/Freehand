@@ -106,9 +106,23 @@ class NoteEditorPresenter {
 		// Draw event
 		} else {
 			// Translate and scale new pen data then add it to raw lists
+			
+			Point sLastAdded;
+			if (rawPoints.isEmpty() == false) {
+				sLastAdded = new Point(windowX + rawPoints.getLast().x*zoomMultiplier, windowY + rawPoints.getLast().y*zoomMultiplier);
+			} else {
+				sLastAdded = new Point(10000000000f, 10000000000f);
+			}
+			
 			for (int i = 0; i < times.size(); i++) {
-				rawPoints.addLast(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
-				rawPressure.addLast(0.333333f + pressures.get(i)*0.6666667f);
+				float newScaledPressure = 0.333333f + pressures.get(i)*0.6666667f;
+				
+				if(Geometry.distSq(xs.get(i), ys.get(i), sLastAdded.x, sLastAdded.y) >= 4 || Math.abs(rawPressure.getLast() - newScaledPressure) >= 0.1f) {
+					sLastAdded = new Point(xs.get(i), ys.get(i));
+					
+					rawPoints.addLast(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
+					rawPressure.addLast(newScaledPressure);
+				}
 			}
 			
 			currentPolygon = Geometry.buildIntermediatePoly(rawPoints, rawPressure, penSize);
