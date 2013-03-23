@@ -12,6 +12,14 @@ public class Geometry {
 		return (float)Math.sqrt(Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2));
 	}
 	
+	public static float distance (Point p1, Point p2) {
+		return distance(p1.x, p1.y, p2.x, p2.y);
+	}
+	
+	public static float distSq (float x1, float y1, float x2, float y2) {
+		return (float) (Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2));
+	}
+	
 	/**
 	 * Calculates the two line segments that represent the polygon from p1 to p2.
 	 * 
@@ -51,7 +59,7 @@ public class Geometry {
 		
 		// Put the left handed points first in the array
 		Point[] lines = new Point[4];
-		int aOnLeft = checkClockwise(p1a, p1, p2);
+		float aOnLeft = Geometry.cross(p1, p2, p1a, p2);
 		if (aOnLeft > 0) {			// a on left
 			lines[0] = p1a;
 			lines[1] = p2a;
@@ -70,6 +78,7 @@ public class Geometry {
 		return lines;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static LinkedList<Point> buildIntermediatePoly (LinkedList<Point> rawPoints, LinkedList<Float> rawPressure, float penSize) {
 		LinkedList<Point> poly = new LinkedList<Point>();
 		
@@ -77,7 +86,7 @@ public class Geometry {
 		if (rawPoints.size() < 2) {
 			return poly;
 		}
-			
+		
 		for (int i = 1; i < rawPoints.size(); i++) {
 			Point[] toAdd = Geometry.buildPolyLines(penSize*rawPressure.get(i-1), penSize*rawPressure.get(i), rawPoints.get(i-1), rawPoints.get(i));
 			
@@ -96,44 +105,22 @@ public class Geometry {
 				continue;
 			}
 			
-			// Handle normal polygon construction
-			
-			Point rightIntersection, leftIntersection;
-			
-			if (rawPressure.get(i) <= rawPressure.get(i-1)) {		// Stroke getting thinner or staying the same
-				rightIntersection = intersectLineIntoSegment(poly.get(poly.size()-2), poly.get(poly.size()-1), toAdd[2], toAdd[3]);
-				leftIntersection = intersectLineIntoSegment(poly.get(0), poly.get(1), toAdd[0], toAdd[1]);
-			} else {												// Stroke getting thicker
-				rightIntersection = intersectLineIntoSegment(toAdd[2], toAdd[3], poly.get(poly.size()-2), poly.get(poly.size()-1));
-				leftIntersection = intersectLineIntoSegment(toAdd[0], toAdd[1], poly.get(0), poly.get(1));
-			}
-			
-			if (rightIntersection == null) {
-				if (Geometry.checkClockwise(rawPoints.get(i), rawPoints.get(i-2), rawPoints.get(i-1)) == -1) {
-					for (Point p : Geometry.traceCircularPath(rawPoints.get(i-1), penSize*rawPressure.get(i-1)*0.5f, true, poly.getLast(), toAdd[2])) {
-						poly.addLast(p);
-					}
-				}
-				poly.addLast(toAdd[2]);
-				poly.addLast(toAdd[3]);
-			} else {
-				poly.removeLast();
-				poly.addLast(rightIntersection);
-				poly.addLast(toAdd[3]);
-			}
-			
-			if (leftIntersection == null) {
-				if (Geometry.checkClockwise(rawPoints.get(i), rawPoints.get(i-2), rawPoints.get(i-1)) == 1) {
-					for (Point p : Geometry.traceCircularPath(rawPoints.get(i-1), penSize*rawPressure.get(i-1)*0.5f, false, poly.getFirst(), toAdd[0])) {
-						poly.addFirst(p);
-					}
-				}
-				poly.addFirst(toAdd[0]);
-				poly.addFirst(toAdd[1]);
-			} else {
+			Object[] left = Geometry.joinSegments(poly.get(0), poly.get(1), toAdd[1], toAdd[0], true, rawPoints.get(i-1), penSize*rawPressure.get(i-1)*0.5f);
+			if (left[0] != null) {
 				poly.removeFirst();
-				poly.addFirst(leftIntersection);
-				poly.addFirst(toAdd[1]);
+				poly.addFirst((Point) left[0]); 
+			}
+			for (Point p : (LinkedList<Point>) left[1]) {
+				poly.addFirst(p);
+			}
+			
+			Object[] right = Geometry.joinSegments(poly.get(poly.size()-1), poly.get(poly.size()-2), toAdd[3], toAdd[2], false, rawPoints.get(i-1), penSize*rawPressure.get(i-1)*0.5f);
+			if (right[0] != null) {
+				poly.removeLast();
+				poly.addLast((Point) right[0]);
+			}
+			for (Point p : (LinkedList<Point>) right[1]) {
+				poly.addLast(p);
 			}
 		}
 		
@@ -145,6 +132,102 @@ public class Geometry {
 		return poly;
 	}
 	
+	
+	/**
+	 * Calculates the join between the old and new segments of the Intermediate Polygon.
+	 * 
+	 * @param oldH The head of the old segment
+	 * @param oldT The tail of the old segment
+	 * @param newH the head of the new segment
+	 * @param newT the tail of the new segment
+	 * @param leftHanded True if the join is on the left handed side of the polygon
+	 * @param center The center of the joint
+	 * @param radius The radius of the joint
+	 * @return an Object[]. Index zero is the point to replace oldH with in the polygon - if no replacement is needed the zero index is null.
+	 * Index one is a LinkedList<Point> of new points to add to the polygon.
+	 */
+	public static Object[] joinSegments (Point oldH, Point oldT, Point newH, Point newT, boolean leftHanded, Point center, float radius) {
+		Point replacement = null;
+		LinkedList<Point> additions = new LinkedList<Point>();
+		
+		boolean segCcvToOld = (cross(oldH, oldT, newH, newT) < 0) == leftHanded;
+		boolean joinCcvToOld = (cross(oldH, oldT, newT, oldH) < 0) == leftHanded;
+		boolean segCcvToJoin = (cross(newT, oldH, newH, newT) < 0) == leftHanded;
+		
+		if (segCcvToOld == false && joinCcvToOld == false && segCcvToJoin == false) {
+			for (Point p : Geometry.traceCircularPath(center, radius, !leftHanded, oldH, newT)) {
+				additions.add(p);
+			}
+			additions.add(newT);
+			additions.add(newH);
+		} else if ((segCcvToOld == false && joinCcvToOld == false && segCcvToJoin == true) || (segCcvToOld == true && joinCcvToOld == true && segCcvToJoin == false)) {
+			replacement = Geometry.intersectLineIntoSegment(oldH, oldT, newH, newT);
+			additions.add(newH);
+		} else if ((segCcvToOld == false && joinCcvToOld == true && segCcvToJoin == false) || (segCcvToOld == true && joinCcvToOld == false && segCcvToJoin == true)) {
+			replacement = Geometry.intersectLineIntoSegment(newH, newT, oldH, oldT);
+			additions.add(newH);
+		} else if (segCcvToOld == true && joinCcvToOld == false && segCcvToJoin == false) {
+			replacement = Geometry.intersectLineIntoSegment(oldH, oldT, newH, newT);
+			additions.add(newH);
+		} else {
+			
+			Point intersection = Geometry.intersectLineIntoSegment(oldH, oldT, newH, newT);
+			if (intersection != null) {
+				additions.add(intersection);
+				additions.add(newH);
+				//Log.d("PEN", "intersection");
+			} else {
+				//Log.d("PEN", "no intersection");
+			}
+		}
+			
+		Object[] toReturn = new Object[2];
+		toReturn[0] = replacement;
+		toReturn[1] = additions;
+		return toReturn;
+	}
+	
+	/**
+	 * Calculates the join between the old and new segments of the Intermediate Polygon.
+	 * 
+	 * @param oldH The head of the old segment
+	 * @param oldT The tail of the old segment
+	 * @param newH the head of the new segment
+	 * @param newT the tail of the new segment
+	 * @param leftHanded True if the join is on the left handed side of the polygon
+	 * @param center The center of the joint
+	 * @param radius The radius of the joint
+	 * @return an Object[]. Index zero is the point to replace oldH with in the polygon - if no replacement is needed the zero index is null.
+	 * Index one is a LinkedList<Point> of new points to add to the polygon.
+	 */
+	public static Object[] joinSegs (Point oldH, Point oldT, Point newH, Point newT, boolean leftHanded, Point center, float radius) {
+		Point replacement = null;
+		LinkedList<Point> additions = new LinkedList<Point>();
+		
+		boolean segCcvToOld = (cross(oldH, oldT, newH, newT) < 0) == leftHanded;
+		boolean joinCcvToOld = (cross(oldH, oldT, newT, oldH) < 0) == leftHanded;
+		boolean segCcvToJoin = (cross(newT, oldH, newH, newT) < 0) == leftHanded;
+		
+		if (segCcvToOld == false && joinCcvToOld == false && segCcvToJoin == false) {
+			for (Point p : Geometry.traceCircularPath(center, radius, !leftHanded, oldH, newT)) {
+				additions.add(p);
+			}
+			additions.add(newT);
+			additions.add(newH);
+		} else {
+			Point intersection = twoWayIntersect(newH, newT, oldH, oldT);
+			if (intersection != null) {
+				replacement = intersection;
+				additions.add(newH);
+			}
+		}
+			
+		Object[] toReturn = new Object[2];
+		toReturn[0] = replacement;
+		toReturn[1] = additions;
+		return toReturn;
+	}
+
 	
 	/**
 	 * Calculates the intersection of the two line segments. The line segments are considered closed.
@@ -160,7 +243,7 @@ public class Geometry {
 		float denominator = (d.y-c.y)*(b.x-a.x)-(d.x-c.x)*(b.y-a.y);
 
 		// Close enough to parallel that we might as well just call them parallel.
-		if (Math.abs(denominator) < 0.00001) {
+		if (Math.abs(denominator) < 0.000000000001) {
 			return null;
 		}
 
@@ -201,6 +284,26 @@ public class Geometry {
 		}
 	}
 	
+	public static Point twoWayIntersect (Point a, Point b, Point c, Point d) {
+		float denominator = (d.y-c.y)*(b.x-a.x)-(d.x-c.x)*(b.y-a.y);
+
+		// Close enough to parallel that we might as well just call them parallel.
+		if (Math.abs(denominator) < 0.000000000001) {
+			return null;
+		}
+
+		// Note: I tried adding the divisions into the if statement but that actually slowed the benchmarks down. I think it might be a branch prediction
+		// issue.
+		float Ta = ((d.x-c.x)*(a.y-c.y)-(d.y-c.y)*(a.x-c.x))/denominator;
+		float Tc = ((b.x-a.x)*(a.y-c.y)-(b.y-a.y)*(a.x-c.x))/denominator;
+
+		if ((Ta <= 1 && Ta >= 0) || (Tc <= 1 && Tc >= 0)) {
+			return new Point(a.x + Ta*(b.x - a.x), a.y + Ta*(b.y - a.y));
+		} else {
+			return null;
+		}
+	}
+	
 	/**
 	 * Determines whether it's possible for two line segments to intersect by checking their bounding rectangles.
 
@@ -221,24 +324,18 @@ public class Geometry {
 		}
 	}
 	
+	
 	/**
-	 * Check to see if check is counter-clockwise of ref based on origin.
+	 * Compute a cross b.
 	 * 
-	 * @param check		The Point who's orientation is being checked
-	 * @param origin	The shared origin point
-	 * @param ref		The reference point
-	 * @return -1 if counter-clockwise, 1 if clockwise, 0 if co-linear
+	 * @param aH the head of the a vector
+	 * @param aT the tail of the a vector
+	 * @param bH the head of the b vector
+	 * @param bT the tail of the b vector
+	 * @return z-axis value of a cross b
 	 */
-	public static int checkClockwise(Point check, Point origin, Point ref) {
-		float cross = (ref.x - origin.x)*(check.y - origin.y) - (check.x - origin.x)*(ref.y - origin.y);
-		
-		if (cross > 0) {
-			return -1;
-		} else if (cross < 0) {
-			return 1;
-		} else {
-			return 0;
-		}
+	public static float cross(Point aH, Point aT, Point bH, Point bT) {
+		return ((aH.x-aT.x)*(bH.y-bT.y) - (aH.y-aT.y)*(bH.x-bT.x));
 	}
 	
 	
@@ -271,7 +368,6 @@ public class Geometry {
 		int fromIndex = findAdjacentCircleIndex(from, center, clockwise);
 		int toIndex = findAdjacentCircleIndex(to, center, !clockwise);
 		
-		//TODO: doesn't handle the edge cases
 		if ((fromIndex == toIndex+1 && clockwise == false) || (fromIndex == 0 && toIndex == CIRCLE.length-1 && clockwise == false ) ||
 			(fromIndex == toIndex-1 && clockwise == true) || (fromIndex == CIRCLE.length-1 && toIndex == 0 && clockwise == true)) {
 			return path;
@@ -342,9 +438,49 @@ public class Geometry {
 	}
 	
 	
+	public static LinkedList<Float> smoothPressures (LinkedList<Float> in) {
+		if (in.size() < 3) {
+			return in;
+		}
+		
+		LinkedList<Float> toReturn = new LinkedList<Float>();
+		
+		toReturn.addLast(in.getFirst());
+		for (int i = 1; i < in.size()-1; i++) {
+			if ((in.get(i) < in.get(i-1) && in.get(i) < in.get(i+1)) || (in.get(i) > in.get(i-1) && in.get(i) > in.get(i+1))) {
+				toReturn.addLast(Float.valueOf((in.get(i-1) + in.get(i+1))/2));
+			} else {
+				toReturn.addLast(in.get(i));
+			}
+		}
+		toReturn.addLast(in.getLast());
+		
+		return toReturn;
+	}
 	
+	private static final float SG0 = 17.0f / 35.0f;
+	private static final float SG1 = 12.0f / 35.0f;
+	private static final float SG2 = -3.0f / 35.0f;
 	
-	
+	public static LinkedList<Float> sgSmooth (LinkedList<Float> in) {
+		if (in.size() < 5) {
+			return in;
+		}
+		
+		LinkedList<Float> toReturn = new LinkedList<Float>();
+		
+		toReturn.add(in.get(0));
+		toReturn.add(in.get(1));
+		
+		for (int i = 2; i < in.size()-2; i++) {
+			toReturn.add(Float.valueOf(in.get(i-2)*SG2 + in.get(i-1)*SG1 + in.get(i)*SG0 + in.get(i+1)*SG1 + in.get(i+2)*SG2));
+		}
+		
+		toReturn.add(in.get(in.size()-2));
+		toReturn.add(in.get(in.size()-1));
+		
+		return toReturn;
+	}
 	
 	
 	

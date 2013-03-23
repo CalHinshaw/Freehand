@@ -36,7 +36,7 @@ class NoteEditorPresenter {
 	private float penSize = 6.5f;
 	
 	private LinkedList<Point> debugDots = new LinkedList<Point>();
-	private Paint debugPaint = new Paint(Color.RED);
+	private Paint debugPaint = new Paint();
 	
 	private Matrix transformMatrix = new Matrix();
 	private float[] matVals = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -48,10 +48,15 @@ class NoteEditorPresenter {
 	
 	
 	public NoteEditorPresenter () {
-		currentPaint.setColor(penColor);
+		currentPaint.setColor(Color.RED);
 		currentPaint.setStyle(Paint.Style.STROKE);
 		currentPaint.setStrokeWidth(1);
 		currentPaint.setAntiAlias(true);
+		
+		debugPaint.setColor(Color.BLACK);
+		debugPaint.setStyle(Paint.Style.STROKE);
+		debugPaint.setStrokeWidth(1);
+		debugPaint.setAntiAlias(true);
 	}
 	
 	public void setPen (int newColor, float newSize) {
@@ -94,9 +99,9 @@ class NoteEditorPresenter {
 		
 		// Hover event
 		if (pressures.get(0) == -1) {
-			if (currentPolygon.size() >= 3) {
-				mStrokes.add(new Stroke(penColor, new ArrayList<Point>(currentPolygon)));
-			}
+//			if (currentPolygon.size() >= 3) {
+//				mStrokes.add(new Stroke(penColor, new ArrayList<Point>(currentPolygon)));
+//			}
 			
 			currentPolygon.clear();
 			
@@ -125,7 +130,7 @@ class NoteEditorPresenter {
 				}
 			}
 			
-			currentPolygon = Geometry.buildIntermediatePoly(rawPoints, rawPressure, penSize);
+			//currentPolygon = Geometry.buildIntermediatePoly(rawPoints, Geometry.smoothPressures(rawPressure), penSize);
 		}
 	}
 	
@@ -158,22 +163,52 @@ class NoteEditorPresenter {
 
 		c.drawColor(0xffffffff); 
 		
-		for (Stroke s : mStrokes) {
-			s.draw(c);
+//		for (Stroke s : mStrokes) {
+//			s.draw(c);
+//		}
+//		
+//		if (currentPolygon.size() >= 3) {
+//			currentPaint.setColor(penColor);
+//			currentPath.reset();
+//			
+//			currentPath.moveTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
+//			for (int i = 1; i < currentPolygon.size()/2; i++) {
+//				currentPath.lineTo(currentPolygon.get(i).x, currentPolygon.get(i).y);
+//			}
+//			currentPath.lineTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
+//			
+//			c.drawPath(currentPath, currentPaint);
+//			
+//			currentPaint.setColor(Color.RED);
+//			currentPath.reset();
+//			
+//			currentPath.moveTo(currentPolygon.get(currentPolygon.size()/2).x, currentPolygon.get(currentPolygon.size()/2).y);
+//			for (int i = currentPolygon.size()/2; i < currentPolygon.size(); i++) {
+//				currentPath.lineTo(currentPolygon.get(i).x, currentPolygon.get(i).y);
+//			}
+//			currentPath.lineTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
+//			
+//			c.drawPath(currentPath, currentPaint);
+//			
+//		}
+		
+		
+
+		
+//		for (int i = 0; i < rawPoints.size(); i++) {
+//			c.drawCircle(rawPoints.get(i).x, rawPoints.get(i).y, penSize*rawPressure.get(i)*0.5f, debugPaint);
+//		}
+		
+		for (int i = 1; i < rawPoints.size(); i++) {
+			Point[] toAdd = TanGeom.calcExternalBitangents(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
+			if (toAdd != null) {
+				c.drawLine(toAdd[0].x, toAdd[0].y, toAdd[1].x, toAdd[1].y, currentPaint);
+				c.drawLine(toAdd[2].x, toAdd[2].y, toAdd[3].x, toAdd[3].y, debugPaint);
+			}
 		}
 		
-		if (currentPolygon.size() >= 3) {
-			currentPaint.setColor(penColor);
-			currentPath.reset();
-			
-			currentPath.moveTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
-			for (int i = 1; i < currentPolygon.size(); i++) {
-				currentPath.lineTo(currentPolygon.get(i).x, currentPolygon.get(i).y);
-			}
-			currentPath.lineTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
-			
-			c.drawPath(currentPath, currentPaint);
-		}
+		
+		
 		
 //		for (Point p : debugDots) {
 //			c.drawCircle((p.x-windowX)*zoomMultiplier, (p.y-windowY)*zoomMultiplier, 5, debugPaint);
