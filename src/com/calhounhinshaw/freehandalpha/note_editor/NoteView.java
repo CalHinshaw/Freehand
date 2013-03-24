@@ -84,7 +84,6 @@ public class NoteView extends View {
 			canDraw = true;
 		}
 		
-		invalidate();
 		return true;
 	}
 	
@@ -107,6 +106,8 @@ public class NoteView extends View {
 		pressures.add(event.getPressure());
 		
 		mPresenter.penAction(times, xs, ys, pressures);
+		
+		invalidate();
 	}
 	
 	private void processPanZoom (MotionEvent event) {

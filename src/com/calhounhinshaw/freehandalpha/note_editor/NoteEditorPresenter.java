@@ -49,12 +49,12 @@ class NoteEditorPresenter {
 	
 	public NoteEditorPresenter () {
 		currentPaint.setColor(Color.RED);
-		currentPaint.setStyle(Paint.Style.STROKE);
+		currentPaint.setStyle(Paint.Style.FILL);
 		currentPaint.setStrokeWidth(1);
 		currentPaint.setAntiAlias(true);
 		
 		debugPaint.setColor(Color.BLACK);
-		debugPaint.setStyle(Paint.Style.STROKE);
+		debugPaint.setStyle(Paint.Style.FILL);
 		debugPaint.setStrokeWidth(1);
 		debugPaint.setAntiAlias(true);
 	}
@@ -199,14 +199,26 @@ class NoteEditorPresenter {
 //			c.drawCircle(rawPoints.get(i).x, rawPoints.get(i).y, penSize*rawPressure.get(i)*0.5f, debugPaint);
 //		}
 		
-		for (int i = 1; i < rawPoints.size(); i++) {
-			Point[] toAdd = TanGeom.calcExternalBitangents(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
-			if (toAdd != null) {
-				c.drawLine(toAdd[0].x, toAdd[0].y, toAdd[1].x, toAdd[1].y, currentPaint);
-				c.drawLine(toAdd[2].x, toAdd[2].y, toAdd[3].x, toAdd[3].y, debugPaint);
-			}
-		}
+		boolean useDebug = true;
 		
+		for (int i = 1; i < rawPoints.size(); i++) {
+			LinkedList<Point> poly = TanGeom.buildUnitPoly(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
+			
+			currentPath.reset();
+			
+			if (poly != null && poly.size() > 2) {
+				currentPath.reset();
+				currentPath.moveTo(poly.getFirst().x, poly.getFirst().y);
+				for (Point p : poly) {
+					currentPath.lineTo(p.x, p.y);
+				}
+				currentPath.lineTo(poly.getFirst().x, poly.getFirst().y);
+			}
+			
+			c.drawPath(currentPath, useDebug? debugPaint : currentPaint);
+			
+			useDebug = !useDebug;
+		}
 		
 		
 		
