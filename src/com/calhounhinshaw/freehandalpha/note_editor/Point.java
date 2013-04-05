@@ -13,7 +13,7 @@ public final class Point {
 	public boolean equals (Object o) {
 		Point p = (Point) o;
 		
-		if (Math.abs(p.x - x) <= 0.0001 && Math.abs(p.y - y) <= 0.0001) {
+		if (this.x == p.x && this.y == p.y) {
 			return true;
 		} else {
 			return false;
