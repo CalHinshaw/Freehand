@@ -1,4 +1,4 @@
-package com.calhounhinshaw.freehandalpha.note_editor;
+package com.calhounhinshaw.freehandalpha.ink;
 
 public final class Point {
 	public final float x;

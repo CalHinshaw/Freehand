@@ -1,4 +1,5 @@
-package com.calhounhinshaw.freehandalpha.note_editor;
+package com.calhounhinshaw.freehandalpha.ink;
+
 
 /**
  * A Vertex is the node of the embedded planar graph used to perform boolean operations on polygons. The graphs are entirely linked data structures because

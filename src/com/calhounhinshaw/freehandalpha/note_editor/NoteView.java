@@ -1,9 +1,11 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
+import com.calhounhinshaw.freehandalpha.ink.MiscGeom;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.content.Context;
@@ -111,7 +113,7 @@ public class NoteView extends View {
 	}
 	
 	private void processPanZoom (MotionEvent event) {
-		float currentDistance = Geometry.distance(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
+		float currentDistance = MiscGeom.distance(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
 		float currentX = (event.getX(0)+event.getX(1)) / 2;
 		float currentY = (event.getY(0)+event.getY(1)) / 2;
 		

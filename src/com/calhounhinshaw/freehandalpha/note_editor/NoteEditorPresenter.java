@@ -1,9 +1,14 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.calhounhinshaw.freehandalpha.ink.MiscGeom;
+import com.calhounhinshaw.freehandalpha.ink.Point;
+import com.calhounhinshaw.freehandalpha.ink.Stroke;
+import com.calhounhinshaw.freehandalpha.ink.UnitPolyGeom;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.graphics.Canvas;
@@ -122,7 +127,7 @@ class NoteEditorPresenter {
 			for (int i = 0; i < times.size(); i++) {
 				float newScaledPressure = 0.333333f + pressures.get(i)*0.6666667f;
 				
-				if(Geometry.distSq(xs.get(i), ys.get(i), sLastAdded.x, sLastAdded.y) >= 4 || Math.abs(rawPressure.getLast() - newScaledPressure) >= 0.1f) {
+				if(MiscGeom.distSq(xs.get(i), ys.get(i), sLastAdded.x, sLastAdded.y) >= 4 || Math.abs(rawPressure.getLast() - newScaledPressure) >= 0.1f) {
 					sLastAdded = new Point(xs.get(i), ys.get(i));
 					
 					rawPoints.addLast(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
@@ -202,7 +207,7 @@ class NoteEditorPresenter {
 		boolean useDebug = true;
 		
 		for (int i = 1; i < rawPoints.size(); i++) {
-			LinkedList<Point> poly = TanGeom.buildUnitPoly(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
+			LinkedList<Point> poly = UnitPolyGeom.buildUnitPoly(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
 			
 			currentPath.reset();
 			

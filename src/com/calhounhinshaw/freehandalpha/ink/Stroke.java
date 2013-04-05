@@ -1,14 +1,15 @@
-package com.calhounhinshaw.freehandalpha.note_editor;
+package com.calhounhinshaw.freehandalpha.ink;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 
-class Stroke {
+public class Stroke {
 	private final List<Point> mPoly;
 	
 	private final Paint mPaint = new Paint();
