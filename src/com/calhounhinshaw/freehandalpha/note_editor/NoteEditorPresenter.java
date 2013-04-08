@@ -5,10 +5,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.calhounhinshaw.freehandalpha.ink.BooleanPolyGeom;
 import com.calhounhinshaw.freehandalpha.ink.MiscGeom;
 import com.calhounhinshaw.freehandalpha.ink.Point;
 import com.calhounhinshaw.freehandalpha.ink.Stroke;
 import com.calhounhinshaw.freehandalpha.ink.UnitPolyGeom;
+import com.calhounhinshaw.freehandalpha.ink.Vertex;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.graphics.Canvas;
@@ -54,12 +56,12 @@ class NoteEditorPresenter {
 	
 	public NoteEditorPresenter () {
 		currentPaint.setColor(Color.RED);
-		currentPaint.setStyle(Paint.Style.FILL);
+		currentPaint.setStyle(Paint.Style.STROKE);
 		currentPaint.setStrokeWidth(1);
 		currentPaint.setAntiAlias(true);
 		
 		debugPaint.setColor(Color.BLACK);
-		debugPaint.setStyle(Paint.Style.FILL);
+		debugPaint.setStyle(Paint.Style.STROKE);
 		debugPaint.setStrokeWidth(1);
 		debugPaint.setAntiAlias(true);
 	}
@@ -204,32 +206,76 @@ class NoteEditorPresenter {
 //			c.drawCircle(rawPoints.get(i).x, rawPoints.get(i).y, penSize*rawPressure.get(i)*0.5f, debugPaint);
 //		}
 		
-		boolean useDebug = true;
+//		boolean useDebug = true;
+//		
+//		for (int i = 1; i < rawPoints.size(); i++) {
+//			LinkedList<Point> poly = UnitPolyGeom.buildUnitPoly(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
+//			
+//			currentPath.reset();
+//			
+//			if (poly != null && poly.size() > 2) {
+//				currentPath.reset();
+//				currentPath.moveTo(poly.getFirst().x, poly.getFirst().y);
+//				for (Point p : poly) {
+//					currentPath.lineTo(p.x, p.y);
+//				}
+//				currentPath.lineTo(poly.getFirst().x, poly.getFirst().y);
+//			}
+//			
+//			c.drawPath(currentPath, useDebug? debugPaint : currentPaint);
+//			
+//			useDebug = !useDebug;
+//		}
 		
-		for (int i = 1; i < rawPoints.size(); i++) {
-			LinkedList<Point> poly = UnitPolyGeom.buildUnitPoly(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
+		
+		LinkedList<Point> square1 = new LinkedList<Point>();
+		LinkedList<Point> square3 = new LinkedList<Point>();
+		
+		
+		square1.add(new Point(-100, -400));
+		square1.add(new Point(-100, 50));
+		square1.add(new Point(-50, 25));
+		square1.add(new Point(0, 50));
+		square1.add(new Point(0, -400));
+		square1.add(new Point(-100, -400));
+		
+		square3.add(new Point(-100, 50f));
+		square3.add(new Point(200, 50f));
+		square3.add(new Point(200, -100));
+		square3.add(new Point(-100, -100));
+		square3.add(new Point(-100, 50f));
+		
+		
+		currentPath.reset();
+		currentPath.moveTo(square1.getFirst().x, square1.getFirst().y);
+		for (Point p : square1) {
+			currentPath.lineTo(p.x, p.y);
+		}
+		c.drawPath(currentPath, currentPaint);
+		
+		currentPath.reset();
+		currentPath.moveTo(square3.getFirst().x, square3.getFirst().y);
+		for (Point p : square3) {
+			currentPath.lineTo(p.x, p.y);
+		}
+		c.drawPath(currentPath, currentPaint);
+		
+		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square1, square3);
+		
+		Log.d("PEN", "printing distances");
+		for (Vertex v : verts) {
 			
-			currentPath.reset();
+			Log.d("PEN", v.intersection.toString());
+			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
+			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
 			
-			if (poly != null && poly.size() > 2) {
-				currentPath.reset();
-				currentPath.moveTo(poly.getFirst().x, poly.getFirst().y);
-				for (Point p : poly) {
-					currentPath.lineTo(p.x, p.y);
-				}
-				currentPath.lineTo(poly.getFirst().x, poly.getFirst().y);
+			if (v.poly1Entry) {
+				c.drawCircle(v.intersection.x, v.intersection.y, 3, debugPaint);
+			} else {
+				c.drawCircle(v.intersection.x, v.intersection.y, 3, currentPaint);
 			}
 			
-			c.drawPath(currentPath, useDebug? debugPaint : currentPaint);
-			
-			useDebug = !useDebug;
 		}
-		
-		
-		
-//		for (Point p : debugDots) {
-//			c.drawCircle((p.x-windowX)*zoomMultiplier, (p.y-windowY)*zoomMultiplier, 5, debugPaint);
-//		}
 	}
 	
 }

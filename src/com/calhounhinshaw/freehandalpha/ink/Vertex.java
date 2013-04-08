@@ -1,5 +1,7 @@
 package com.calhounhinshaw.freehandalpha.ink;
 
+import java.util.Comparator;
+
 
 /**
  * A Vertex is the node of the embedded planar graph used to perform boolean operations on polygons. The graphs are entirely linked data structures because
@@ -29,5 +31,43 @@ public class Vertex {
 		this.intersection = intersection;
 		this.distIn1 = distIn1;
 		this.distIn2 = distIn2;
+	}
+	
+	
+	
+	public static class p1Comparator implements Comparator<Vertex> {
+		public int compare(Vertex lhs, Vertex rhs) {
+			if (lhs.precedingIndex1 < rhs.precedingIndex1) {
+				return -1;
+			} else if (lhs.precedingIndex1 > rhs.precedingIndex1) {
+				return 1;
+			} else {
+				if (lhs.distIn1 < rhs.distIn1) {
+					return -1;
+				} else if (lhs.distIn1 > rhs.distIn1) {
+					return 1;
+				} else {
+					return 0;
+				}
+			}
+		}
+	}
+	
+	public static class p2Comparator implements Comparator<Vertex> {
+		public int compare(Vertex lhs, Vertex rhs) {
+			if (lhs.precedingIndex2 < rhs.precedingIndex2) {
+				return -1;
+			} else if (lhs.precedingIndex2 > rhs.precedingIndex2) {
+				return 1;
+			} else {
+				if (lhs.distIn2 < rhs.distIn2) {
+					return -1;
+				} else if (lhs.distIn2 > rhs.distIn2) {
+					return 1;
+				} else {
+					return 0;
+				}
+			}
+		}
 	}
 }

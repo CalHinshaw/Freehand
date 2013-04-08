@@ -1,10 +1,13 @@
 package com.calhounhinshaw.freehandalpha.ink;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 
-public class BooleanPolyGeom {
+import android.util.Log;
 
+public class BooleanPolyGeom {
 	/**
 	 * Intersects the two polygons and returns a list of Vertex objects that represent the intersections. COLINEAR SEGMENTS ARE CONSIDERED NON-INTERSECTING.
 	 * @param p1 corresponds to all of the fields in the returned Vertexes marked 1.
@@ -28,130 +31,9 @@ public class BooleanPolyGeom {
 		return intersections;
 	}
 	
-	
-//	public static Vertex[] buildRawGraph (LinkedList<Point> p1, LinkedList<Point> p2) {
-//		ArrayList<Vertex> l1 = new ArrayList<Vertex>();
-//		ArrayList<Vertex> l2 = new ArrayList<Vertex>();
-//		
-//		for (int i = 0; i < p1.size()-1; i++) {
-//			for (int j = 0; j < p2.size()-1; j++) {
-//				Object[] data = segmentIntersection(p1.get(i+1), p1.get(i), p2.get(j+1), p2.get(j));
-//				
-//				if (data != null) {
-//					Point intersection = (Point) data[0];
-//					Float p1Percentage = (Float) data[1];
-//					Float p2Percentage = (Float) data[2];
-//					
-//					if ((p1Percentage > 0 && p1Percentage < 1) || (p2Percentage > 0 && p2Percentage < 1)) {
-//						// Normal case, just add the two vertexes to the graph
-//						Vertex v1 = new Vertex(intersection, p1Percentage, false, i, p1);
-//						Vertex v2 = new Vertex(intersection, p2Percentage, false, j, p2);
-//						v1.neighbor = v2;
-//						v2.neighbor = v1;
-//						
-//						l1.add(v1);
-//						l2.add(v2);
-//					} else {
-//						
-//						Log.d("PEN", "point-on-point intersection");
-//						
-//						// This is an end on end intersection and will require more care. Only head/tail or tail/head intersections get added.
-//						// In addition to that, point-on-point intersections with colinear segments on each side shouldn't be added.
-//						// Also, there should only be two point-on-point intersections in each individual polygon's graph for each point - when
-//						// there are more it means a polygon is being double counted on a cutout. 
-//						
-//						// Starting with the p1 head:
-//						if (p1Percentage == 1 && p2Percentage == 0) {
-//							Point before1 = p1.get(i);
-//							Point after1 = (i+2 == p1.size()) ? p1.get(0) : p1.get(i+2);
-//							Point before2 = (j-1 >= 0) ? p2.get(j) : p2.get(p2.size()-1);
-//							Point after2 = p2.get(j+1);
-//
-//							if (TanGeom.cross(before1, p1.get(i+1), before2, p2.get(j)) != 0 || TanGeom.cross(after1, p1.get(i+1), after2, p2.get(j)) != 0) {
-//								Vertex v1 = new Vertex(intersection, p1Percentage, true, i, p1);
-//								Vertex v2 = new Vertex(intersection, p2Percentage, true, j, p2);
-//								v1.neighbor = v2;
-//								v2.neighbor = v1;
-//								
-//								l1.add(v1);
-//								l2.add(v2);
-//							}
-//						} else if (p1Percentage == 0 && p2Percentage == 1) {
-//							// p2 is the head here
-//							Point before1 = (i-1 >= 0) ? p1.get(i) : p1.get(p1.size()-1);
-//							Point after1 = p1.get(i+1);
-//							Point before2 = p2.get(j);
-//							Point after2 = (j+2 == p2.size()) ? p2.get(0) : p2.get(j+2);
-//							
-//							if (TanGeom.cross(before1, p1.get(i+1), before2, p2.get(j)) != 0 || TanGeom.cross(after1, p1.get(i+1), after2, p2.get(j)) != 0) {
-//								Vertex v1 = new Vertex(intersection, p1Percentage, true, i, p1);
-//								Vertex v2 = new Vertex(intersection, p2Percentage, true, j, p2);
-//								v1.neighbor = v2;
-//								v2.neighbor = v1;
-//								
-//								l1.add(v1);
-//								l2.add(v2);
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//		Collections.sort(l2);
-//		
-//		if (l1.size() > 0 && l2.size() > 0) {
-//			Vertex[] toReturn = new Vertex[2];
-//			toReturn[0] = linkVerts(l1);
-//			toReturn[1] = linkVerts(l2);
-//			return toReturn;
-//		} else {
-//			return null;
-//		}
-//	}
-//	
-//	public static Vertex linkVerts (List<Vertex> l) {
-//		for (int i = 0; i < l.size()-1; i++) {
-//			l.get(i).next = l.get(i+1);
-//			l.get(i+1).previous = l.get(i);
-//		}
-//		l.get(0).previous = l.get(l.size()-1);
-//		l.get(l.size()-1).next = l.get(0);
-//		
-//		return l.get(0);
-//	}
-//	
-//	public static Vertex[] populateGraph (Vertex[] g, LinkedList<Point> p1, LinkedList<Point> p2) {
-//		boolean nextIsEntry = !pointInPoly(p1.getFirst(), p2);
-//		Vertex current = g[0];
-//		do {
-//			current.isEntry = nextIsEntry;
-//			current = current.next;
-//		} while (current != g[0]);
-//		
-//		return g;
-//	}
-	
-//	public static Vertex[] buildGraph (LinkedList<Point> p1, LinkedList<Point> p2) {
-//		Vertex[] graph = populateGraph(buildRawGraph(p1, p2), p1, p2);
-//		
-//		return null;
-//	}
-	
-	
-
-	
-	
-	public static LinkedList<Point> polygonUnion (Vertex[] graph) {
-		
-		
-		
-		return null;
-	}
-	
-	
 	/**
-	 * Calculates the intersection of the two line segments. The line segments are considered closed. Considers coincident lines to not intersect (returns null).
+	 * Calculates the intersection of the two line segments. The line segments are considered closed. Considers coincident lines 
+	 * to not intersect even if they only share endpoints.
 	 * 
 	 * @param aH The head of the first vector
 	 * @param aT The tail of the first vector
@@ -166,24 +48,165 @@ public class BooleanPolyGeom {
 			return null;
 		}
 		
-		float denominator = (bT.y-bH.y)*(aT.x-aH.x)-(bT.x-bH.x)*(aT.y-aH.y);
+		float denominator = (bH.y-bT.y)*(aH.x-aT.x)-(bH.x-bT.x)*(aH.y-aT.y);
 
-		// Close enough to parallel that we might as well just call them parallel.
-		if (Math.abs(denominator) < 0.000000000001) {
-			return null;
+		// Check for endpoint-on-endpoint intersections. If there aren't any return null.
+		if (denominator == 0) {
+			if (aH.equals(bH)) {
+				if ((aH.x > aT.x && bH.x < bT.x) || (aH.x < aT.x && bH.x > bT.x) || (aH.y > aT.y && bH.y < bT.y) || (aH.y < aT.y && bH.y > bT.y)) {
+					return new Vertex(aH, 1, 1);
+				}
+			} else if (aH.equals(bT)) {
+				if ((aH.x > aT.x && bH.x > bT.x) || (aH.x < aT.x && bH.x < bT.x) || (aH.y > aT.y && bH.y > bT.y) || (aH.y < aT.y && bH.y < bT.y)) {
+					return new Vertex(aH, 1, 0);
+				}
+			} else if (aT.equals(bH)) {
+				if ((aH.x < aT.x && bH.x < bT.x) || (aH.x > aT.x && bH.x > bT.x) || (aH.y < aT.y && bH.y < bT.y) || (aH.y > aT.y && bH.y > bT.y)) {
+					return new Vertex(aH, 0, 1);
+				}
+			} else if (aT.equals(bT)) {
+				if ((aH.x > aT.x && bH.x < bT.x) || (aH.x < aT.x && bH.x > bT.x) || (aH.y > aT.y && bH.y < bT.y) || (aH.y < aT.y && bH.y > bT.y)) {
+					return new Vertex(aH, 0, 0);
+				}
+			} else {
+				return null;
+			}
 		}
 
 		// Note: I tried adding the divisions into the if statement but that actually slowed the benchmarks down. I think it might be a branch prediction
 		// issue. It's been a while (and a lot of other changes) since I ran the benchmark, I should probably test it again if there's a performance problem.
-		float Ta = ((bT.x-bH.x)*(aH.y-bH.y)-(bT.y-bH.y)*(aH.x-bH.x))/denominator;
-		float Tb = ((aT.x-aH.x)*(aH.y-bH.y)-(aT.y-aH.y)*(aH.x-bH.x))/denominator;
+		float Ta = ((bH.x-bT.x)*(aT.y-bT.y)-(bH.y-bT.y)*(aT.x-bT.x))/denominator;
+		float Tb = ((aH.x-aT.x)*(aT.y-bT.y)-(aH.y-aT.y)*(aT.x-bT.x))/denominator;
 
 		if (Ta <= 1 && Ta >= 0 && Tb <= 1 && Tb >= 0) {
-			Point intersection = new Point(aH.x + Ta*(aT.x - aH.x), aH.y + Ta*(aT.y - aH.y));
+			Point intersection = new Point(aT.x + Ta*(aH.x - aT.x), aT.y + Ta*(aH.y - aT.y));
 			return new Vertex(intersection, Ta, Tb);
 		} else {
 			return null;
 		}
 	}
+	
+
+	public static void removeSimilarEndToEndVertices (ArrayList<Vertex> graph) {
+		Iterator<Vertex> iter = graph.iterator();
+		while (iter.hasNext()) {
+			Vertex v = iter.next();
+			if ((v.distIn1 == 0 && v.distIn2 == 0) || (v.distIn1 == 1 && v.distIn2 == 1)) {
+				iter.remove();
+			}
+		}
+	}
+	
+	public static void removeInternalVertsAndSetInOut (ArrayList<Vertex> graph, LinkedList<Point> p1, LinkedList<Point> p2) {
+		Collections.sort(graph, new Vertex.p1Comparator());
+		Iterator<Vertex> iter1 = graph.iterator();
+		
+		boolean p1CurrentlyOut = !MiscGeom.pointInPoly(p1.getFirst(), p2);
+		while (iter1.hasNext()) {
+			Vertex v = iter1.next();
+			
+			if (p1CurrentlyOut == true) {
+				Log.d("PEN", "going in");
+				p1CurrentlyOut = false;
+			} else {
+				if (v.distIn1 > 0 && v.distIn1 < 1 && v.distIn2 > 0 && v.distIn2 < 1) {				// Line-on-line intersection, has to go out
+					Log.d("PEN", "line on line");
+					p1CurrentlyOut = true;
+				} else if (v.distIn1 == 1) {														// Head-on-something intersection, delete Vertex
+					Log.d("PEN", "head on, apply directly to the forehead");
+					iter1.remove();
+					continue;
+				} else if (v.distIn2 > 0 && v.distIn2 < 1) {										// Tail-on-segment intersection, need single cross to test
+					// TODO account for intersections in the last segment in the polygon (wrap around)
+					boolean goesOut = MiscGeom.cross(p2.get(v.precedingIndex2+1), p2.get(v.precedingIndex2), p1.get(v.precedingIndex1+1), v.intersection) > 0;
+					
+					Log.d("PEN", "tail on seg");
+					
+					if (goesOut == true) {
+						p1CurrentlyOut = true;
+					} else {
+						iter1.remove();
+						continue;
+					}
+				} else {																			// Tail-on-point, need two crosses to test
+					// TODO account for intersections in the last segment in the polygon (wrap around)
+					
+					
+					Log.d("PEN", "tail on point intersection");
+					
+					
+					boolean segBeforeGoesOut = MiscGeom.cross(p2.get(v.precedingIndex2+1), p2.get(v.precedingIndex2), p1.get(v.precedingIndex1+1), v.intersection) > 0;
+					boolean segAfterGoesOut = MiscGeom.cross(p2.get(v.precedingIndex2+2), p2.get(v.precedingIndex2+1), p1.get(v.precedingIndex1+1), v.intersection) > 0;
+					if (segBeforeGoesOut == true || segAfterGoesOut == true) {
+						p1CurrentlyOut = true;
+					} else {
+						iter1.remove();
+						continue;
+					}
+				}
+			}
+		}
+		
+		
+		Collections.sort(graph, new Vertex.p2Comparator());
+		Iterator<Vertex> iter2 = graph.iterator();
+		
+		boolean p2CurrentlyOut = !MiscGeom.pointInPoly(p2.getFirst(), p1);
+		while (iter2.hasNext()) {
+			Vertex v = iter2.next();
+			
+			if (p2CurrentlyOut == true) {
+				v.poly1Entry = false;
+				p2CurrentlyOut = false;
+			} else {
+				if (v.distIn2 > 0 && v.distIn2 < 1 && v.distIn1 > 0 && v.distIn1 < 1) {				// Line-on-line intersection, has to go out
+					v.poly1Entry = true;
+					p2CurrentlyOut = true;
+				} else if (v.distIn2 == 1) {														// Head-on-something intersection, delete Vertex
+					iter2.remove();
+					continue;
+				} else if (v.distIn1 > 0 && v.distIn1 < 1) {										// Head-on-segment intersection, need single cross to test
+					// TODO account for intersections in the last segment in the polygon (wrap around)
+					boolean goesOut = MiscGeom.cross(p1.get(v.precedingIndex1+1), p1.get(v.precedingIndex1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
+					if (goesOut == true) {
+						v.poly1Entry = true;
+						p2CurrentlyOut = true;
+					} else {
+						iter2.remove();
+						continue;
+					}
+				} else {																			// Head-on-point, need two crosses to test
+					// TODO account for intersections in the last segment in the polygon (wrap around)
+					boolean segBeforeGoesOut = MiscGeom.cross(p1.get(v.precedingIndex1+1), p1.get(v.precedingIndex1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
+					boolean segAfterGoesOut = MiscGeom.cross(p1.get(v.precedingIndex1+2), p1.get(v.precedingIndex1+1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
+					if (segBeforeGoesOut == true || segAfterGoesOut == true) {
+						v.poly1Entry = true;
+						p2CurrentlyOut = true;
+					} else {
+						iter2.remove();
+						continue;
+					}
+				}
+			}
+		}
+	}
+	
+	public static ArrayList<Vertex> buildPolyGraph (LinkedList<Point> p1, LinkedList<Point> p2) {
+		if (p1.size() < 3 || p2.size() < 3) {
+			return new ArrayList<Vertex>(1);
+		}
+		
+		ArrayList<Vertex> graph = intersectPolys(p1, p2);
+		removeSimilarEndToEndVertices(graph);
+		removeInternalVertsAndSetInOut(graph, p1, p2);
+		
+		return graph;
+	}
+	
+	
+
+	
+	
+	
 	
 }

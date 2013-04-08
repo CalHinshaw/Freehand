@@ -129,6 +129,8 @@ public class NoteView extends View {
 		previousDistance = currentDistance;
 		previousX = currentX;
 		previousY = currentY;
+		
+		invalidate();
 	}
 	
 	
