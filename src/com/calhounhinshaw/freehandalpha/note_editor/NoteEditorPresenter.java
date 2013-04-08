@@ -260,22 +260,23 @@ class NoteEditorPresenter {
 		}
 		c.drawPath(currentPath, currentPaint);
 		
-		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square1, square3);
-		
-		Log.d("PEN", "printing distances");
-		for (Vertex v : verts) {
-			
-			Log.d("PEN", v.intersection.toString());
-			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
-			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
-			
-			if (v.poly1Entry) {
-				c.drawCircle(v.intersection.x, v.intersection.y, 3, debugPaint);
-			} else {
-				c.drawCircle(v.intersection.x, v.intersection.y, 3, currentPaint);
-			}
-			
-		}
+//		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square1, square3);
+//		
+//		Log.d("PEN", "printing distances");
+//		for (Vertex v : verts) {
+//			
+//			Log.d("PEN", v.intersection.toString());
+//			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
+//			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
+//			
+//			if (v.poly1Entry) {
+//				c.drawCircle(v.intersection.x, v.intersection.y, 3, debugPaint);
+//			} else {
+//				c.drawCircle(v.intersection.x, v.intersection.y, 3, currentPaint);
+//			}
+//			
+//		}
+
 	}
 	
 }
