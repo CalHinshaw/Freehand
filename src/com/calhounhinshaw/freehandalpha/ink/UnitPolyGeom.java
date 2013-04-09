@@ -1,9 +1,31 @@
 package com.calhounhinshaw.freehandalpha.ink;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+
+import com.calhounhinshaw.freehandalpha.misc.WrapList;
 
 public class UnitPolyGeom {
 
+	/**
+	 * An array of evenly spaced points on the unit circle going counter-clockwise starting at theta == 0;
+	 */
+	private static final Point[] CIRCLE ={	new Point ((float) Math.cos(0 * Math.PI/6), (float) Math.sin(0 * Math.PI/6)),
+											new Point ((float) Math.cos(1 * Math.PI/6), (float) Math.sin(1 * Math.PI/6)),
+											new Point ((float) Math.cos(2 * Math.PI/6), (float) Math.sin(2 * Math.PI/6)),
+											new Point ((float) Math.cos(3 * Math.PI/6), (float) Math.sin(3 * Math.PI/6)),
+											new Point ((float) Math.cos(4 * Math.PI/6), (float) Math.sin(4 * Math.PI/6)),
+											new Point ((float) Math.cos(5 * Math.PI/6), (float) Math.sin(5 * Math.PI/6)),
+											new Point ((float) Math.cos(6 * Math.PI/6), (float) Math.sin(6 * Math.PI/6)),
+											new Point ((float) Math.cos(7 * Math.PI/6), (float) Math.sin(7 * Math.PI/6)),
+											new Point ((float) Math.cos(8 * Math.PI/6), (float) Math.sin(8 * Math.PI/6)),
+											new Point ((float) Math.cos(9 * Math.PI/6), (float) Math.sin(9 * Math.PI/6)),
+											new Point ((float) Math.cos(10 * Math.PI/6), (float) Math.sin(10 * Math.PI/6)),
+											new Point ((float) Math.cos(11 * Math.PI/6), (float) Math.sin(11 * Math.PI/6)),
+										   };
+	
+	private static final double STEP_SIZE = (2 * Math.PI) / CIRCLE.length;
+	private static final int POLY_SIZE = (CIRCLE.length) + 7;
+	
 	/**
 	 * Builds a polygon out of a single inputed segment. The first and last entries in the list are duplicated to make
 	 * iteration easier.
@@ -15,14 +37,14 @@ public class UnitPolyGeom {
 	 * 
 	 * @return The unit poly if one can be constructed, null if not.
 	 */
-	public static LinkedList<Point> buildUnitPoly (float r1, float r2, Point c1, Point c2) {
+	public static WrapList<Point> buildUnitPoly (float r1, float r2, Point c1, Point c2) {
 		float[] angles = UnitPolyGeom.calcBitangentAngles(r1, r2, c1, c2);
 		
 		if (angles == null) {
 			return null;
 		}
 		
-		LinkedList<Point> poly = new LinkedList<Point>();
+		WrapList<Point> poly = new WrapList<Point>(POLY_SIZE);
 
 		Point lPoint, rPoint;
 		float lRad, rRad;
@@ -75,7 +97,6 @@ public class UnitPolyGeom {
 		poly.add(points[2]);
 		poly.add(points[3]);
 		poly.addAll(UnitPolyGeom.traceCircularPath(lPoint, lRad, true, angles[1], angles[0]));
-		poly.add(points[0]);
 		
 		return poly;
 	}
@@ -112,25 +133,6 @@ public class UnitPolyGeom {
 	}
 	
 	/**
-	 * An array of evenly spaced points on the unit circle going counter-clockwise starting at theta == 0;
-	 */
-	private static final Point[] CIRCLE ={	new Point ((float) Math.cos(0 * Math.PI/6), (float) Math.sin(0 * Math.PI/6)),
-											new Point ((float) Math.cos(1 * Math.PI/6), (float) Math.sin(1 * Math.PI/6)),
-											new Point ((float) Math.cos(2 * Math.PI/6), (float) Math.sin(2 * Math.PI/6)),
-											new Point ((float) Math.cos(3 * Math.PI/6), (float) Math.sin(3 * Math.PI/6)),
-											new Point ((float) Math.cos(4 * Math.PI/6), (float) Math.sin(4 * Math.PI/6)),
-											new Point ((float) Math.cos(5 * Math.PI/6), (float) Math.sin(5 * Math.PI/6)),
-											new Point ((float) Math.cos(6 * Math.PI/6), (float) Math.sin(6 * Math.PI/6)),
-											new Point ((float) Math.cos(7 * Math.PI/6), (float) Math.sin(7 * Math.PI/6)),
-											new Point ((float) Math.cos(8 * Math.PI/6), (float) Math.sin(8 * Math.PI/6)),
-											new Point ((float) Math.cos(9 * Math.PI/6), (float) Math.sin(9 * Math.PI/6)),
-											new Point ((float) Math.cos(10 * Math.PI/6), (float) Math.sin(10 * Math.PI/6)),
-											new Point ((float) Math.cos(11 * Math.PI/6), (float) Math.sin(11 * Math.PI/6)),
-										   };
-	
-	private static final double STEP_SIZE = (2 * Math.PI) / CIRCLE.length;
-	
-	/**
 	 * Approximates a circular path as a poly-line.
 	 * 
 	 * @param center The center of the circle
@@ -140,8 +142,8 @@ public class UnitPolyGeom {
 	 * @param to The angle the path to be traced ends at
 	 * @return The path
 	 */
-	public static LinkedList<Point> traceCircularPath (final Point center, final float radius, final boolean clockwise, final float from, final float to) {
-		LinkedList<Point> path = new LinkedList<Point>();
+	public static ArrayList<Point> traceCircularPath (final Point center, final float radius, final boolean clockwise, final float from, final float to) {
+		ArrayList<Point> path = new ArrayList<Point>();
 		
 		// Find the indexes of the points on the circle the path is starting and ending at
 		int fromIndex = findAdjacentCircleIndex(from, clockwise);

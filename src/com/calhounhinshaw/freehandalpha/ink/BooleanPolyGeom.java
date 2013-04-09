@@ -3,7 +3,8 @@ package com.calhounhinshaw.freehandalpha.ink;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
+
+import com.calhounhinshaw.freehandalpha.misc.WrapList;
 
 import android.util.Log;
 
@@ -13,7 +14,7 @@ public class BooleanPolyGeom {
 	 * @param p1 corresponds to all of the fields in the returned Vertexes marked 1.
 	 * @param p2 corresponds to all of the fields in the returned Vertexes marked 2.
 	 */
-	public static ArrayList<Vertex> intersectPolys (LinkedList<Point> p1, LinkedList<Point> p2) {
+	public static ArrayList<Vertex> intersectPolys (WrapList<Point> p1, WrapList<Point> p2) {
 		ArrayList<Vertex> intersections = new ArrayList<Vertex>(10);
 		
 		for (int i = 0; i < p1.size()-1; i++) {
@@ -97,11 +98,11 @@ public class BooleanPolyGeom {
 		}
 	}
 	
-	public static void removeInternalVertsAndSetInOut (ArrayList<Vertex> graph, LinkedList<Point> p1, LinkedList<Point> p2) {
+	public static void removeInternalVertsAndSetInOut (ArrayList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
 		Collections.sort(graph, new Vertex.p1Comparator());
 		Iterator<Vertex> iter1 = graph.iterator();
 		
-		boolean p1CurrentlyOut = !MiscGeom.pointInPoly(p1.getFirst(), p2);
+		boolean p1CurrentlyOut = !MiscGeom.pointInPoly(p1.get(0), p2);
 		while (iter1.hasNext()) {
 			Vertex v = iter1.next();
 			
@@ -151,7 +152,7 @@ public class BooleanPolyGeom {
 		Collections.sort(graph, new Vertex.p2Comparator());
 		Iterator<Vertex> iter2 = graph.iterator();
 		
-		boolean p2CurrentlyOut = !MiscGeom.pointInPoly(p2.getFirst(), p1);
+		boolean p2CurrentlyOut = !MiscGeom.pointInPoly(p2.get(0), p1);
 		while (iter2.hasNext()) {
 			Vertex v = iter2.next();
 			
@@ -191,7 +192,7 @@ public class BooleanPolyGeom {
 		}
 	}
 	
-	public static ArrayList<Vertex> buildPolyGraph (LinkedList<Point> p1, LinkedList<Point> p2) {
+	public static ArrayList<Vertex> buildPolyGraph (WrapList<Point> p1, WrapList<Point> p2) {
 		if (p1.size() < 3 || p2.size() < 3) {
 			return new ArrayList<Vertex>(1);
 		}

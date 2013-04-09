@@ -1,6 +1,8 @@
 package com.calhounhinshaw.freehandalpha.ink;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+
+import com.calhounhinshaw.freehandalpha.misc.WrapList;
 
 public class MiscGeom {
 	private static final float SG0 = 17.0f / 35.0f;
@@ -132,12 +134,12 @@ public class MiscGeom {
 	/**
 	 * Simple, small effect Savitzky-Golay filter.
 	 */
-	public static LinkedList<Float> sgSmooth (LinkedList<Float> in) {
+	public static ArrayList<Float> sgSmooth (ArrayList<Float> in) {
 		if (in.size() < 5) {
 			return in;
 		}
 		
-		LinkedList<Float> toReturn = new LinkedList<Float>();
+		ArrayList<Float> toReturn = new ArrayList<Float>(in.size());
 		
 		toReturn.add(in.get(0));
 		toReturn.add(in.get(1));
@@ -155,48 +157,28 @@ public class MiscGeom {
 	/**
 	 * UNTESTED, DON'T TRUST! (it's from the prototype ink when I was using polylines and PointF)
 	 */
-	public static boolean pointInPoly (Point point, LinkedList<Point> poly) {
+	public static boolean pointInPoly (Point point, WrapList<Point> poly) {
 		// -1 if not valid, else 0 if below and 1 if above
 		int ptState = -1;
-		
 		int intersections = 0;
 		
-		for (Point selPt : poly) {
-			if (selPt.x < point.x) {
+		for (int i = 0; i <= poly.size(); i++) {
+			if (poly.get(i).x < point.x) {
 				ptState = -1;
 			} else {
 				if (ptState == -1) {
-					if (selPt.y >= point.y) {
+					if (poly.get(i).y >= point.y) {
 						ptState = 1;
 					} else {
 						ptState = 0;
 					}
-				} else if ((selPt.y >= point.y) && ptState == 0) {
+				} else if ((poly.get(i).y >= point.y) && ptState == 0) {
 					intersections++;
 					ptState = 1;
-				} else if ((selPt.y < point.y) && ptState == 1) {
+				} else if ((poly.get(i).y < point.y) && ptState == 1) {
 					intersections++;
 					ptState = 0;
 				}
-				
-			}
-		}
-		
-		if (poly.get(0).x < point.x) {
-			ptState = -1;
-		} else {
-			if (ptState == -1) {
-				if (poly.get(0).y >= point.y) {
-					ptState = 1;
-				} else {
-					ptState = 0;
-				}
-			} else if ((poly.get(0).y >= point.y) && ptState == 0) {
-				intersections++;
-				ptState = 1;
-			} else if ((poly.get(0).y < point.y) && ptState == 1) {
-				intersections++;
-				ptState = 0;
 			}
 		}
 		

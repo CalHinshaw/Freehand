@@ -1,11 +1,11 @@
 package com.calhounhinshaw.freehandalpha.test;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 
 import com.calhounhinshaw.freehandalpha.ink.BooleanPolyGeom;
 import com.calhounhinshaw.freehandalpha.ink.Point;
 import com.calhounhinshaw.freehandalpha.ink.Vertex;
+import com.calhounhinshaw.freehandalpha.misc.WrapList;
 
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -13,12 +13,12 @@ import android.util.Log;
 import junit.framework.Assert;
 
 public class BooleanPolyGeomTests extends AndroidTestCase {
-	private LinkedList<Point> square1 = new LinkedList<Point>();
-	private LinkedList<Point> square2 = new LinkedList<Point>();
-	private LinkedList<Point> square3 = new LinkedList<Point>();
-	private LinkedList<Point> square4 = new LinkedList<Point>();
-	private LinkedList<Point> tri1 = new LinkedList<Point>();
-	private LinkedList<Point> tri2 = new LinkedList<Point>();
+	private WrapList<Point> square1 = new WrapList<Point>();
+	private WrapList<Point> square2 = new WrapList<Point>();
+	private WrapList<Point> square3 = new WrapList<Point>();
+	private WrapList<Point> square4 = new WrapList<Point>();
+	private WrapList<Point> tri1 = new WrapList<Point>();
+	private WrapList<Point> tri2 = new WrapList<Point>();
 	
 	@Override
 	protected void setUp () {

@@ -11,6 +11,7 @@ import com.calhounhinshaw.freehandalpha.ink.Point;
 import com.calhounhinshaw.freehandalpha.ink.Stroke;
 import com.calhounhinshaw.freehandalpha.ink.UnitPolyGeom;
 import com.calhounhinshaw.freehandalpha.ink.Vertex;
+import com.calhounhinshaw.freehandalpha.misc.WrapList;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
 import android.graphics.Canvas;
@@ -28,7 +29,7 @@ class NoteEditorPresenter {
 	private LinkedList<Float> rawPressure = new LinkedList<Float>();
 	
 	// Holds the current stroke's data for drawing
-	private LinkedList<Point> currentPolygon = new LinkedList<Point>();
+	private WrapList<Point> currentPolygon = new WrapList<Point>();
 	private Path currentPath = new Path();
 	private Paint currentPaint = new Paint();
 	
@@ -228,8 +229,8 @@ class NoteEditorPresenter {
 //		}
 		
 		
-		LinkedList<Point> square1 = new LinkedList<Point>();
-		LinkedList<Point> square3 = new LinkedList<Point>();
+		WrapList<Point> square1 = new WrapList<Point>();
+		WrapList<Point> square3 = new WrapList<Point>();
 		
 		
 		square1.add(new Point(-100, -400));
@@ -247,16 +248,16 @@ class NoteEditorPresenter {
 		
 		
 		currentPath.reset();
-		currentPath.moveTo(square1.getFirst().x, square1.getFirst().y);
-		for (Point p : square1) {
-			currentPath.lineTo(p.x, p.y);
+		currentPath.moveTo(square1.get(0).x, square1.get(0).y);
+		for (int i = 0; i <= square1.size(); i++) {
+			currentPath.lineTo(square1.get(i).x, square1.get(i).y);
 		}
 		c.drawPath(currentPath, currentPaint);
 		
 		currentPath.reset();
-		currentPath.moveTo(square3.getFirst().x, square3.getFirst().y);
-		for (Point p : square3) {
-			currentPath.lineTo(p.x, p.y);
+		currentPath.moveTo(square3.get(0).x, square3.get(0).y);
+		for (int i = 0; i <= square3.size(); i++) {
+			currentPath.lineTo(square3.get(i).x, square3.get(i).y);
 		}
 		c.drawPath(currentPath, currentPaint);
 		

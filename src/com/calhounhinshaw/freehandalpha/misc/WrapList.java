@@ -6,6 +6,14 @@ import java.util.Collection;
 public class WrapList<E> extends ArrayList<E> {
 	private static final long serialVersionUID = 1L;
 	
+	public WrapList (int size) {
+		super(size);
+	}
+	
+	public WrapList () {
+		super();
+	}
+
 	private int wrap (int index) {
 		if (index < 0) {
 			return super.size() + (index % super.size());
