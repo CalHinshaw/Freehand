@@ -2,6 +2,8 @@ package com.calhounhinshaw.freehandalpha.ink;
 
 import java.util.Comparator;
 
+import com.calhounhinshaw.freehandalpha.misc.WrapList;
+
 
 /**
  * A Vertex is the node of the embedded planar graph used to perform boolean operations on polygons. The graphs are entirely linked data structures because
@@ -23,8 +25,11 @@ public class Vertex {
 	
 	public Vertex next1 = null;
 	public Vertex next2 = null;
-	public Vertex previous1 = null;
-	public Vertex previous2 = null;
+	public Vertex prev1 = null;
+	public Vertex prev2 = null;
+	
+	public WrapList<Point> poly1;
+	public WrapList<Point> poly2;
 	
 	
 	public Vertex (Point intersection, float distIn1, float distIn2) {
@@ -33,7 +38,62 @@ public class Vertex {
 		this.distIn2 = distIn2;
 	}
 	
+	public Vertex getNext(int poly) {
+		if (poly == 1) {
+			return next1;
+		} else {
+			return next2;
+		}
+	}
 	
+	public Vertex getPrevious (int poly) {
+		if (poly == 1) {
+			return prev1;
+		} else {
+			return prev2;
+		}
+	}
+	
+	public float getDistIn (int poly) {
+		if (poly == 1) {
+			return distIn1;
+		} else {
+			return distIn2;
+		}
+	}
+	
+	public int getPrecedingIndex (int poly) {
+		if (poly == 1) {
+			return precedingIndex1;
+		} else {
+			return precedingIndex2;
+		}
+	}
+	
+	public WrapList<Point> getPoly (int poly) {
+		if (poly == 1) {
+			return poly1;
+		} else {
+			return poly2;
+		}
+	}
+	
+	public boolean getWasEntry (int poly) {
+		if (poly == 1) {
+			return poly1Entry;
+		} else {
+			return !poly1Entry;
+		}
+	}
+	
+	
+	public static Comparator<Vertex> getComparator (int poly) {
+		if (poly == 1) {
+			return new p1Comparator();
+		} else {
+			return new p2Comparator();
+		}
+	}
 	
 	public static class p1Comparator implements Comparator<Vertex> {
 		public int compare(Vertex lhs, Vertex rhs) {

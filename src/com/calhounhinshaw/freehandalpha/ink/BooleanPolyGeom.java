@@ -22,7 +22,9 @@ public class BooleanPolyGeom {
 				Vertex v = segmentIntersection(p1.get(i+1), p1.get(i), p2.get(j+1), p2.get(j));
 				
 				if (v != null) {
+					v.poly1 = p1;
 					v.precedingIndex1 = i;
+					v.poly2 = p2;
 					v.precedingIndex2 = j;
 					intersections.add(v);
 				}
@@ -115,10 +117,10 @@ public class BooleanPolyGeom {
 					p1CurrentlyOut = true;
 				} else if (v.distIn1 == 1) {														// Head-on-something intersection, delete Vertex
 					Log.d("PEN", "head on, apply directly to the forehead");
+					Log.d("PEN", "removed");
 					iter1.remove();
 					continue;
 				} else if (v.distIn2 > 0 && v.distIn2 < 1) {										// Tail-on-segment intersection, need single cross to test
-					// TODO account for intersections in the last segment in the polygon (wrap around)
 					boolean goesOut = MiscGeom.cross(p2.get(v.precedingIndex2+1), p2.get(v.precedingIndex2), p1.get(v.precedingIndex1+1), v.intersection) > 0;
 					
 					Log.d("PEN", "tail on seg");
@@ -126,11 +128,11 @@ public class BooleanPolyGeom {
 					if (goesOut == true) {
 						p1CurrentlyOut = true;
 					} else {
+						Log.d("PEN", "removed");
 						iter1.remove();
 						continue;
 					}
 				} else {																			// Tail-on-point, need two crosses to test
-					// TODO account for intersections in the last segment in the polygon (wrap around)
 					
 					
 					Log.d("PEN", "tail on point intersection");
@@ -141,6 +143,7 @@ public class BooleanPolyGeom {
 					if (segBeforeGoesOut == true || segAfterGoesOut == true) {
 						p1CurrentlyOut = true;
 					} else {
+						Log.d("PEN", "removed");
 						iter1.remove();
 						continue;
 					}
@@ -167,7 +170,6 @@ public class BooleanPolyGeom {
 					iter2.remove();
 					continue;
 				} else if (v.distIn1 > 0 && v.distIn1 < 1) {										// Head-on-segment intersection, need single cross to test
-					// TODO account for intersections in the last segment in the polygon (wrap around)
 					boolean goesOut = MiscGeom.cross(p1.get(v.precedingIndex1+1), p1.get(v.precedingIndex1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
 					if (goesOut == true) {
 						v.poly1Entry = true;
@@ -177,7 +179,6 @@ public class BooleanPolyGeom {
 						continue;
 					}
 				} else {																			// Head-on-point, need two crosses to test
-					// TODO account for intersections in the last segment in the polygon (wrap around)
 					boolean segBeforeGoesOut = MiscGeom.cross(p1.get(v.precedingIndex1+1), p1.get(v.precedingIndex1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
 					boolean segAfterGoesOut = MiscGeom.cross(p1.get(v.precedingIndex1+2), p1.get(v.precedingIndex1+1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
 					if (segBeforeGoesOut == true || segAfterGoesOut == true) {

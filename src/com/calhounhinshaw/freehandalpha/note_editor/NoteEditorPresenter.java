@@ -232,7 +232,6 @@ class NoteEditorPresenter {
 		WrapList<Point> square1 = new WrapList<Point>();
 		WrapList<Point> square3 = new WrapList<Point>();
 		
-		
 		square1.add(new Point(-100, -400));
 		square1.add(new Point(-100, 50));
 		square1.add(new Point(-50, 25));
@@ -261,22 +260,22 @@ class NoteEditorPresenter {
 		}
 		c.drawPath(currentPath, currentPaint);
 		
-//		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square1, square3);
-//		
-//		Log.d("PEN", "printing distances");
-//		for (Vertex v : verts) {
-//			
-//			Log.d("PEN", v.intersection.toString());
-//			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
-//			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
-//			
-//			if (v.poly1Entry) {
-//				c.drawCircle(v.intersection.x, v.intersection.y, 3, debugPaint);
-//			} else {
-//				c.drawCircle(v.intersection.x, v.intersection.y, 3, currentPaint);
-//			}
-//			
-//		}
+		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square3, square1);
+		
+		Log.d("PEN", "printing distances");
+		for (Vertex v : verts) {
+			
+			Log.d("PEN", v.intersection.toString());
+			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
+			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
+			
+			if (v.poly1Entry) {
+				c.drawCircle(v.intersection.x, v.intersection.y, 3, debugPaint);
+			} else {
+				c.drawCircle(v.intersection.x, v.intersection.y, 3, currentPaint);
+			}
+			
+		}
 
 	}
 	
