@@ -17,8 +17,8 @@ public class BooleanPolyGeom {
 	public static ArrayList<Vertex> intersectPolys (WrapList<Point> p1, WrapList<Point> p2) {
 		ArrayList<Vertex> intersections = new ArrayList<Vertex>(10);
 		
-		for (int i = 0; i < p1.size()-1; i++) {
-			for (int j = 0; j < p2.size()-1; j++) {
+		for (int i = 0; i < p1.size(); i++) {
+			for (int j = 0; j < p2.size(); j++) {
 				Vertex v = segmentIntersection(p1.get(i+1), p1.get(i), p2.get(j+1), p2.get(j));
 				
 				if (v != null) {
@@ -89,6 +89,41 @@ public class BooleanPolyGeom {
 		}
 	}
 	
+	/**
+	 * UNTESTED, DON'T TRUST! (it's from the prototype ink when I was using polylines and PointF)
+	 * Is supposed to be closed.
+	 */
+	public static boolean pointInPoly (Point point, WrapList<Point> poly) {
+		// -1 if not valid, else 0 if below and 1 if above
+		int ptState = -1;
+		int intersections = 0;
+		
+		for (int i = 0; i <= poly.size(); i++) {
+			if (poly.get(i).x < point.x) {
+				ptState = -1;
+			} else {
+				if (ptState == -1) {
+					if (poly.get(i).y >= point.y) {
+						ptState = 1;
+					} else if (poly.get(i).y < point.y){
+						ptState = 0;
+					}
+				} else if ((poly.get(i).y >= point.y) && ptState == 0) {
+					intersections++;
+					ptState = 1;
+				} else if ((poly.get(i).y <= point.y) && ptState == 1) {
+					intersections++;
+					ptState = 0;
+				}
+			}
+		}
+		
+		if (intersections >=1 && intersections%2 == 1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	public static void removeSimilarEndToEndVertices (ArrayList<Vertex> graph) {
 		Iterator<Vertex> iter = graph.iterator();
@@ -100,92 +135,45 @@ public class BooleanPolyGeom {
 		}
 	}
 	
-	public static void removeInternalVertsAndSetInOut (ArrayList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
-		Collections.sort(graph, new Vertex.p1Comparator());
-		Iterator<Vertex> iter1 = graph.iterator();
-		
-		boolean p1CurrentlyOut = !MiscGeom.pointInPoly(p1.get(0), p2);
-		while (iter1.hasNext()) {
-			Vertex v = iter1.next();
-			
-			if (p1CurrentlyOut == true) {
-				Log.d("PEN", "going in");
-				p1CurrentlyOut = false;
-			} else {
-				if (v.distIn1 > 0 && v.distIn1 < 1 && v.distIn2 > 0 && v.distIn2 < 1) {				// Line-on-line intersection, has to go out
-					Log.d("PEN", "line on line");
-					p1CurrentlyOut = true;
-				} else if (v.distIn1 == 1) {														// Head-on-something intersection, delete Vertex
-					Log.d("PEN", "head on, apply directly to the forehead");
-					Log.d("PEN", "removed");
-					iter1.remove();
-					continue;
-				} else if (v.distIn2 > 0 && v.distIn2 < 1) {										// Tail-on-segment intersection, need single cross to test
-					boolean goesOut = MiscGeom.cross(p2.get(v.precedingIndex2+1), p2.get(v.precedingIndex2), p1.get(v.precedingIndex1+1), v.intersection) > 0;
-					
-					Log.d("PEN", "tail on seg");
-					
-					if (goesOut == true) {
-						p1CurrentlyOut = true;
-					} else {
-						Log.d("PEN", "removed");
-						iter1.remove();
-						continue;
-					}
-				} else {																			// Tail-on-point, need two crosses to test
-					
-					
-					Log.d("PEN", "tail on point intersection");
-					
-					
-					boolean segBeforeGoesOut = MiscGeom.cross(p2.get(v.precedingIndex2+1), p2.get(v.precedingIndex2), p1.get(v.precedingIndex1+1), v.intersection) > 0;
-					boolean segAfterGoesOut = MiscGeom.cross(p2.get(v.precedingIndex2+2), p2.get(v.precedingIndex2+1), p1.get(v.precedingIndex1+1), v.intersection) > 0;
-					if (segBeforeGoesOut == true || segAfterGoesOut == true) {
-						p1CurrentlyOut = true;
-					} else {
-						Log.d("PEN", "removed");
-						iter1.remove();
-						continue;
-					}
-				}
-			}
+	public static void removeInternalVertsAndSetInOut (ArrayList<Vertex> graph, boolean poly) {
+		if (graph.size() < 2) {
+			return;
 		}
 		
+		Collections.sort(graph, Vertex.getComparator(poly));
+		Iterator<Vertex> iter = graph.iterator();
 		
-		Collections.sort(graph, new Vertex.p2Comparator());
-		Iterator<Vertex> iter2 = graph.iterator();
-		
-		boolean p2CurrentlyOut = !MiscGeom.pointInPoly(p2.get(0), p1);
-		while (iter2.hasNext()) {
-			Vertex v = iter2.next();
+		boolean currentlyOut = !pointInPoly(graph.get(0).getPoly(poly).get(0), graph.get(0).getPoly(!poly));
+		while (iter.hasNext()) {
+			Vertex v = iter.next();
 			
-			if (p2CurrentlyOut == true) {
-				v.poly1Entry = false;
-				p2CurrentlyOut = false;
+			if (currentlyOut == true) {
+				v.setWasEntry(poly, true);
+				currentlyOut = false;
 			} else {
-				if (v.distIn2 > 0 && v.distIn2 < 1 && v.distIn1 > 0 && v.distIn1 < 1) {				// Line-on-line intersection, has to go out
-					v.poly1Entry = true;
-					p2CurrentlyOut = true;
-				} else if (v.distIn2 == 1) {														// Head-on-something intersection, delete Vertex
-					iter2.remove();
+				if (v.getDistIn(poly) > 0 && v.getDistIn(poly) < 1 && v.getDistIn(!poly) > 0 && v.getDistIn(!poly) < 1) {				// Line-on-line intersection, has to go out
+					v.setWasEntry(poly, false);
+					currentlyOut = true;
+				} else if (v.getDistIn(poly) == 1) {														// Head-on-something intersection, delete Vertex
+					iter.remove();
 					continue;
-				} else if (v.distIn1 > 0 && v.distIn1 < 1) {										// Head-on-segment intersection, need single cross to test
-					boolean goesOut = MiscGeom.cross(p1.get(v.precedingIndex1+1), p1.get(v.precedingIndex1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
+				} else if (v.getDistIn(!poly) > 0 && v.getDistIn(!poly) < 1) {										// Tail-on-segment intersection, need single cross to test
+					boolean goesOut = MiscGeom.cross(v.getPoint(!poly, 1), v.getPoint(!poly, -1), v.getPoint(poly, 1), v.getPoint(poly, 0)) > 0;
 					if (goesOut == true) {
-						v.poly1Entry = true;
-						p2CurrentlyOut = true;
+						v.setWasEntry(poly, false);
+						currentlyOut = true;
 					} else {
-						iter2.remove();
+						iter.remove();
 						continue;
 					}
-				} else {																			// Head-on-point, need two crosses to test
-					boolean segBeforeGoesOut = MiscGeom.cross(p1.get(v.precedingIndex1+1), p1.get(v.precedingIndex1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
-					boolean segAfterGoesOut = MiscGeom.cross(p1.get(v.precedingIndex1+2), p1.get(v.precedingIndex1+1), p2.get(v.precedingIndex2+1), v.intersection) > 0;
+				} else {																			// tail-on-point, need two crosses to test
+					boolean segBeforeGoesOut = MiscGeom.cross(v.getPoint(!poly, 1), v.getPoint(!poly, -1), v.getPoint(poly, 1), v.getPoint(poly, 0)) > 0;
+					boolean segAfterGoesOut = MiscGeom.cross(v.getPoint(!poly, -1), v.getPoint(!poly, -2), v.getPoint(poly, 2), v.getPoint(poly, 1)) > 0;
 					if (segBeforeGoesOut == true || segAfterGoesOut == true) {
-						v.poly1Entry = true;
-						p2CurrentlyOut = true;
+						v.setWasEntry(poly, false);
+						currentlyOut = true;
 					} else {
-						iter2.remove();
+						iter.remove();
 						continue;
 					}
 				}
@@ -200,7 +188,10 @@ public class BooleanPolyGeom {
 		
 		ArrayList<Vertex> graph = intersectPolys(p1, p2);
 		removeSimilarEndToEndVertices(graph);
-		removeInternalVertsAndSetInOut(graph, p1, p2);
+
+		removeInternalVertsAndSetInOut(graph, true);
+		removeInternalVertsAndSetInOut(graph, false);
+		
 		
 		return graph;
 	}

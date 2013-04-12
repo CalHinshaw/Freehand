@@ -38,57 +38,85 @@ public class Vertex {
 		this.distIn2 = distIn2;
 	}
 	
-	public Vertex getNext(int poly) {
-		if (poly == 1) {
+	public Vertex getNext(boolean poly) {
+		if (poly == true) {
 			return next1;
 		} else {
 			return next2;
 		}
 	}
 	
-	public Vertex getPrevious (int poly) {
-		if (poly == 1) {
+	public Vertex getPrevious (boolean poly) {
+		if (poly == true) {
 			return prev1;
 		} else {
 			return prev2;
 		}
 	}
 	
-	public float getDistIn (int poly) {
-		if (poly == 1) {
+	public float getDistIn (boolean poly) {
+		if (poly == true) {
 			return distIn1;
 		} else {
 			return distIn2;
 		}
 	}
 	
-	public int getPrecedingIndex (int poly) {
-		if (poly == 1) {
+	public int getPrecedingIndex (boolean poly) {
+		if (poly == true) {
 			return precedingIndex1;
 		} else {
 			return precedingIndex2;
 		}
 	}
 	
-	public WrapList<Point> getPoly (int poly) {
-		if (poly == 1) {
+	public WrapList<Point> getPoly (boolean poly) {
+		if (poly == true) {
 			return poly1;
 		} else {
 			return poly2;
 		}
 	}
 	
-	public boolean getWasEntry (int poly) {
-		if (poly == 1) {
+	public Point getPoint (boolean poly, int offset) {
+		if (poly == true) {
+			if (offset == 0) {
+				return intersection;
+			} else if (offset > 0) {
+				return poly1.get(precedingIndex1+offset);
+			} else {
+				return poly1.get(precedingIndex1+offset+1);
+			}
+		} else {
+			if (offset == 0) {
+				return intersection;
+			} else if (offset > 0) {
+				return poly2.get(precedingIndex2+offset);
+			} else {
+				return poly2.get(precedingIndex2+offset+1);
+			}
+		}
+	}
+	
+	public boolean getWasEntry (boolean poly) {
+		if (poly == true) {
 			return poly1Entry;
 		} else {
 			return !poly1Entry;
 		}
 	}
 	
+	public void setWasEntry (boolean poly, boolean wasEntry) {
+		if (poly == true) {
+			poly1Entry = wasEntry;
+		} else {
+			poly1Entry = !wasEntry;
+		}
+	}
 	
-	public static Comparator<Vertex> getComparator (int poly) {
-		if (poly == 1) {
+	
+	public static Comparator<Vertex> getComparator (boolean poly) {
+		if (poly == true) {
 			return new p1Comparator();
 		} else {
 			return new p2Comparator();

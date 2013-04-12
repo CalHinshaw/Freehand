@@ -26,35 +26,29 @@ public class BooleanPolyGeomTests extends AndroidTestCase {
 		square1.add(new Point(1, 1));
 		square1.add(new Point(1, 0));
 		square1.add(new Point(0, 0));
-		square1.add(new Point(0, 1));
 		
 		square2.add(new Point(3, 4));
 		square2.add(new Point(4, 4));
 		square2.add(new Point(4, 3));
 		square2.add(new Point(3, 3));
-		square2.add(new Point(3, 4));
 		
 		square3.add(new Point(-1, 0.5f));
 		square3.add(new Point(2, 0.5f));
 		square3.add(new Point(2, -1));
 		square3.add(new Point(-1, -1));
-		square3.add(new Point(-1, 0.5f));
 		
 		square4.add(new Point(1, 2));
 		square4.add(new Point(2, 2));
 		square4.add(new Point(2, 1));
 		square4.add(new Point(1, 1));
-		square4.add(new Point(1, 2));
 		
 		tri1.add(new Point(0, 0));
 		tri1.add(new Point(1, -1));
 		tri1.add(new Point(-1, -1));
-		tri1.add(new Point(0, 0));
 		
 		tri2.add(new Point(0, 0));
 		tri2.add(new Point(1, 1));
 		tri2.add(new Point(-1, 1));
-		tri2.add(new Point(0, 0));
 	}
 	
 	
@@ -97,7 +91,33 @@ public class BooleanPolyGeomTests extends AndroidTestCase {
 	}
 	
 	
-	
+	public void testPointInPoly () {
+		boolean result;
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(0.5f, 0.5f), square1);
+		Assert.assertTrue(result);
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(2, 2), square1);
+		Assert.assertFalse(result);
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(1, 0.5f), square1);
+		Assert.assertTrue(result);
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(1, 1), square1);
+		Assert.assertTrue(result);
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(0.99999999999999f, 0.99999999999999f), square1);
+		Assert.assertTrue(result);
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(0.00000000000001f, 0.00000000000001f), square1);
+		Assert.assertTrue(result);
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(1, 0.00000000000001f), square1);
+		Assert.assertTrue(result);
+		
+		result = BooleanPolyGeom.pointInPoly(new Point(1, 0.99999999999999999f), square1);
+		Assert.assertTrue(result);
+	}
 	
 	
 	

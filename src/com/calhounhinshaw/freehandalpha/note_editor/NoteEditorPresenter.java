@@ -213,7 +213,7 @@ class NoteEditorPresenter {
 //			LinkedList<Point> poly = UnitPolyGeom.buildUnitPoly(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
 //			
 //			currentPath.reset();
-//			
+//			0
 //			if (poly != null && poly.size() > 2) {
 //				currentPath.reset();
 //				currentPath.moveTo(poly.getFirst().x, poly.getFirst().y);
@@ -237,14 +237,12 @@ class NoteEditorPresenter {
 		square1.add(new Point(-50, 25));
 		square1.add(new Point(0, 50));
 		square1.add(new Point(0, -400));
-		square1.add(new Point(-100, -400));
 		
-		square3.add(new Point(-100, 50f));
+		
 		square3.add(new Point(200, 50f));
 		square3.add(new Point(200, -100));
 		square3.add(new Point(-100, -100));
 		square3.add(new Point(-100, 50f));
-		
 		
 		currentPath.reset();
 		currentPath.moveTo(square1.get(0).x, square1.get(0).y);
@@ -260,14 +258,16 @@ class NoteEditorPresenter {
 		}
 		c.drawPath(currentPath, currentPaint);
 		
-		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square3, square1);
+		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square1, square3);
 		
 		Log.d("PEN", "printing distances");
 		for (Vertex v : verts) {
 			
 			Log.d("PEN", v.intersection.toString());
-			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
-			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
+//			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
+//			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
+			Log.d("PEN", "Index1:  " + Integer.toString(v.precedingIndex1));
+			Log.d("PEN", "Index2:  " + Integer.toString(v.precedingIndex2));
 			
 			if (v.poly1Entry) {
 				c.drawCircle(v.intersection.x, v.intersection.y, 3, debugPaint);

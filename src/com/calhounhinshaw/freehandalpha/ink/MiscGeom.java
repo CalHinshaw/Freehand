@@ -153,39 +153,4 @@ public class MiscGeom {
 		
 		return toReturn;
 	}
-	
-	/**
-	 * UNTESTED, DON'T TRUST! (it's from the prototype ink when I was using polylines and PointF)
-	 */
-	public static boolean pointInPoly (Point point, WrapList<Point> poly) {
-		// -1 if not valid, else 0 if below and 1 if above
-		int ptState = -1;
-		int intersections = 0;
-		
-		for (int i = 0; i <= poly.size(); i++) {
-			if (poly.get(i).x < point.x) {
-				ptState = -1;
-			} else {
-				if (ptState == -1) {
-					if (poly.get(i).y >= point.y) {
-						ptState = 1;
-					} else {
-						ptState = 0;
-					}
-				} else if ((poly.get(i).y >= point.y) && ptState == 0) {
-					intersections++;
-					ptState = 1;
-				} else if ((poly.get(i).y < point.y) && ptState == 1) {
-					intersections++;
-					ptState = 0;
-				}
-			}
-		}
-		
-		if (intersections >=1 && intersections%2 == 1) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 }
