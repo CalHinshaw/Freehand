@@ -255,30 +255,78 @@ class NoteEditorPresenter {
 		square3.add(new Point(-200, -90));
 		square3.add(new Point(-200, 40f));
 		
-		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(square3, square1);
+		drawDebugPolys(c, square1, square3);
+		
+		
+		WrapList<Point> shape1 = new WrapList<Point>();
+		WrapList<Point> shape2 = new WrapList<Point>();
+		
+		shape1.add(new Point(-100, 100));
+		shape1.add(new Point(-100, 550));
+		shape1.add(new Point(-50, 525));
+		shape1.add(new Point(0, 550));
+		shape1.add(new Point(0, 100));
+		
+		
+		shape2.add(new Point(0, 550f));
+		shape2.add(new Point(0, 400));
+		shape2.add(new Point(-200, 400));
+		shape2.add(new Point(-200, 550f));
+		
+		drawDebugPolys(c, shape1, shape2);
+		
+		WrapList<Point> hole1 = new WrapList<Point>();
+		WrapList<Point> hole2 = new WrapList<Point>();
+		
+		
+		hole1.add(new Point(500, 700));
+		hole1.add(new Point(700, 700));
+		hole1.add(new Point(700, 500));
+		hole1.add(new Point(500, 500));
+		
+		
+		hole2.add(new Point(550, 600));
+		hole2.add(new Point(550, 450));
+		hole2.add(new Point(650, 450));
+		hole2.add(new Point(650, 600));
+		hole2.add(new Point(700, 600));
+		hole2.add(new Point(700, 400));
+		hole2.add(new Point(500, 400));
+		
+		
+		
+		
+		
+		drawDebugPolys(c, hole1, hole2);
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	private void drawDebugPolys (Canvas c, WrapList<Point> poly1, WrapList<Point> poly2) {
 
-		WrapList<Point> union = BooleanPolyGeom.union(graph, square3, square1);
+		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(poly1, poly2);
+
+		WrapList<Point> union = BooleanPolyGeom.union(graph, poly1, poly2);
 		
 		currentPath.reset();
-		currentPath.moveTo(square1.get(0).x, square1.get(0).y);
-		for (int i = 0; i <= square1.size(); i++) {
-			currentPath.lineTo(square1.get(i).x, square1.get(i).y);
+		currentPath.moveTo(poly1.get(0).x, poly1.get(0).y);
+		for (int i = 0; i <= poly1.size(); i++) {
+			currentPath.lineTo(poly1.get(i).x, poly1.get(i).y);
 		}
 		c.drawPath(currentPath, debugPaint);
 		
 		currentPath.reset();
-		currentPath.moveTo(square3.get(0).x, square3.get(0).y);
-		for (int i = 0; i <= square3.size(); i++) {
-			currentPath.lineTo(square3.get(i).x, square3.get(i).y);
+		currentPath.moveTo(poly2.get(0).x, poly2.get(0).y);
+		for (int i = 0; i <= poly2.size(); i++) {
+			currentPath.lineTo(poly2.get(i).x, poly2.get(i).y);
 		}
 		c.drawPath(currentPath, debugPaint);
-		
-//		currentPath.reset();
-//		currentPath.moveTo(union.get(0).x, union.get(0).y);
-//		for (int i = 0; i <= union.size(); i++) {
-//			currentPath.lineTo(union.get(i).x, union.get(i).y);
-//		}
-//		c.drawPath(currentPath, currentPaint);
 		
 		for (int i = 0; i < union.size(); i++) {
 			c.drawLine(union.get(i).x, union.get(i).y, union.get(i+1).x, union.get(i+1).y, currentPaint);
@@ -293,7 +341,6 @@ class NoteEditorPresenter {
 				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, outPaint);
 			}
 		}
-
 	}
 	
 	
