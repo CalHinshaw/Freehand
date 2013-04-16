@@ -2,6 +2,7 @@ package com.calhounhinshaw.freehandalpha.misc;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class WrapList<E> extends ArrayList<E> {
 	private static final long serialVersionUID = 1L;
@@ -40,5 +41,15 @@ public class WrapList<E> extends ArrayList<E> {
 	@Override
 	public E remove (int index) {
 		return super.remove(wrap(index));
+	}
+	
+	public void addRangeToList (List<E> l, int start, int end) {
+		if (start > end) {
+			end += this.size();
+		}
+		
+		for (int i = start; i <= end; i++) {
+			l.add(this.get(i));
+		}
 	}
 }

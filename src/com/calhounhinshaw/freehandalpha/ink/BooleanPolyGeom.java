@@ -9,13 +9,72 @@ import com.calhounhinshaw.freehandalpha.misc.WrapList;
 import android.util.Log;
 
 public class BooleanPolyGeom {
+	
+	public static void perturbPolys (WrapList<Point> p1, WrapList<Point> p2) {
+		for (int i = 0; i < p1.size(); i++) {
+			for (int j = 0; j < p2.size(); j++) {
+				if (pointOnSeg(p1.get(i+1), p2.get(j+1), p2.get(j))) {
+					//Log.d("PEN", "Perturbed p1");
+					Point newPoint = perturb(p1.get(i+1), p1.get(i), p2.get(j+1), p2.get(j));
+					p1.remove(i+1);
+					p1.add(i+1, newPoint);
+				} else if (pointOnSeg(p2.get(j+1), p1.get(i+1), p1.get(i))) {
+					//Log.d("PEN", "Perturbed p2");
+					Point newPoint = perturb(p2.get(j+1), p2.get(j), p1.get(i+1), p1.get(i));
+					p2.remove(j+1);
+					p2.add(j+1, newPoint);
+				} else if (pointOnSeg(p1.get(i), p2.get(j+1), p2.get(j))) {
+					//Log.d("PEN", "Perturbed p1");
+					Point newPoint = perturb(p1.get(i), p1.get(i+1), p2.get(j+1), p2.get(j));
+					p1.remove(i);
+					p1.add(i, newPoint);
+				} else if (pointOnSeg(p2.get(j), p1.get(i+1), p1.get(i))) {
+					//Log.d("PEN", "Perturbed p2");
+					Point newPoint = perturb(p2.get(j), p2.get(j+1), p1.get(i+1), p1.get(i));
+					p2.remove(j);
+					p2.add(j, newPoint);
+				}
+			}
+		}
+	}
+	
+	public static Point perturb (Point p1, Point p2, Point l1, Point l2) {
+//		if ((l1.x==l2.x && p1.y==p2.y) || (l1.y==l2.y && p1.x==p2.x)) {
+//			Log.d("PEN", "both");
+//			return new Point (p1.x+2, p1.y+2);
+//		} else 
+		if (l1.x != l2.x) {
+			return new Point (p1.x, p1.y+2);
+		} else {
+			return new Point (p1.x+2, p1.y);
+		}
+	}
+	
+	public static boolean pointOnSeg (Point p, Point s1, Point s2) {
+		if (s1.x != s2.x) {
+			return (MiscGeom.cross(p, s2, s1, s2) == 0 && isBetween(p.x, s1.x, s2.x));
+		} else {
+			return (MiscGeom.cross(p, s2, s1, s2) == 0 && isBetween(p.y, s1.y, s2.y));
+		}
+		
+	}
+	
+	public static boolean isBetween (float check, float b1, float b2) {
+		return ((b1<b2 ? b1:b2) <= check && (b1<b2 ? b2:b1) >= check);
+	}
+	
+	
+	
+	
+	
+	
 	/**
 	 * Intersects the two polygons and returns a list of Vertex objects that represent the intersections. COLINEAR SEGMENTS ARE CONSIDERED NON-INTERSECTING.
 	 * @param p1 corresponds to all of the fields in the returned Vertexes marked 1.
 	 * @param p2 corresponds to all of the fields in the returned Vertexes marked 2.
 	 */
-	public static ArrayList<Vertex> intersectPolys (WrapList<Point> p1, WrapList<Point> p2) {
-		ArrayList<Vertex> intersections = new ArrayList<Vertex>(10);
+	public static WrapList<Vertex> intersectPolys (WrapList<Point> p1, WrapList<Point> p2) {
+		WrapList<Vertex> intersections = new WrapList<Vertex>(10);
 		
 		for (int i = 0; i < p1.size(); i++) {
 			for (int j = 0; j < p2.size(); j++) {
@@ -50,30 +109,12 @@ public class BooleanPolyGeom {
 		if (MiscGeom.intersectionPossible(aH, aT, bH, bT) == false) {
 			return null;
 		}
-		
+
 		float denominator = (bH.y-bT.y)*(aH.x-aT.x)-(bH.x-bT.x)*(aH.y-aT.y);
 
 		// Check for endpoint-on-endpoint intersections. If there aren't any return null.
 		if (denominator == 0) {
-			if (aH.equals(bH)) {
-				if ((aH.x > aT.x && bH.x < bT.x) || (aH.x < aT.x && bH.x > bT.x) || (aH.y > aT.y && bH.y < bT.y) || (aH.y < aT.y && bH.y > bT.y)) {
-					return new Vertex(aH, 1, 1);
-				}
-			} else if (aH.equals(bT)) {
-				if ((aH.x > aT.x && bH.x > bT.x) || (aH.x < aT.x && bH.x < bT.x) || (aH.y > aT.y && bH.y > bT.y) || (aH.y < aT.y && bH.y < bT.y)) {
-					return new Vertex(aH, 1, 0);
-				}
-			} else if (aT.equals(bH)) {
-				if ((aH.x < aT.x && bH.x < bT.x) || (aH.x > aT.x && bH.x > bT.x) || (aH.y < aT.y && bH.y < bT.y) || (aH.y > aT.y && bH.y > bT.y)) {
-					return new Vertex(aH, 0, 1);
-				}
-			} else if (aT.equals(bT)) {
-				if ((aH.x > aT.x && bH.x < bT.x) || (aH.x < aT.x && bH.x > bT.x) || (aH.y > aT.y && bH.y < bT.y) || (aH.y < aT.y && bH.y > bT.y)) {
-					return new Vertex(aH, 0, 0);
-				}
-			} else {
-				return null;
-			}
+			return null;
 		}
 
 		// Note: I tried adding the divisions into the if statement but that actually slowed the benchmarks down. I think it might be a branch prediction
@@ -125,78 +166,86 @@ public class BooleanPolyGeom {
 		}
 	}
 
-	public static void removeSimilarEndToEndVertices (ArrayList<Vertex> graph) {
-		Iterator<Vertex> iter = graph.iterator();
-		while (iter.hasNext()) {
-			Vertex v = iter.next();
-			if ((v.distIn1 == 0 && v.distIn2 == 0) || (v.distIn1 == 1 && v.distIn2 == 1)) {
-				iter.remove();
-			}
+	
+	public static void setInOut (WrapList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
+		Collections.sort(graph, new Vertex.p1Comparator());
+		boolean currentlyOut = !pointInPoly(p1.get(0), p2);
+		
+		for (Vertex v : graph) {
+			v.poly1Entry = currentlyOut;
+			currentlyOut = !currentlyOut;
 		}
 	}
 	
-	public static void removeInternalVertsAndSetInOut (ArrayList<Vertex> graph, boolean poly) {
-		if (graph.size() < 2) {
-			return;
+	public static void link (WrapList<Vertex> graph) {
+		Collections.sort(graph, new Vertex.p1Comparator());
+		for (int i = 0; i < graph.size(); i++) {
+			graph.get(i).next1 = graph.get(i+1);
+			graph.get(i).prev1 = graph.get(i-1);
 		}
 		
-		Collections.sort(graph, Vertex.getComparator(poly));
-		Iterator<Vertex> iter = graph.iterator();
-		
-		boolean currentlyOut = !pointInPoly(graph.get(0).getPoly(poly).get(0), graph.get(0).getPoly(!poly));
-		while (iter.hasNext()) {
-			Vertex v = iter.next();
-			
-			if (currentlyOut == true) {
-				v.setWasEntry(poly, true);
-				currentlyOut = false;
-			} else {
-				if (v.getDistIn(poly) > 0 && v.getDistIn(poly) < 1 && v.getDistIn(!poly) > 0 && v.getDistIn(!poly) < 1) {				// Line-on-line intersection, has to go out
-					v.setWasEntry(poly, false);
-					currentlyOut = true;
-				} else if (v.getDistIn(poly) == 1) {														// Head-on-something intersection, delete Vertex
-					iter.remove();
-					continue;
-				} else if (v.getDistIn(!poly) > 0 && v.getDistIn(!poly) < 1) {										// Tail-on-segment intersection, need single cross to test
-					boolean goesOut = MiscGeom.cross(v.getPoint(!poly, 1), v.getPoint(!poly, -1), v.getPoint(poly, 1), v.getPoint(poly, 0)) > 0;
-					if (goesOut == true) {
-						v.setWasEntry(poly, false);
-						currentlyOut = true;
-					} else {
-						iter.remove();
-						continue;
-					}
-				} else {																			// tail-on-point, need two crosses to test
-					boolean segBeforeGoesOut = MiscGeom.cross(v.getPoint(!poly, 1), v.getPoint(!poly, -1), v.getPoint(poly, 1), v.getPoint(poly, 0)) > 0;
-					boolean segAfterGoesOut = MiscGeom.cross(v.getPoint(!poly, -1), v.getPoint(!poly, -2), v.getPoint(poly, 2), v.getPoint(poly, 1)) > 0;
-					if (segBeforeGoesOut == true || segAfterGoesOut == true) {
-						v.setWasEntry(poly, false);
-						currentlyOut = true;
-					} else {
-						iter.remove();
-						continue;
-					}
-				}
-			}
+		Collections.sort(graph, new Vertex.p2Comparator());
+		for (int i = 0; i < graph.size(); i++) {
+			graph.get(i).next2 = graph.get(i+1);
+			graph.get(i).prev2 = graph.get(i-1);
 		}
 	}
 	
-	public static ArrayList<Vertex> buildPolyGraph (WrapList<Point> p1, WrapList<Point> p2) {
+	public static WrapList<Vertex> buildPolyGraph (WrapList<Point> p1, WrapList<Point> p2) {
 		if (p1.size() < 3 || p2.size() < 3) {
-			return new ArrayList<Vertex>(1);
+			return new WrapList<Vertex>(1);
 		}
 		
-		ArrayList<Vertex> graph = intersectPolys(p1, p2);
-		removeSimilarEndToEndVertices(graph);
-
-		removeInternalVertsAndSetInOut(graph, true);
-		removeInternalVertsAndSetInOut(graph, false);
+		perturbPolys(p1, p2);
+		WrapList<Vertex> graph = intersectPolys(p1, p2);
 		
+		if (graph.size() < 2) {
+			Log.d("PEN", "graph size < 2");
+			return graph;
+		}
+
+		setInOut(graph, p1, p2);
+		link(graph);
 		
 		return graph;
 	}
 	
+	public static void resetGraph (WrapList<Vertex> graph) {
+		for (Vertex v : graph) {
+			v.wasVisited = false;
+		}
+	}
 	
+	public static WrapList<Point> union (WrapList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
+		resetGraph(graph);
+		
+		WrapList<Point> union = new WrapList<Point>(p1.size()+p2.size()+graph.size());
+		
+		Vertex current = graph.get(0);
+		Vertex next = current.getNext(!current.poly1Entry);
+		
+		Log.d("PEN", "starting union loop");
+		while (current.wasVisited == false) {
+			
+			
+			Log.d("PEN", Boolean.toString(current.poly1Entry));
+			
+			union.add(current.intersection);
+			//union.addAll(current.getPoly(onPolyOne).subList(current.getIndex(onPolyOne)+1, next.getIndex(onPolyOne)));
+			
+			if (current.getPrecedingIndex(!current.poly1Entry) != next.getPrecedingIndex(!current.poly1Entry)) {
+				current.getPoly(!current.poly1Entry).addRangeToList(union, current.getPrecedingIndex(!current.poly1Entry)+1, next.getPrecedingIndex(!current.poly1Entry));
+			}
+			
+			
+			current.wasVisited = true;
+			current = next;
+			next = next.getNext(!current.poly1Entry);
+		}
+		
+		
+		return union;
+	}
 
 	
 	

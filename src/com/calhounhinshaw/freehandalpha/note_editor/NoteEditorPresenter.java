@@ -54,17 +54,28 @@ class NoteEditorPresenter {
 	private float canvasYOffset = -1;
 	private float canvasXOffset = -1;
 	
+	private Paint inPaint = new Paint();
+	private Paint outPaint = new Paint();
+	
 	
 	public NoteEditorPresenter () {
-		currentPaint.setColor(Color.RED);
+		currentPaint.setColor(0xa0ff0000);
 		currentPaint.setStyle(Paint.Style.STROKE);
 		currentPaint.setStrokeWidth(1);
 		currentPaint.setAntiAlias(true);
 		
 		debugPaint.setColor(Color.BLACK);
 		debugPaint.setStyle(Paint.Style.STROKE);
-		debugPaint.setStrokeWidth(1);
+		debugPaint.setStrokeWidth(0);
 		debugPaint.setAntiAlias(true);
+		
+		inPaint.setColor(Color.GREEN);
+		inPaint.setStyle(Paint.Style.FILL);
+		inPaint.setAntiAlias(true);
+		
+		outPaint.setColor(Color.BLUE);
+		outPaint.setStyle(Paint.Style.FILL);
+		outPaint.setAntiAlias(true);
 	}
 	
 	public void setPen (int newColor, float newSize) {
@@ -239,44 +250,66 @@ class NoteEditorPresenter {
 		square1.add(new Point(0, -400));
 		
 		
-		square3.add(new Point(200, 50f));
-		square3.add(new Point(200, -100));
-		square3.add(new Point(-100, -100));
-		square3.add(new Point(-100, 50f));
+		square3.add(new Point(200, 40f));
+		square3.add(new Point(200, -90));
+		square3.add(new Point(-200, -90));
+		square3.add(new Point(-200, 40f));
+		
+		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(square3, square1);
+
+		WrapList<Point> union = BooleanPolyGeom.union(graph, square3, square1);
 		
 		currentPath.reset();
 		currentPath.moveTo(square1.get(0).x, square1.get(0).y);
 		for (int i = 0; i <= square1.size(); i++) {
 			currentPath.lineTo(square1.get(i).x, square1.get(i).y);
 		}
-		c.drawPath(currentPath, currentPaint);
+		c.drawPath(currentPath, debugPaint);
 		
 		currentPath.reset();
 		currentPath.moveTo(square3.get(0).x, square3.get(0).y);
 		for (int i = 0; i <= square3.size(); i++) {
 			currentPath.lineTo(square3.get(i).x, square3.get(i).y);
 		}
-		c.drawPath(currentPath, currentPaint);
+		c.drawPath(currentPath, debugPaint);
 		
-		ArrayList<Vertex> verts = BooleanPolyGeom.buildPolyGraph(square1, square3);
+//		currentPath.reset();
+//		currentPath.moveTo(union.get(0).x, union.get(0).y);
+//		for (int i = 0; i <= union.size(); i++) {
+//			currentPath.lineTo(union.get(i).x, union.get(i).y);
+//		}
+//		c.drawPath(currentPath, currentPaint);
 		
-		Log.d("PEN", "printing distances");
-		for (Vertex v : verts) {
-			
-			Log.d("PEN", v.intersection.toString());
-//			Log.d("PEN", "Dist in 1:  " + Float.toString(v.distIn1));
-//			Log.d("PEN", "Dist in 2:  " + Float.toString(v.distIn2));
-			Log.d("PEN", "Index1:  " + Integer.toString(v.precedingIndex1));
-			Log.d("PEN", "Index2:  " + Integer.toString(v.precedingIndex2));
-			
-			if (v.poly1Entry) {
-				c.drawCircle(v.intersection.x, v.intersection.y, 3, debugPaint);
+		for (int i = 0; i < union.size(); i++) {
+			c.drawLine(union.get(i).x, union.get(i).y, union.get(i+1).x, union.get(i+1).y, currentPaint);
+		}
+		
+		c.drawCircle(graph.get(0).intersection.x, graph.get(0).intersection.y, 1.5f, inPaint);
+		
+		for (Vertex v : graph) {
+			if (v.poly1Entry == true) {
+				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, inPaint);
 			} else {
-				c.drawCircle(v.intersection.x, v.intersection.y, 3, currentPaint);
+				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, outPaint);
 			}
-			
 		}
 
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 }
