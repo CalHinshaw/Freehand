@@ -39,14 +39,10 @@ public class BooleanPolyGeom {
 	}
 	
 	public static Point perturb (Point p1, Point p2, Point l1, Point l2) {
-//		if ((l1.x==l2.x && p1.y==p2.y) || (l1.y==l2.y && p1.x==p2.x)) {
-//			Log.d("PEN", "both");
-//			return new Point (p1.x+2, p1.y+2);
-//		} else 
 		if (l1.x != l2.x) {
-			return new Point (p1.x, p1.y+2);
+			return new Point (p1.x, p1.y+0.001f);
 		} else {
-			return new Point (p1.x+2, p1.y);
+			return new Point (p1.x+0.001f, p1.y);
 		}
 	}
 	
@@ -216,35 +212,131 @@ public class BooleanPolyGeom {
 		}
 	}
 	
-	public static WrapList<Point> union (WrapList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
+	public static WrapList<Point> union (WrapList<Vertex> graph) {
 		resetGraph(graph);
+		return cutHoles(rawUnion(graph));
+	}
+	
+	/**
+	 * The first poly is the shell, the rest are holes.
+	 * @param graph
+	 * @param p1
+	 * @param p2
+	 * @return
+	 */
+	public static ArrayList<WrapList<Point>> rawUnion (WrapList<Vertex> graph) {
+		ArrayList<WrapList<Point>> raw = new ArrayList<WrapList<Point>>(5);
 		
-		WrapList<Point> union = new WrapList<Point>(p1.size()+p2.size()+graph.size());
+		Vertex start = findOuterVertex(graph);
+		while (start != null) {
+			WrapList<Point> currentPoly = new WrapList<Point>(graph.get(0).getPoly(true).size()+graph.get(0).getPoly(false).size()+graph.size());
 		
-		Vertex current = graph.get(0);
-		Vertex next = current.getNext(!current.poly1Entry);
-		
-		Log.d("PEN", "starting union loop");
-		while (current.wasVisited == false) {
-			
-			
-			Log.d("PEN", Boolean.toString(current.poly1Entry));
-			
-			union.add(current.intersection);
-			//union.addAll(current.getPoly(onPolyOne).subList(current.getIndex(onPolyOne)+1, next.getIndex(onPolyOne)));
-			
-			if (current.getPrecedingIndex(!current.poly1Entry) != next.getPrecedingIndex(!current.poly1Entry)) {
-				current.getPoly(!current.poly1Entry).addRangeToList(union, current.getPrecedingIndex(!current.poly1Entry)+1, next.getPrecedingIndex(!current.poly1Entry));
+			Vertex current = start;
+			Vertex next = current.getNext(!current.poly1Entry);
+	
+			while (current.wasVisited == false) {
+				currentPoly.add(current.intersection);
+				
+				if (current.getPrecedingIndex(!current.poly1Entry) != next.getPrecedingIndex(!current.poly1Entry)) {
+					current.getPoly(!current.poly1Entry).addRangeToList(currentPoly, current.getPrecedingIndex(!current.poly1Entry)+1, next.getPrecedingIndex(!current.poly1Entry), true);
+				}
+				
+				current.wasVisited = true;
+				current = next;
+				next = next.getNext(!current.poly1Entry);
 			}
 			
+			raw.add(currentPoly);
 			
-			current.wasVisited = true;
-			current = next;
-			next = next.getNext(!current.poly1Entry);
+			start = findUnvisitedVertex(graph);
+		}
+		
+		return raw;
+	}
+	
+	public static WrapList<Point> cutHoles (ArrayList<WrapList<Point>> raw) {
+		if (raw.size() == 1) {
+			return raw.get(0);
+		}
+		
+		int unionSize = -2;
+		for (WrapList<Point> poly : raw) {
+			unionSize += poly.size() + 2;
+		}
+
+		WrapList<Point> union = new WrapList<Point>(unionSize);
+		union.addAll(raw.get(0));
+		
+		for (int i = 1; i < raw.size(); i++) {
+			int highestInHole = highestPoint(raw.get(i));
+			Object[] insertionInfo = getCutoutPoint(raw.get(i).get(highestInHole), union);
+			Point outsideIntersection = (Point) insertionInfo[0];
+			int index = ((Integer) insertionInfo[1])+1;
+			
+			WrapList<Point> insertion = new WrapList<Point>(raw.get(i).size()+3);
+			insertion.add(outsideIntersection);
+			insertion.addAll(raw.get(i).getWrapSublist(highestInHole, highestInHole+1, false));
+			insertion.add(raw.get(i).get(highestInHole));
+			insertion.add(outsideIntersection);
+			
+			union.addAll(index, insertion);
 		}
 		
 		
 		return union;
+	}
+	
+	public static int highestPoint (WrapList<Point> poly) {
+		int highest = 0;
+		
+		for (int i = 1; i < poly.size(); i++) {
+			if (poly.get(i).y > poly.get(highest).y) {
+				highest = i;
+			}
+		}
+		
+		return highest;
+	}
+	
+	public static Object[] getCutoutPoint (Point hole, WrapList<Point> poly) {
+		
+		Point lowPoint = new Point(0, Float.MAX_VALUE);
+		int precedingIndex = 0;
+		
+		for (int i = 0; i < poly.size(); i++) {
+			if (poly.get(i).y >= hole.y && BooleanPolyGeom.isBetween(hole.x, poly.get(i).x, poly.get(i+1).x)) {
+				Point newPoint = MiscGeom.intersectLineIntoSegment(hole, new Point(hole.x, hole.y+10), poly.get(i), poly.get(i+1));
+				if (newPoint.y < lowPoint.y) {
+					lowPoint = newPoint;
+					precedingIndex = i;
+				}
+			}
+		}
+		
+		Object[] toReturn = new Object[2];
+		toReturn[0] = lowPoint;
+		toReturn[1] = precedingIndex;
+		return toReturn;
+	}
+	
+	public static Vertex findOuterVertex (WrapList<Vertex> graph) {
+		Vertex outer = graph.get(0);
+		for (Vertex v : graph) {
+			if (v.intersection.x < outer.intersection.x || (v.intersection.x == outer.intersection.x && v.intersection.y > outer.intersection.y)) {
+				outer = v;
+			}
+		}
+		
+		return outer;
+	}
+	
+	public static Vertex findUnvisitedVertex (WrapList<Vertex> graph) {
+		for (Vertex v : graph) {
+			if (v.wasVisited == false) {
+				return v;
+			}
+		}
+		return null;
 	}
 
 	

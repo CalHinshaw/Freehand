@@ -43,13 +43,62 @@ public class WrapList<E> extends ArrayList<E> {
 		return super.remove(wrap(index));
 	}
 	
-	public void addRangeToList (List<E> l, int start, int end) {
-		if (start > end) {
-			end += this.size();
-		}
-		
-		for (int i = start; i <= end; i++) {
-			l.add(this.get(i));
+	public void addRangeToList (List<E> l, int start, int end, boolean direction) {
+		if (direction == true) {
+			if (start > end) {
+				end += this.size();
+			}
+			
+			for (int i = start; i <= end; i++) {
+				l.add(this.get(i));
+			}
+		} else {
+			if (end < start) {
+				start += this.size();
+			}
+			
+			for (int i = start; i >= end; i--) {
+				l.add(this.get(i));
+			}
 		}
 	}
+	
+	public WrapList<E> getWrapSublist (int start, int end, boolean direction) {
+		if (direction == true) {
+			if (end < start) {
+				end += this.size();
+			}
+			
+			WrapList<E> toReturn = new WrapList<E>(end-start);
+			
+			for (int i = start; i <= end; i++) {
+				toReturn.add(this.get(i));
+			}
+			return toReturn;
+		} else {
+			if (start < end) {
+				start += this.size();
+			}
+			
+			WrapList<E> toReturn = new WrapList<E>(start-end);
+			
+			for (int i = start; i >= end; i--) {
+				toReturn.add(this.get(i));
+			}
+			
+			return toReturn;
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

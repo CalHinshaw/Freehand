@@ -34,12 +34,12 @@ public class WrapListTests extends AndroidTestCase {
 	public void testAddRangeToList () {
 		ArrayList<Integer> result = new ArrayList<Integer>(15);
 		
-		test.addRangeToList(result, 0, test.size()-1);
+		test.addRangeToList(result, 0, test.size()-1, true);
 		Assert.assertEquals(test.size(), result.size());
 		
 		result.clear();
 		
-		test.addRangeToList(result, 1, 4);
+		test.addRangeToList(result, 1, 4, true);
 		Assert.assertEquals(4, result.size());
 		Assert.assertEquals(new Integer(1), result.get(0));
 		
@@ -47,7 +47,7 @@ public class WrapListTests extends AndroidTestCase {
 		
 		result.clear();
 		
-		test.addRangeToList(result, 5, 2);
+		test.addRangeToList(result, 5, 2, true);
 		
 		for (Integer i : result) {
 			Log.d("PEN", i.toString());

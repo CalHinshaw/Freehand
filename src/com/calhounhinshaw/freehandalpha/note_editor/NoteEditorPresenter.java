@@ -240,6 +240,14 @@ class NoteEditorPresenter {
 //		}
 		
 		
+		visualPolyTests (c);
+		
+	}
+	
+	
+	
+	
+	private void visualPolyTests (Canvas c) {
 		WrapList<Point> square1 = new WrapList<Point>();
 		WrapList<Point> square3 = new WrapList<Point>();
 		
@@ -248,7 +256,6 @@ class NoteEditorPresenter {
 		square1.add(new Point(-50, 25));
 		square1.add(new Point(0, 50));
 		square1.add(new Point(0, -400));
-		
 		
 		square3.add(new Point(200, 40f));
 		square3.add(new Point(200, -90));
@@ -267,7 +274,6 @@ class NoteEditorPresenter {
 		shape1.add(new Point(0, 550));
 		shape1.add(new Point(0, 100));
 		
-		
 		shape2.add(new Point(0, 550f));
 		shape2.add(new Point(0, 400));
 		shape2.add(new Point(-200, 400));
@@ -275,15 +281,14 @@ class NoteEditorPresenter {
 		
 		drawDebugPolys(c, shape1, shape2);
 		
+		
 		WrapList<Point> hole1 = new WrapList<Point>();
 		WrapList<Point> hole2 = new WrapList<Point>();
-		
 		
 		hole1.add(new Point(500, 700));
 		hole1.add(new Point(700, 700));
 		hole1.add(new Point(700, 500));
 		hole1.add(new Point(500, 500));
-		
 		
 		hole2.add(new Point(550, 600));
 		hole2.add(new Point(550, 450));
@@ -293,18 +298,8 @@ class NoteEditorPresenter {
 		hole2.add(new Point(700, 400));
 		hole2.add(new Point(500, 400));
 		
-		
-		
-		
-		
 		drawDebugPolys(c, hole1, hole2);
-		
 	}
-	
-	
-	
-	
-	
 	
 	
 	
@@ -312,7 +307,7 @@ class NoteEditorPresenter {
 
 		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(poly1, poly2);
 
-		WrapList<Point> union = BooleanPolyGeom.union(graph, poly1, poly2);
+		WrapList<Point> union = BooleanPolyGeom.union(graph);
 		
 		currentPath.reset();
 		currentPath.moveTo(poly1.get(0).x, poly1.get(0).y);
