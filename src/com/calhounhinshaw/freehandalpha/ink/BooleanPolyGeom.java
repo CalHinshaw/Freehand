@@ -3,6 +3,7 @@ package com.calhounhinshaw.freehandalpha.ink;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import com.calhounhinshaw.freehandalpha.misc.WrapList;
 
@@ -196,7 +197,6 @@ public class BooleanPolyGeom {
 		WrapList<Vertex> graph = intersectPolys(p1, p2);
 		
 		if (graph.size() < 2) {
-			Log.d("PEN", "graph size < 2");
 			return graph;
 		}
 
@@ -212,9 +212,13 @@ public class BooleanPolyGeom {
 		}
 	}
 	
-	public static WrapList<Point> union (WrapList<Vertex> graph) {
+	public static WrapList<Point> union (WrapList<Point> p1, WrapList<Point> p2) {		
+		return cutHoles(rawUnion(buildPolyGraph(p1, p2), p1, p2));
+	}
+	
+	public static WrapList<Point> union (WrapList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
 		resetGraph(graph);
-		return cutHoles(rawUnion(graph));
+		return cutHoles(rawUnion(graph, p1, p2));
 	}
 	
 	/**
@@ -224,7 +228,23 @@ public class BooleanPolyGeom {
 	 * @param p2
 	 * @return
 	 */
-	public static ArrayList<WrapList<Point>> rawUnion (WrapList<Vertex> graph) {
+	public static ArrayList<WrapList<Point>> rawUnion (WrapList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
+		
+		if (graph.size() < 2) {
+			if (pointInPoly(p1.get(0), p2)) {
+				ArrayList<WrapList<Point>> raw = new ArrayList<WrapList<Point>>(5);
+				raw.add(p2);
+				return raw;
+			} else {
+				ArrayList<WrapList<Point>> raw = new ArrayList<WrapList<Point>>(5);
+				raw.add(p1);
+				return raw;
+			}
+		}
+		
+		
+		
+		
 		ArrayList<WrapList<Point>> raw = new ArrayList<WrapList<Point>>(5);
 		
 		Vertex start = findOuterVertex(graph);
@@ -306,7 +326,7 @@ public class BooleanPolyGeom {
 		for (int i = 0; i < poly.size(); i++) {
 			if (poly.get(i).y >= hole.y && BooleanPolyGeom.isBetween(hole.x, poly.get(i).x, poly.get(i+1).x)) {
 				Point newPoint = MiscGeom.intersectLineIntoSegment(hole, new Point(hole.x, hole.y+10), poly.get(i), poly.get(i+1));
-				if (newPoint.y < lowPoint.y) {
+				if (newPoint != null && newPoint.y < lowPoint.y) {
 					lowPoint = newPoint;
 					precedingIndex = i;
 				}
@@ -339,7 +359,27 @@ public class BooleanPolyGeom {
 		return null;
 	}
 
-	
+	public static WrapList<Point> buildPolygon (List<Point> points, List<Float> sizes) {
+		if (points.size() != sizes.size()) {
+			Log.d("PEN", "points.size and sizes.size aren't equal.");
+			return null;
+		}
+		
+		if (points.size() == 0) {
+			return new WrapList<Point>(0);
+		} else if (points.size() == 1) {
+			return UnitPolyGeom.getCircularPoly(points.get(0), sizes.get(0));
+		} else {
+			WrapList<Point> current = UnitPolyGeom.buildUnitPoly(sizes.get(0), sizes.get(1), points.get(0), points.get(1));
+			
+			for (int i = 1; i < points.size()-1; i++) {
+				WrapList<Point> newPoly = UnitPolyGeom.buildUnitPoly(sizes.get(i), sizes.get(i+1), points.get(i), points.get(i+1));
+				current = union(current, newPoly);
+			}
+			
+			return current;
+		}
+	}
 	
 	
 	

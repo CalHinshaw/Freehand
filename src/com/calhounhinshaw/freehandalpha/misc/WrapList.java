@@ -16,7 +16,9 @@ public class WrapList<E> extends ArrayList<E> {
 	}
 
 	private int wrap (int index) {
-		if (index < 0) {
+		if (this.size() == 0) {
+			return index;
+		} else if (index < 0) {
 			return super.size() + (index % super.size());
 		} else {
 			return index % super.size();

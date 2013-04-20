@@ -25,11 +25,11 @@ class NoteEditorPresenter {
 	private LinkedList<Stroke> mStrokes = new LinkedList<Stroke>();
 	
 	// Hold the current stroke's raw data
-	private LinkedList<Point> rawPoints = new LinkedList<Point>();
-	private LinkedList<Float> rawPressure = new LinkedList<Float>();
+	private ArrayList<Point> rawPoints = new ArrayList<Point>();
+	private ArrayList<Float> rawPressures = new ArrayList<Float>();
 	
 	// Holds the current stroke's data for drawing
-	private WrapList<Point> currentPolygon = new WrapList<Point>();
+	private WrapList<Point> currentPoly = new WrapList<Point>();
 	private Path currentPath = new Path();
 	private Paint currentPaint = new Paint();
 	
@@ -43,8 +43,7 @@ class NoteEditorPresenter {
 	private int penColor = 0xff000000;
 	private float penSize = 6.5f;
 	
-	private LinkedList<Point> debugDots = new LinkedList<Point>();
-	private Paint debugPaint = new Paint();
+	
 	
 	private Matrix transformMatrix = new Matrix();
 	private float[] matVals = {1, 0, 0, 0, 1, 0, 0, 0, 1};
@@ -54,20 +53,28 @@ class NoteEditorPresenter {
 	private float canvasYOffset = -1;
 	private float canvasXOffset = -1;
 	
+	
+	private Paint debugPaint1 = new Paint();
+	private Paint debugPaint2 = new Paint();
 	private Paint inPaint = new Paint();
 	private Paint outPaint = new Paint();
 	
 	
 	public NoteEditorPresenter () {
-		currentPaint.setColor(0xa0ff0000);
-		currentPaint.setStyle(Paint.Style.STROKE);
-		currentPaint.setStrokeWidth(1);
+		currentPaint.setColor(penColor);
+		currentPaint.setStyle(Paint.Style.FILL);
+		currentPaint.setStrokeWidth(0);
 		currentPaint.setAntiAlias(true);
+
+		debugPaint1.setColor(Color.BLACK);
+		debugPaint1.setStyle(Paint.Style.STROKE);
+		debugPaint1.setStrokeWidth(0);
+		debugPaint1.setAntiAlias(true);
 		
-		debugPaint.setColor(Color.BLACK);
-		debugPaint.setStyle(Paint.Style.STROKE);
-		debugPaint.setStrokeWidth(0);
-		debugPaint.setAntiAlias(true);
+		debugPaint2.setColor(0xa0ff0000);
+		debugPaint2.setStyle(Paint.Style.STROKE);
+		debugPaint2.setStrokeWidth(1);
+		debugPaint2.setAntiAlias(true);
 		
 		inPaint.setColor(Color.GREEN);
 		inPaint.setStyle(Paint.Style.FILL);
@@ -76,10 +83,13 @@ class NoteEditorPresenter {
 		outPaint.setColor(Color.BLUE);
 		outPaint.setStyle(Paint.Style.FILL);
 		outPaint.setAntiAlias(true);
+		
+		currentPath.setFillType(Path.FillType.WINDING);
 	}
 	
 	public void setPen (int newColor, float newSize) {
 		penColor = newColor;
+		currentPaint.setColor(penColor);
 		penSize = newSize;
 	}
 	
@@ -111,45 +121,27 @@ class NoteEditorPresenter {
 		//TODO
 	}
 	
+	public void hoverAction (ArrayList<Long> times, ArrayList<Float> xs, ArrayList<Float> ys) {
+		//TODO
+	}
 	
-	public void penAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures) {
+	
+	public void penAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean penUp) {
 		
-		//TODO: I should probably split hover events and draw events into their own methods, but I'm not sure...
+		for (int i = 0; i < times.size(); i++) {
+			rawPoints.add(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
+			rawPressures.add(pressures.get(i)*penSize);
+		}
+
 		
-		// Hover event
-		if (pressures.get(0) == -1) {
-//			if (currentPolygon.size() >= 3) {
-//				mStrokes.add(new Stroke(penColor, new ArrayList<Point>(currentPolygon)));
-//			}
-			
-			currentPolygon.clear();
-			
+		currentPoly = BooleanPolyGeom.buildPolygon(rawPoints, rawPressures);
+		
+		
+		
+		if (penUp == true) {
+			Log.d("PEN", "Pen up");
 			rawPoints.clear();
-			rawPressure.clear();
-			
-		// Draw event
-		} else {
-			// Translate and scale new pen data then add it to raw lists
-			
-			Point sLastAdded;
-			if (rawPoints.isEmpty() == false) {
-				sLastAdded = new Point(windowX + rawPoints.getLast().x*zoomMultiplier, windowY + rawPoints.getLast().y*zoomMultiplier);
-			} else {
-				sLastAdded = new Point(10000000000f, 10000000000f);
-			}
-			
-			for (int i = 0; i < times.size(); i++) {
-				float newScaledPressure = 0.333333f + pressures.get(i)*0.6666667f;
-				
-				if(MiscGeom.distSq(xs.get(i), ys.get(i), sLastAdded.x, sLastAdded.y) >= 4 || Math.abs(rawPressure.getLast() - newScaledPressure) >= 0.1f) {
-					sLastAdded = new Point(xs.get(i), ys.get(i));
-					
-					rawPoints.addLast(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
-					rawPressure.addLast(newScaledPressure);
-				}
-			}
-			
-			//currentPolygon = Geometry.buildIntermediatePoly(rawPoints, Geometry.smoothPressures(rawPressure), penSize);
+			rawPressures.clear();
 		}
 	}
 	
@@ -162,8 +154,7 @@ class NoteEditorPresenter {
 		zoomMultiplier *= dZoom;
 	}
 	
-	public void drawNote (Canvas c) {
-		
+	private void calcPanZoom (Canvas c) {
 		// Set the transformMatrix's offsets if they haven't been set yet
 		if (canvasYOffset < 0 || canvasXOffset < 0) {
 			float[] values = new float[9];
@@ -179,68 +170,23 @@ class NoteEditorPresenter {
 		
 		transformMatrix.setValues(matVals);
 		c.setMatrix(transformMatrix);
-
+	}
+	
+	
+	public void drawNote (Canvas c) {
+		calcPanZoom(c);
 		c.drawColor(0xffffffff); 
 		
-//		for (Stroke s : mStrokes) {
-//			s.draw(c);
-//		}
-//		
-//		if (currentPolygon.size() >= 3) {
-//			currentPaint.setColor(penColor);
-//			currentPath.reset();
-//			
-//			currentPath.moveTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
-//			for (int i = 1; i < currentPolygon.size()/2; i++) {
-//				currentPath.lineTo(currentPolygon.get(i).x, currentPolygon.get(i).y);
-//			}
-//			currentPath.lineTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
-//			
-//			c.drawPath(currentPath, currentPaint);
-//			
-//			currentPaint.setColor(Color.RED);
-//			currentPath.reset();
-//			
-//			currentPath.moveTo(currentPolygon.get(currentPolygon.size()/2).x, currentPolygon.get(currentPolygon.size()/2).y);
-//			for (int i = currentPolygon.size()/2; i < currentPolygon.size(); i++) {
-//				currentPath.lineTo(currentPolygon.get(i).x, currentPolygon.get(i).y);
-//			}
-//			currentPath.lineTo(currentPolygon.get(0).x, currentPolygon.get(0).y);
-//			
-//			c.drawPath(currentPath, currentPaint);
-//			
-//		}
+		if (currentPoly != null && currentPoly.size() >= 3) {
+			currentPath.reset();
+			currentPath.moveTo(currentPoly.get(0).x, currentPoly.get(0).y);
+			for (int i = 0; i <= currentPoly.size(); i++) {
+				currentPath.lineTo(currentPoly.get(i).x, currentPoly.get(i).y);
+			}
+			c.drawPath(currentPath, currentPaint);
+		}
 		
-		
-
-		
-//		for (int i = 0; i < rawPoints.size(); i++) {
-//			c.drawCircle(rawPoints.get(i).x, rawPoints.get(i).y, penSize*rawPressure.get(i)*0.5f, debugPaint);
-//		}
-		
-//		boolean useDebug = true;
-//		
-//		for (int i = 1; i < rawPoints.size(); i++) {
-//			LinkedList<Point> poly = UnitPolyGeom.buildUnitPoly(penSize*rawPressure.get(i-1)*0.5f, penSize*rawPressure.get(i)*0.5f, rawPoints.get(i-1), rawPoints.get(i));
-//			
-//			currentPath.reset();
-//			0
-//			if (poly != null && poly.size() > 2) {
-//				currentPath.reset();
-//				currentPath.moveTo(poly.getFirst().x, poly.getFirst().y);
-//				for (Point p : poly) {
-//					currentPath.lineTo(p.x, p.y);
-//				}
-//				currentPath.lineTo(poly.getFirst().x, poly.getFirst().y);
-//			}
-//			
-//			c.drawPath(currentPath, useDebug? debugPaint : currentPaint);
-//			
-//			useDebug = !useDebug;
-//		}
-		
-		
-		visualPolyTests (c);
+		visualPolyTests(c);
 		
 	}
 	
@@ -286,6 +232,7 @@ class NoteEditorPresenter {
 		WrapList<Point> hole2 = new WrapList<Point>();
 		
 		hole1.add(new Point(500, 700));
+		hole1.add(new Point(550, 750));
 		hole1.add(new Point(700, 700));
 		hole1.add(new Point(700, 500));
 		hole1.add(new Point(500, 500));
@@ -299,6 +246,70 @@ class NoteEditorPresenter {
 		hole2.add(new Point(500, 400));
 		
 		drawDebugPolys(c, hole1, hole2);
+		
+		
+		WrapList<Point> inside1 = new WrapList<Point>();
+		WrapList<Point> inside2 = new WrapList<Point>();
+		
+		inside1.add(new Point(600, 100));
+		inside1.add(new Point(500, 100));
+		inside1.add(new Point(550, 200));
+		
+		inside2.add(new Point(550, 150));
+		inside2.add(new Point(545, 150));
+		inside2.add(new Point(547.5f, 155));
+		
+		drawDebugPolys(c, inside1, inside2);
+		
+		
+		ArrayList<Point> points = new ArrayList<Point>();
+		ArrayList<Float> sizes = new ArrayList<Float>();
+		
+		points.add(new Point(100, 600));
+		points.add(new Point(110, 600));
+		points.add(new Point(110, 615));
+		points.add(new Point(90, 625));
+		points.add(new Point(90, 650));
+		points.add(new Point(90, 650));
+		points.add(new Point(100, 640));
+		points.add(new Point(91, 590));
+		
+		sizes.add(8f);
+		sizes.add(7f);
+		sizes.add(4f);
+		sizes.add(4f);
+		sizes.add(5f);
+		sizes.add(3f);
+		sizes.add(6f);
+		sizes.add(3f);
+		
+		WrapList<Point> poly = BooleanPolyGeom.buildPolygon(points, sizes);
+		
+		currentPath.reset();
+		currentPath.moveTo(poly.get(0).x, poly.get(0).y);
+		for (int i = 0; i <= poly.size(); i++) {
+			currentPath.lineTo(poly.get(i).x, poly.get(i).y);
+		}
+		c.drawPath(currentPath, currentPaint);
+		
+		
+		currentPath.reset();
+		
+		currentPath.moveTo(100, 800);
+		currentPath.lineTo(100, 800);
+		currentPath.lineTo(100, 1000);
+		currentPath.lineTo(300, 1000);
+		currentPath.lineTo(300, 1000);
+		currentPath.lineTo(300, 900);
+		currentPath.lineTo(50, 900);
+		currentPath.lineTo(50, 930);
+		currentPath.lineTo(250, 930);
+		currentPath.lineTo(250, 960);
+		currentPath.lineTo(150, 960);
+		currentPath.lineTo(150, 800);
+		
+		c.drawPath(currentPath, currentPaint);
+		
 	}
 	
 	
@@ -307,27 +318,30 @@ class NoteEditorPresenter {
 
 		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(poly1, poly2);
 
-		WrapList<Point> union = BooleanPolyGeom.union(graph);
+		WrapList<Point> union = BooleanPolyGeom.union(graph, poly1, poly2);
 		
 		currentPath.reset();
 		currentPath.moveTo(poly1.get(0).x, poly1.get(0).y);
 		for (int i = 0; i <= poly1.size(); i++) {
 			currentPath.lineTo(poly1.get(i).x, poly1.get(i).y);
 		}
-		c.drawPath(currentPath, debugPaint);
+		c.drawPath(currentPath, debugPaint1);
 		
 		currentPath.reset();
 		currentPath.moveTo(poly2.get(0).x, poly2.get(0).y);
 		for (int i = 0; i <= poly2.size(); i++) {
 			currentPath.lineTo(poly2.get(i).x, poly2.get(i).y);
 		}
-		c.drawPath(currentPath, debugPaint);
+		c.drawPath(currentPath, debugPaint1);
 		
 		for (int i = 0; i < union.size(); i++) {
-			c.drawLine(union.get(i).x, union.get(i).y, union.get(i+1).x, union.get(i+1).y, currentPaint);
+			c.drawLine(union.get(i).x, union.get(i).y, union.get(i+1).x, union.get(i+1).y, debugPaint2);
 		}
 		
-		c.drawCircle(graph.get(0).intersection.x, graph.get(0).intersection.y, 1.5f, inPaint);
+		if (graph.size() > 1) {
+			c.drawCircle(graph.get(0).intersection.x, graph.get(0).intersection.y, 1.5f, inPaint);
+		}
+		
 		
 		for (Vertex v : graph) {
 			if (v.poly1Entry == true) {

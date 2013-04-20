@@ -1,6 +1,7 @@
 package com.calhounhinshaw.freehandalpha.note_editor;
 
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
@@ -26,11 +27,6 @@ import android.widget.Toast;
 
 public class NoteView extends View {
 	private NoteEditorPresenter mPresenter;
-	
-	private LinkedList<Long> times = new LinkedList<Long>();
-	private LinkedList<Float> xs = new LinkedList<Float>();
-	private LinkedList<Float> ys = new LinkedList<Float>();
-	private LinkedList<Float> pressures = new LinkedList<Float>();
 	
 //************************************* Constructors ************************************************
 
@@ -90,10 +86,10 @@ public class NoteView extends View {
 	}
 	
 	private void processDraw (MotionEvent event) {
-		times.clear();
-		xs.clear();
-		ys.clear();
-		pressures.clear();
+		ArrayList<Long> times = new ArrayList<Long>(event.getHistorySize()+1);
+		ArrayList<Float> xs = new ArrayList<Float>(event.getHistorySize()+1);
+		ArrayList<Float> ys = new ArrayList<Float>(event.getHistorySize()+1);
+		ArrayList<Float> pressures = new ArrayList<Float>(event.getHistorySize()+1);
 		
 		for(int i = 0; i < event.getHistorySize(); i++) {
 			times.add(event.getHistoricalEventTime(i));
@@ -107,7 +103,7 @@ public class NoteView extends View {
 		ys.add(event.getY());
 		pressures.add(event.getPressure());
 		
-		mPresenter.penAction(times, xs, ys, pressures);
+		mPresenter.penAction(times, xs, ys, pressures, event.getAction() == MotionEvent.ACTION_UP);
 		
 		invalidate();
 	}
@@ -137,24 +133,21 @@ public class NoteView extends View {
 	@Override
 	public boolean onHoverEvent (MotionEvent event) {
 		
-		times.clear();
-		xs.clear();
-		ys.clear();
-		pressures.clear();
+		ArrayList<Long> times = new ArrayList<Long>(event.getHistorySize()+1);
+		ArrayList<Float> xs = new ArrayList<Float>(event.getHistorySize()+1);
+		ArrayList<Float> ys = new ArrayList<Float>(event.getHistorySize()+1);
 		
 		for(int i = 0; i < event.getHistorySize(); i++) {
 			times.add(event.getHistoricalEventTime(i));
 			xs.add(event.getHistoricalX(i));
 			ys.add(event.getHistoricalY(i));
-			pressures.add(-1.0f);
 		}
 		
 		times.add(event.getEventTime());
 		xs.add(event.getX());
 		ys.add(event.getY());//
-		pressures.add(-1.0f);
 		
-		mPresenter.penAction(times, xs, ys, pressures);
+		mPresenter.hoverAction(times, xs, ys);
 		
 		return true;
 	}

@@ -9,7 +9,7 @@ public class UnitPolyGeom {
 	/**
 	 * An array of evenly spaced points on the unit circle going counter-clockwise starting at theta == 0;
 	 */
-	private static final Point[] CIRCLE ={	new Point ((float) Math.cos(0 * Math.PI/6), (float) Math.sin(0 * Math.PI/6)),
+	public static final Point[] CIRCLE ={	new Point ((float) Math.cos(0 * Math.PI/6), (float) Math.sin(0 * Math.PI/6)),
 											new Point ((float) Math.cos(1 * Math.PI/6), (float) Math.sin(1 * Math.PI/6)),
 											new Point ((float) Math.cos(2 * Math.PI/6), (float) Math.sin(2 * Math.PI/6)),
 											new Point ((float) Math.cos(3 * Math.PI/6), (float) Math.sin(3 * Math.PI/6)),
@@ -41,7 +41,11 @@ public class UnitPolyGeom {
 		float[] angles = UnitPolyGeom.calcBitangentAngles(r1, r2, c1, c2);
 		
 		if (angles == null) {
-			return null;
+			if(r1 >= r2) {
+				return getCircularPoly(c1, r1);
+			} else {
+				return getCircularPoly(c2, r2);
+			}
 		}
 		
 		WrapList<Point> poly = new WrapList<Point>(POLY_SIZE);
@@ -211,6 +215,14 @@ public class UnitPolyGeom {
 			}
 		}
 
+		return toReturn;
+	}
+	
+	public static WrapList<Point> getCircularPoly (Point center, float radius) {
+		WrapList<Point> toReturn = new WrapList<Point>(CIRCLE.length);
+		for (int i = CIRCLE.length-1; i >= 0; i--) {
+			toReturn.add(new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y));
+		}
 		return toReturn;
 	}
 }
