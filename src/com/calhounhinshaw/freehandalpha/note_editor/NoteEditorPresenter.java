@@ -9,6 +9,7 @@ import com.calhounhinshaw.freehandalpha.ink.BooleanPolyGeom;
 import com.calhounhinshaw.freehandalpha.ink.MiscGeom;
 import com.calhounhinshaw.freehandalpha.ink.Point;
 import com.calhounhinshaw.freehandalpha.ink.Stroke;
+import com.calhounhinshaw.freehandalpha.ink.StrokeGeom;
 import com.calhounhinshaw.freehandalpha.ink.UnitPolyGeom;
 import com.calhounhinshaw.freehandalpha.ink.Vertex;
 import com.calhounhinshaw.freehandalpha.misc.WrapList;
@@ -29,7 +30,7 @@ class NoteEditorPresenter {
 	private ArrayList<Float> rawPressures = new ArrayList<Float>();
 	
 	// Holds the current stroke's data for drawing
-	private WrapList<Point> currentPoly = new WrapList<Point>();
+	private LinkedList<Point> currentPoly = new LinkedList<Point>();
 	private Path currentPath = new Path();
 	private Paint currentPaint = new Paint();
 	
@@ -62,7 +63,7 @@ class NoteEditorPresenter {
 	
 	public NoteEditorPresenter () {
 		currentPaint.setColor(penColor);
-		currentPaint.setStyle(Paint.Style.FILL);
+		currentPaint.setStyle(Paint.Style.STROKE);
 		currentPaint.setStrokeWidth(0);
 		currentPaint.setAntiAlias(true);
 
@@ -126,22 +127,61 @@ class NoteEditorPresenter {
 	}
 	
 	
+	private Point lastPoint = null;
+	private Float lastSize = null;
+	
 	public void penAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean penUp) {
 		
+		// Process the new points coming in from the stylus
 		for (int i = 0; i < times.size(); i++) {
-			rawPoints.add(new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier));
-			rawPressures.add(pressures.get(i)*penSize);
+			Point currentPoint = new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier);
+			Float currentSize = penSize*0.33333f + pressures.get(i)*penSize*0.66666f;
+			
+			// First add the points to the historical data
+			rawPoints.add(currentPoint);
+			rawPressures.add(currentSize);	//TODO: change to pressure, using size for debugging
+			
+			
+			
+			
+			if (currentPoint != null && lastPoint != null) {
+				Point[] tangentPoints = StrokeGeom.calcExternalBitangentPoints(lastPoint, lastSize, currentPoint, currentSize);
+				
+				if (tangentPoints != null) {
+					currentPoly.addFirst(tangentPoints[0]);
+					currentPoly.addFirst(tangentPoints[1]);
+					currentPoly.addLast(tangentPoints[2]);
+					currentPoly.addLast(tangentPoints[3]);
+				}
+			}
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			lastPoint = currentPoint;
+			lastSize = currentSize;
 		}
+		
+		
+		// calculate cap
 
 		
-		currentPoly = BooleanPolyGeom.buildPolygon(rawPoints, rawPressures);
-		
-		
-		
 		if (penUp == true) {
-			Log.d("PEN", "Pen up");
+			if (currentPoly.size() >= 3) {
+				mStrokes.add(new Stroke(penColor, currentPoly));
+			}
+			
 			rawPoints.clear();
 			rawPressures.clear();
+			currentPoly = new LinkedList<Point>();
+			
+			lastPoint = null;
+			lastSize = null;
 		}
 	}
 	
@@ -175,18 +215,31 @@ class NoteEditorPresenter {
 	
 	public void drawNote (Canvas c) {
 		calcPanZoom(c);
-		c.drawColor(0xffffffff); 
+		c.drawColor(0xffffffff);
+		
+		for (Stroke s : mStrokes) {
+			s.draw(c);
+		}
+		
+		Paint debug = new Paint();
+		debug.setColor(0x50ff0000);
+		debug.setStyle(Paint.Style.STROKE);
+		debug.setStrokeWidth(0);
+		debug.setAntiAlias(true);
+		
+		for (int i = 0; i < rawPressures.size(); i++) {
+			c.drawCircle(rawPoints.get(i).x, rawPoints.get(i).y, rawPressures.get(i), debug);
+		}
 		
 		if (currentPoly != null && currentPoly.size() >= 3) {
 			currentPath.reset();
 			currentPath.moveTo(currentPoly.get(0).x, currentPoly.get(0).y);
-			for (int i = 0; i <= currentPoly.size(); i++) {
+			for (int i = 0; i < currentPoly.size(); i++) {
 				currentPath.lineTo(currentPoly.get(i).x, currentPoly.get(i).y);
 			}
 			c.drawPath(currentPath, currentPaint);
 		}
 		
-		visualPolyTests(c);
 		
 	}
 	
