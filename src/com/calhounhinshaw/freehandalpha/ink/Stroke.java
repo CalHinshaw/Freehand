@@ -1,11 +1,10 @@
 package com.calhounhinshaw.freehandalpha.ink;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 
@@ -22,7 +21,7 @@ public class Stroke {
 	 * @param color The polygon's color
 	 * @param polygon The points that define the polygon.
 	 */
-	public Stroke (int color, ArrayList<Point> polygon) {
+	public Stroke (int color, List<Point> polygon) {
 		
 		mPoly = Collections.unmodifiableList(polygon);
 		
@@ -30,6 +29,8 @@ public class Stroke {
 		mPaint.setStyle(Paint.Style.STROKE);
 		mPaint.setStrokeWidth(0);
 		mPaint.setAntiAlias(true);
+		
+		mPath.setFillType(Path.FillType.WINDING);
 		
 		mPath.moveTo(mPoly.get(0).x, mPoly.get(0).y);
 		for (int i = 1; i < mPoly.size(); i++) {
@@ -39,6 +40,6 @@ public class Stroke {
 	}
 	
 	public void draw (Canvas c) {
-		c.drawPath(mPath, mPaint);
+		c.drawPath(mPath, mPaint);		
 	}
 }
