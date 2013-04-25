@@ -2,7 +2,6 @@ package com.calhounhinshaw.freehandalpha.ink;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import com.calhounhinshaw.freehandalpha.misc.WrapList;
@@ -155,6 +154,7 @@ public class BooleanPolyGeom {
 				}
 			}
 		}
+		
 		
 		if (intersections >=1 && intersections%2 == 1) {
 			return true;
