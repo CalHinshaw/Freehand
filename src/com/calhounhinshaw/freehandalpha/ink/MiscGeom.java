@@ -2,15 +2,13 @@ package com.calhounhinshaw.freehandalpha.ink;
 
 import java.util.ArrayList;
 
-import com.calhounhinshaw.freehandalpha.misc.WrapList;
-
 public class MiscGeom {
 	private static final float SG0 = 17.0f / 35.0f;
 	private static final float SG1 = 12.0f / 35.0f;
 	private static final float SG2 = -3.0f / 35.0f;
 	
 	public static float distance (float x1, float y1, float x2, float y2) {
-		return (float)Math.sqrt(Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2));
+		return (float) Math.sqrt(Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2));
 	}
 	
 	public static float distance (Point p1, Point p2) {
@@ -19,6 +17,10 @@ public class MiscGeom {
 	
 	public static float distSq (float x1, float y1, float x2, float y2) {
 		return (float) (Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2));
+	}
+	
+	public static float distSq (Point p1, Point p2) {
+		return distSq(p1.x, p1.y, p2.x, p2.y);
 	}
 	
 	/**
