@@ -1,9 +1,6 @@
 package com.calhounhinshaw.freehandalpha.ink;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-
-import android.util.Log;
 
 import com.calhounhinshaw.freehandalpha.misc.WrapList;
 
@@ -37,77 +34,65 @@ public class StrokeGeom {
 	}
 
 
-	/**
-	 * Approximates a circular path as a poly-line.
-	 * 
-	 * @param center The center of the circle
-	 * @param radius The radius of the circle
-	 * @param clockwise The direction around the circle the path is going
-	 * @param from The angle the path to be traced starts at
-	 * @param to The angle the path to be traced ends at
-	 * @return The path
-	 */
-	public static ArrayList<Point> traceCircularPath(final Point center, final float radius, final boolean clockwise, final float from, final float to) {
-		ArrayList<Point> path = new ArrayList<Point>();
-
+	public static LinkedList<Point> traceCircularPath (final Point center, final float radius, final boolean clockwise, final Point from, final Point to) {
+		LinkedList<Point> path = new LinkedList<Point>();
+		
 		// Find the indexes of the points on the circle the path is starting and ending at
-		int fromIndex = findAdjacentCircleIndex(from, clockwise);
-		int toIndex = findAdjacentCircleIndex(to, !clockwise);
-
-		if ((fromIndex == toIndex + 1 && clockwise == false) || (fromIndex == 0 && toIndex == CIRCLE.length - 1 && clockwise == false) ||
-			(fromIndex == toIndex - 1 && clockwise == true) || (fromIndex == CIRCLE.length - 1 && toIndex == 0 && clockwise == true)) {
-			return path;
-		}
-
+		int fromIndex = findAdjacentCircleIndex(from, center, clockwise);
+		int toIndex = findAdjacentCircleIndex(to, center, !clockwise);
+		
 		Point[] scaledCircle = new Point[CIRCLE.length];
 		for (int i = 0; i < scaledCircle.length; i++) {
 			scaledCircle[i] = new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y);
 		}
-
+		
 		int step;
 		if (clockwise == true) {
 			step = -1;
 		} else {
 			step = 1;
 		}
-
+		
 		int counter = fromIndex;
 		while (true) {
 			path.add(scaledCircle[counter]);
-
+			
 			if (counter == toIndex) {
 				break;
 			}
-
+			
 			counter += step;
-
+			
 			if (counter >= scaledCircle.length) {
 				counter = 0;
 			} else if (counter < 0) {
 				counter = scaledCircle.length - 1;
 			}
 		}
-
+		
 		return path;
 	}
-
-
+	
 	/**
 	 * @param p The point on the circle you're trying to find the adjacent point to
 	 * @param center The center of the circle
 	 * @param clockwise	if true, return the index of the point directly clockwise. if false return the index of the point directly counterclockwise.
 	 * @return The index of the point in circle that's next to p in the direction specified by clockwise or -1 if something went wrong.
 	 */
-	public static int findAdjacentCircleIndex(float angle, boolean clockwise) {
-
-		double continuousIndex = angle / STEP_SIZE;
-
-		if (continuousIndex < 0) {
-			continuousIndex += 12;
+	public static int findAdjacentCircleIndex (Point p, Point center, boolean clockwise) {
+		
+		float mag = MiscGeom.distance(p, center);
+		
+		double angle;
+		if (p.y - center.y >= 0) {
+			angle = Math.acos((p.x-center.x)/mag);
+		} else {
+			angle = 2*Math.PI - Math.acos((p.x-center.x)/mag);
 		}
+		double continuousIndex = angle/STEP_SIZE;
 
 		int toReturn;
-
+		
 		if (clockwise == true) {
 			toReturn = (int) Math.floor(continuousIndex);
 		} else {

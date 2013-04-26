@@ -143,25 +143,55 @@ class NoteEditorPresenter {
 			
 			
 			
-			
 			if (currentPoint != null && lastPoint != null) {
 				Point[] tangentPoints = StrokeGeom.calcExternalBitangentPoints(lastPoint, lastSize, currentPoint, currentSize);
-				
 				if (tangentPoints != null) {
-					currentPoly.addFirst(tangentPoints[0]);
-					currentPoly.addFirst(tangentPoints[1]);
-					currentPoly.addLast(tangentPoints[2]);
-					currentPoly.addLast(tangentPoints[3]);
+					if (currentPoly.size() == 0) {					// Start new stroke with a cap
+						currentPoly.addAll(StrokeGeom.traceCircularPath(lastPoint, lastSize, false, tangentPoints[0], tangentPoints[2]));
+						currentPoly.addFirst(tangentPoints[0]);
+						currentPoly.addFirst(tangentPoints[1]);
+						currentPoly.addLast(tangentPoints[2]);
+						currentPoly.addLast(tangentPoints[3]);
+					} else {										// Handle normal stroke additions
+						// Handle the left handed side
+						if (MiscGeom.cross(currentPoly.get(0), currentPoly.get(1), tangentPoints[1], tangentPoints[0]) >= 0) {
+							Point intersection = MiscGeom.calcIntersection(currentPoly.get(0), currentPoly.get(1), tangentPoints[1], tangentPoints[0]);
+							if (intersection == null) {
+								currentPoly.addFirst(tangentPoints[0]);
+								currentPoly.addFirst(tangentPoints[1]);
+							} else {
+								currentPoly.removeFirst();
+								currentPoly.addFirst(intersection);
+								currentPoly.addFirst(tangentPoints[1]);
+							}
+						} else {
+							LinkedList<Point> join = StrokeGeom.traceCircularPath(lastPoint, lastSize, false, tangentPoints[0], currentPoly.getFirst());
+							
+							for (Point p : join) {
+								currentPoly.addFirst(p);
+							}
+							
+							currentPoly.addFirst(tangentPoints[0]);
+							currentPoly.addFirst(tangentPoints[1]);
+						}
+						
+						
+						
+						
+						// Handle the right handed side
+						if (MiscGeom.cross(currentPoly.get(currentPoly.size()-1), currentPoly.get(currentPoly.size()-2), tangentPoints[3], tangentPoints[2]) <= 0) {
+							// test intersection
+						} else {
+							// interpolate along circle
+						}
+						
+						
+						
+						currentPoly.addLast(tangentPoints[2]);
+						currentPoly.addLast(tangentPoints[3]);
+					}
 				}
 			}
-			
-			
-			
-			
-			
-			
-			
-			
 			
 			lastPoint = currentPoint;
 			lastSize = currentSize;
