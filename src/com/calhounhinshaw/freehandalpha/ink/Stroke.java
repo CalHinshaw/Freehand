@@ -1,15 +1,13 @@
 package com.calhounhinshaw.freehandalpha.ink;
 
-import java.util.Collections;
-import java.util.List;
+import com.calhounhinshaw.freehandalpha.misc.WrapList;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 
 public class Stroke {
-	private final List<Point> mPoly;
+	private final WrapList<Point> mPoly;
 	
 	private final Paint mPaint = new Paint();
 	private final Path mPath = new Path();
@@ -21,9 +19,9 @@ public class Stroke {
 	 * @param color The polygon's color
 	 * @param polygon The points that define the polygon.
 	 */
-	public Stroke (int color, List<Point> polygon) {
+	public Stroke (int color, WrapList<Point> poly) {
 		
-		mPoly = Collections.unmodifiableList(polygon);
+		mPoly = poly;
 		
 		mPaint.setColor(color);
 		mPaint.setStyle(Paint.Style.STROKE);

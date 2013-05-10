@@ -10,6 +10,7 @@ import com.calhounhinshaw.freehandalpha.ink.MiscGeom;
 import com.calhounhinshaw.freehandalpha.ink.Point;
 import com.calhounhinshaw.freehandalpha.ink.Stroke;
 import com.calhounhinshaw.freehandalpha.ink.StrokeGeom;
+import com.calhounhinshaw.freehandalpha.ink.StrokePolyBuilder;
 import com.calhounhinshaw.freehandalpha.ink.UnitPolyGeom;
 import com.calhounhinshaw.freehandalpha.ink.Vertex;
 import com.calhounhinshaw.freehandalpha.misc.WrapList;
@@ -29,9 +30,6 @@ class NoteEditorPresenter {
 	private ArrayList<Point> rawPoints = new ArrayList<Point>();
 	private ArrayList<Float> rawPressures = new ArrayList<Float>();
 	
-	// Holds the current stroke's data for drawing
-	private LinkedList<Point> currentPoly = new LinkedList<Point>();
-	private Path currentPath = new Path();
 	private Paint currentPaint = new Paint();
 	
 	// The zoom scalar that all values going into and out of the note are multiplied by after translation by windowX and windowY
@@ -61,6 +59,10 @@ class NoteEditorPresenter {
 	private Paint outPaint = new Paint();
 	
 	
+	private final StrokePolyBuilder builder = new StrokePolyBuilder();
+	
+	
+	
 	public NoteEditorPresenter () {
 		currentPaint.setColor(penColor);
 		currentPaint.setStyle(Paint.Style.STROKE);
@@ -84,8 +86,6 @@ class NoteEditorPresenter {
 		outPaint.setColor(Color.BLUE);
 		outPaint.setStyle(Paint.Style.FILL);
 		outPaint.setAntiAlias(true);
-		
-		currentPath.setFillType(Path.FillType.WINDING);
 	}
 	
 	public void setPen (int newColor, float newSize) {
@@ -125,93 +125,33 @@ class NoteEditorPresenter {
 	public void hoverAction (ArrayList<Long> times, ArrayList<Float> xs, ArrayList<Float> ys) {
 		//TODO
 	}
-	
-	
-	private Point lastPoint = null;
-	private Float lastSize = null;
+
 	
 	public void penAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean penUp) {
 		
 		// Process the new points coming in from the stylus
 		for (int i = 0; i < times.size(); i++) {
+			// First scale the input to the current canvas position and pressure sensitivity
 			Point currentPoint = new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier);
-			Float currentSize = penSize*0.33333f + pressures.get(i)*penSize*0.66666f;
+			float currentSize = penSize*0.33333f + pressures.get(i)*penSize*0.66666f;
 			
-			// First add the points to the historical data
+			// Second add the points to the historical data
 			rawPoints.add(currentPoint);
-			rawPressures.add(currentSize);	//TODO: change to pressure, using size for debugging
+			rawPressures.add(pressures.get(i));
 			
-			
-			
-			if (currentPoint != null && lastPoint != null) {
-				Point[] tangentPoints = StrokeGeom.calcExternalBitangentPoints(lastPoint, lastSize, currentPoint, currentSize);
-				if (tangentPoints != null) {
-					if (currentPoly.size() == 0) {					// Start new stroke with a cap
-						currentPoly.addAll(StrokeGeom.traceCircularPath(lastPoint, lastSize, false, tangentPoints[0], tangentPoints[2]));
-						currentPoly.addFirst(tangentPoints[0]);
-						currentPoly.addFirst(tangentPoints[1]);
-						currentPoly.addLast(tangentPoints[2]);
-						currentPoly.addLast(tangentPoints[3]);
-					} else {										// Handle normal stroke additions
-						// Handle the left handed side
-						if (MiscGeom.cross(currentPoly.get(0), currentPoly.get(1), tangentPoints[1], tangentPoints[0]) >= 0) {
-							Point intersection = MiscGeom.calcIntersection(currentPoly.get(0), currentPoly.get(1), tangentPoints[1], tangentPoints[0]);
-							if (intersection == null) {
-								currentPoly.addFirst(tangentPoints[0]);
-								currentPoly.addFirst(tangentPoints[1]);
-							} else {
-								currentPoly.removeFirst();
-								currentPoly.addFirst(intersection);
-								currentPoly.addFirst(tangentPoints[1]);
-							}
-						} else {
-							LinkedList<Point> join = StrokeGeom.traceCircularPath(lastPoint, lastSize, false, tangentPoints[0], currentPoly.getFirst());
-							
-							for (Point p : join) {
-								currentPoly.addFirst(p);
-							}
-							
-							currentPoly.addFirst(tangentPoints[0]);
-							currentPoly.addFirst(tangentPoints[1]);
-						}
-						
-						
-						
-						
-						// Handle the right handed side
-						if (MiscGeom.cross(currentPoly.get(currentPoly.size()-1), currentPoly.get(currentPoly.size()-2), tangentPoints[3], tangentPoints[2]) <= 0) {
-							// test intersection
-						} else {
-							// interpolate along circle
-						}
-						
-						
-						
-						currentPoly.addLast(tangentPoints[2]);
-						currentPoly.addLast(tangentPoints[3]);
-					}
-				}
-			}
-			
-			lastPoint = currentPoint;
-			lastSize = currentSize;
+			builder.add(currentPoint, currentSize, zoomMultiplier);
 		}
-		
-		
-		// calculate cap
 
-		
+		// Terminate strokes when they end
 		if (penUp == true) {
-			if (currentPoly.size() >= 3) {
-				mStrokes.add(new Stroke(penColor, currentPoly));
+			WrapList<Point> finalPoly = builder.getFinalPoly();
+			if (finalPoly.size() >= 3) {
+				mStrokes.add(new Stroke(penColor, finalPoly));
 			}
+			builder.reset();
 			
 			rawPoints.clear();
 			rawPressures.clear();
-			currentPoly = new LinkedList<Point>();
-			
-			lastPoint = null;
-			lastSize = null;
 		}
 	}
 	
@@ -251,189 +191,170 @@ class NoteEditorPresenter {
 			s.draw(c);
 		}
 		
-		Paint debug = new Paint();
-		debug.setColor(0x50ff0000);
-		debug.setStyle(Paint.Style.STROKE);
-		debug.setStrokeWidth(0);
-		debug.setAntiAlias(true);
-		
-		for (int i = 0; i < rawPressures.size(); i++) {
-			c.drawCircle(rawPoints.get(i).x, rawPoints.get(i).y, rawPressures.get(i), debug);
-		}
-		
-		if (currentPoly != null && currentPoly.size() >= 3) {
-			currentPath.reset();
-			currentPath.moveTo(currentPoly.get(0).x, currentPoly.get(0).y);
-			for (int i = 0; i < currentPoly.size(); i++) {
-				currentPath.lineTo(currentPoly.get(i).x, currentPoly.get(i).y);
-			}
-			c.drawPath(currentPath, currentPaint);
-		}
-		
-		
+		builder.draw(c, currentPaint);
 	}
 	
 	
 	
 	
-	private void visualPolyTests (Canvas c) {
-		WrapList<Point> square1 = new WrapList<Point>();
-		WrapList<Point> square3 = new WrapList<Point>();
-		
-		square1.add(new Point(-100, -400));
-		square1.add(new Point(-100, 50));
-		square1.add(new Point(-50, 25));
-		square1.add(new Point(0, 50));
-		square1.add(new Point(0, -400));
-		
-		square3.add(new Point(200, 40f));
-		square3.add(new Point(200, -90));
-		square3.add(new Point(-200, -90));
-		square3.add(new Point(-200, 40f));
-		
-		drawDebugPolys(c, square1, square3);
-		
-		
-		WrapList<Point> shape1 = new WrapList<Point>();
-		WrapList<Point> shape2 = new WrapList<Point>();
-		
-		shape1.add(new Point(-100, 100));
-		shape1.add(new Point(-100, 550));
-		shape1.add(new Point(-50, 525));
-		shape1.add(new Point(0, 550));
-		shape1.add(new Point(0, 100));
-		
-		shape2.add(new Point(0, 550f));
-		shape2.add(new Point(0, 400));
-		shape2.add(new Point(-200, 400));
-		shape2.add(new Point(-200, 550f));
-		
-		drawDebugPolys(c, shape1, shape2);
-		
-		
-		WrapList<Point> hole1 = new WrapList<Point>();
-		WrapList<Point> hole2 = new WrapList<Point>();
-		
-		hole1.add(new Point(500, 700));
-		hole1.add(new Point(550, 750));
-		hole1.add(new Point(700, 700));
-		hole1.add(new Point(700, 500));
-		hole1.add(new Point(500, 500));
-		
-		hole2.add(new Point(550, 600));
-		hole2.add(new Point(550, 450));
-		hole2.add(new Point(650, 450));
-		hole2.add(new Point(650, 600));
-		hole2.add(new Point(700, 600));
-		hole2.add(new Point(700, 400));
-		hole2.add(new Point(500, 400));
-		
-		drawDebugPolys(c, hole1, hole2);
-		
-		
-		WrapList<Point> inside1 = new WrapList<Point>();
-		WrapList<Point> inside2 = new WrapList<Point>();
-		
-		inside1.add(new Point(600, 100));
-		inside1.add(new Point(500, 100));
-		inside1.add(new Point(550, 200));
-		
-		inside2.add(new Point(550, 150));
-		inside2.add(new Point(545, 150));
-		inside2.add(new Point(547.5f, 155));
-		
-		drawDebugPolys(c, inside1, inside2);
-		
-		
-		ArrayList<Point> points = new ArrayList<Point>();
-		ArrayList<Float> sizes = new ArrayList<Float>();
-		
-		points.add(new Point(100, 600));
-		points.add(new Point(110, 600));
-		points.add(new Point(110, 615));
-		points.add(new Point(90, 625));
-		points.add(new Point(90, 650));
-		points.add(new Point(90, 650));
-		points.add(new Point(100, 640));
-		points.add(new Point(91, 590));
-		
-		sizes.add(8f);
-		sizes.add(7f);
-		sizes.add(4f);
-		sizes.add(4f);
-		sizes.add(5f);
-		sizes.add(3f);
-		sizes.add(6f);
-		sizes.add(3f);
-		
-		WrapList<Point> poly = BooleanPolyGeom.buildPolygon(points, sizes);
-		
-		currentPath.reset();
-		currentPath.moveTo(poly.get(0).x, poly.get(0).y);
-		for (int i = 0; i <= poly.size(); i++) {
-			currentPath.lineTo(poly.get(i).x, poly.get(i).y);
-		}
-		c.drawPath(currentPath, currentPaint);
-		
-		
-		currentPath.reset();
-		
-		currentPath.moveTo(100, 800);
-		currentPath.lineTo(100, 800);
-		currentPath.lineTo(100, 1000);
-		currentPath.lineTo(300, 1000);
-		currentPath.lineTo(300, 1000);
-		currentPath.lineTo(300, 900);
-		currentPath.lineTo(50, 900);
-		currentPath.lineTo(50, 930);
-		currentPath.lineTo(250, 930);
-		currentPath.lineTo(250, 960);
-		currentPath.lineTo(150, 960);
-		currentPath.lineTo(150, 800);
-		
-		c.drawPath(currentPath, currentPaint);
-		
-	}
-	
-	
-	
-	private void drawDebugPolys (Canvas c, WrapList<Point> poly1, WrapList<Point> poly2) {
-
-		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(poly1, poly2);
-
-		WrapList<Point> union = BooleanPolyGeom.union(graph, poly1, poly2);
-		
-		currentPath.reset();
-		currentPath.moveTo(poly1.get(0).x, poly1.get(0).y);
-		for (int i = 0; i <= poly1.size(); i++) {
-			currentPath.lineTo(poly1.get(i).x, poly1.get(i).y);
-		}
-		c.drawPath(currentPath, debugPaint1);
-		
-		currentPath.reset();
-		currentPath.moveTo(poly2.get(0).x, poly2.get(0).y);
-		for (int i = 0; i <= poly2.size(); i++) {
-			currentPath.lineTo(poly2.get(i).x, poly2.get(i).y);
-		}
-		c.drawPath(currentPath, debugPaint1);
-		
-		for (int i = 0; i < union.size(); i++) {
-			c.drawLine(union.get(i).x, union.get(i).y, union.get(i+1).x, union.get(i+1).y, debugPaint2);
-		}
-		
-		if (graph.size() > 1) {
-			c.drawCircle(graph.get(0).intersection.x, graph.get(0).intersection.y, 1.5f, inPaint);
-		}
-		
-		
-		for (Vertex v : graph) {
-			if (v.poly1Entry == true) {
-				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, inPaint);
-			} else {
-				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, outPaint);
-			}
-		}
-	}
+//	private void visualPolyTests (Canvas c) {
+//		WrapList<Point> square1 = new WrapList<Point>();
+//		WrapList<Point> square3 = new WrapList<Point>();
+//		
+//		square1.add(new Point(-100, -400));
+//		square1.add(new Point(-100, 50));
+//		square1.add(new Point(-50, 25));
+//		square1.add(new Point(0, 50));
+//		square1.add(new Point(0, -400));
+//		
+//		square3.add(new Point(200, 40f));
+//		square3.add(new Point(200, -90));
+//		square3.add(new Point(-200, -90));
+//		square3.add(new Point(-200, 40f));
+//		
+//		drawDebugPolys(c, square1, square3);
+//		
+//		
+//		WrapList<Point> shape1 = new WrapList<Point>();
+//		WrapList<Point> shape2 = new WrapList<Point>();
+//		
+//		shape1.add(new Point(-100, 100));
+//		shape1.add(new Point(-100, 550));
+//		shape1.add(new Point(-50, 525));
+//		shape1.add(new Point(0, 550));
+//		shape1.add(new Point(0, 100));
+//		
+//		shape2.add(new Point(0, 550f));
+//		shape2.add(new Point(0, 400));
+//		shape2.add(new Point(-200, 400));
+//		shape2.add(new Point(-200, 550f));
+//		
+//		drawDebugPolys(c, shape1, shape2);
+//		
+//		
+//		WrapList<Point> hole1 = new WrapList<Point>();
+//		WrapList<Point> hole2 = new WrapList<Point>();
+//		
+//		hole1.add(new Point(500, 700));
+//		hole1.add(new Point(550, 750));
+//		hole1.add(new Point(700, 700));
+//		hole1.add(new Point(700, 500));
+//		hole1.add(new Point(500, 500));
+//		
+//		hole2.add(new Point(550, 600));
+//		hole2.add(new Point(550, 450));
+//		hole2.add(new Point(650, 450));
+//		hole2.add(new Point(650, 600));
+//		hole2.add(new Point(700, 600));
+//		hole2.add(new Point(700, 400));
+//		hole2.add(new Point(500, 400));
+//		
+//		drawDebugPolys(c, hole1, hole2);
+//		
+//		
+//		WrapList<Point> inside1 = new WrapList<Point>();
+//		WrapList<Point> inside2 = new WrapList<Point>();
+//		
+//		inside1.add(new Point(600, 100));
+//		inside1.add(new Point(500, 100));
+//		inside1.add(new Point(550, 200));
+//		
+//		inside2.add(new Point(550, 150));
+//		inside2.add(new Point(545, 150));
+//		inside2.add(new Point(547.5f, 155));
+//		
+//		drawDebugPolys(c, inside1, inside2);
+//		
+//		
+//		ArrayList<Point> points = new ArrayList<Point>();
+//		ArrayList<Float> sizes = new ArrayList<Float>();
+//		
+//		points.add(new Point(100, 600));
+//		points.add(new Point(110, 600));
+//		points.add(new Point(110, 615));
+//		points.add(new Point(90, 625));
+//		points.add(new Point(90, 650));
+//		points.add(new Point(90, 650));
+//		points.add(new Point(100, 640));
+//		points.add(new Point(91, 590));
+//		
+//		sizes.add(8f);
+//		sizes.add(7f);
+//		sizes.add(4f);
+//		sizes.add(4f);
+//		sizes.add(5f);
+//		sizes.add(3f);
+//		sizes.add(6f);
+//		sizes.add(3f);
+//		
+//		WrapList<Point> poly = BooleanPolyGeom.buildPolygon(points, sizes);
+//		
+//		currentPath.reset();
+//		currentPath.moveTo(poly.get(0).x, poly.get(0).y);
+//		for (int i = 0; i <= poly.size(); i++) {
+//			currentPath.lineTo(poly.get(i).x, poly.get(i).y);
+//		}
+//		c.drawPath(currentPath, currentPaint);
+//		
+//		
+//		currentPath.reset();
+//		
+//		currentPath.moveTo(100, 800);
+//		currentPath.lineTo(100, 800);
+//		currentPath.lineTo(100, 1000);
+//		currentPath.lineTo(300, 1000);
+//		currentPath.lineTo(300, 1000);
+//		currentPath.lineTo(300, 900);
+//		currentPath.lineTo(50, 900);
+//		currentPath.lineTo(50, 930);
+//		currentPath.lineTo(250, 930);
+//		currentPath.lineTo(250, 960);
+//		currentPath.lineTo(150, 960);
+//		currentPath.lineTo(150, 800);
+//		
+//		c.drawPath(currentPath, currentPaint);
+//		
+//	}
+//	
+//	
+//	
+//	private void drawDebugPolys (Canvas c, WrapList<Point> poly1, WrapList<Point> poly2) {
+//
+//		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(poly1, poly2);
+//
+//		WrapList<Point> union = BooleanPolyGeom.union(graph, poly1, poly2);
+//		
+//		currentPath.reset();
+//		currentPath.moveTo(poly1.get(0).x, poly1.get(0).y);
+//		for (int i = 0; i <= poly1.size(); i++) {
+//			currentPath.lineTo(poly1.get(i).x, poly1.get(i).y);
+//		}
+//		c.drawPath(currentPath, debugPaint1);
+//		
+//		currentPath.reset();
+//		currentPath.moveTo(poly2.get(0).x, poly2.get(0).y);
+//		for (int i = 0; i <= poly2.size(); i++) {
+//			currentPath.lineTo(poly2.get(i).x, poly2.get(i).y);
+//		}
+//		c.drawPath(currentPath, debugPaint1);
+//		
+//		for (int i = 0; i < union.size(); i++) {
+//			c.drawLine(union.get(i).x, union.get(i).y, union.get(i+1).x, union.get(i+1).y, debugPaint2);
+//		}
+//		
+//		if (graph.size() > 1) {
+//			c.drawCircle(graph.get(0).intersection.x, graph.get(0).intersection.y, 1.5f, inPaint);
+//		}
+//		
+//		
+//		for (Vertex v : graph) {
+//			if (v.poly1Entry == true) {
+//				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, inPaint);
+//			} else {
+//				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, outPaint);
+//			}
+//		}
+//	}
 	
 	
 	
