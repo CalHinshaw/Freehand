@@ -94,71 +94,112 @@ public class StrokePolyBuilder {
 		
 		Point[] tangentPoints = MiscGeom.calcExternalBitangentPoints(points.get(points.size()-2),
 			sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
+		
 		if (tangentPoints != null) {
 			StrokePolyBuilder.addNewSeg(poly, tangentPoints[0], tangentPoints[1], points.get(points.size()-2), sizes.get(sizes.size()-2), true);
 			StrokePolyBuilder.addNewSeg(poly, tangentPoints[2], tangentPoints[3], points.get(points.size()-2), sizes.get(sizes.size()-2), false);
 		} else {
 			if (sizes.get(sizes.size()-1) <= sizes.get(sizes.size()-2)) {	// new contained by old -> Start containment
-				Log.d("PEN", "containing index set");
 				containingIndex = sizes.size()-2;
 			} else {														// old contained by new -> backtrack
 				// TODO implement all of the backtracking crap
-				Log.d("PEN", "should backtrack");
+				backtrack();
 			}
 		}
 
 	}
 	
-	private void breakContainment () {
-
-		Point[] tangentPoints = MiscGeom.calcExternalBitangentPoints(points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
+	private void backtrack () {
 		
-		if (tangentPoints != null) {
-			Point[] left = MiscGeom.calcCircleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tangentPoints[0], tangentPoints[1]);
-			Point[] right = MiscGeom.calcCircleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tangentPoints[2], tangentPoints[3]);
-			
-			if (left[0] != null && right[0] != null) {
-				StrokePolyBuilder.addNewSeg(poly, left[0], tangentPoints[1], points.get(containingIndex), sizes.get(containingIndex), true);
-				StrokePolyBuilder.addNewSeg(poly, right[0], tangentPoints[3], points.get(containingIndex), sizes.get(containingIndex), false);
-				containingIndex = -1;
-			} else if (left[0] != null) {
-				StrokePolyBuilder.addNewSeg(poly, left[0], tangentPoints[1], points.get(containingIndex), sizes.get(containingIndex), true);
+		// calculate the points to trace the circle to
+		Point[] newPts = {null, null};
+		
+		
+		while (poly.size() >= 2) {
+			Point[] pts = MiscGeom.calcCircleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(poly.size()-1), poly.get(poly.size()-2));
+			poly.removeLast();
+			if (pts[0] != null) {
+				// add the intersection, trace the quarter(ish) circle
+				poly.addLast(pts[0]);
+				//TODO: trace to the offsets (not calculated yet)
 				
-				// need to intersect the two circles, pick the correct intersection point, and trace along the containing circle clockwise to the point.
-				
-				Point[] intersections = MiscGeom.circleCircleIntersection(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1));
-				// trace along circle to intersections[0]
-				
-				LinkedList<Point> joinPoints = MiscGeom.traceCircularPath(points.get(points.size()-1), sizes.get(sizes.size()-1), true, poly.getLast(), intersections[0]);
-				
-				for (Point p : joinPoints) {
-					poly.addLast(p);
-				}
-				
-				poly.addFirst(intersections[0]);
-				
-				containingIndex = -1;
-			} else if (right[0] != null) {
-				StrokePolyBuilder.addNewSeg(poly, right[0], tangentPoints[3], points.get(containingIndex), sizes.get(containingIndex), false);
-				
-				// need to intersect the two circles, pick the correct intersection point, and trace along the containing circle clockwise to the point.
-				
-				Point[] intersections = MiscGeom.circleCircleIntersection(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1));
-				// trace along circle to intersections[0]
-				
-				LinkedList<Point> joinPoints = MiscGeom.traceCircularPath(points.get(points.size()-1), sizes.get(sizes.size()-1), false, intersections[1], poly.getFirst());
-				
-				for (Point p : joinPoints) {
-					poly.addFirst(p);
-				}
-				
-				poly.addLast(intersections[1]);
-				
-				
-				
-				containingIndex = -1;
+				break;
 			}
 		}
+		
+		if (poly.size() < 2) {
+			// the entire existing stroke was encompassed, trace a half circle.
+			poly.clear();
+			
+			return;
+		}
+		
+		while (poly.size() >= 2) {
+			Point[] pts = MiscGeom.calcCircleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(0), poly.get(1));
+			poly.removeFirst();
+			if (pts[0] != null) {
+				// add the intersection, trace the quarter(ish) circle
+				
+				break;
+			}
+		}
+	}
+	
+	private void breakContainment () {
+		if (MiscGeom.checkCircleContainment(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1)) == true) {
+			return;
+		}
+
+		Point[] tanPts = MiscGeom.calcExternalBitangentPoints(points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
+		Point[] circPts = MiscGeom.circleCircleIntersection(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1));
+		
+		if (tanPts == null && circPts == null) {
+			Log.d("PEN", "both tan and circ null - something's wrong");
+		} else if (tanPts == null) {
+			LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circPts[0]);
+			for (Point p : left) {
+				poly.addFirst(p);
+			}
+			
+			LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circPts[1]);
+			for (Point p : right) {
+				poly.addLast(p);
+			}
+		} else {
+			// lhs
+			Point[] leftInt = MiscGeom.calcCircleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tanPts[0], tanPts[1]);
+			
+			if (leftInt[0] == null) {
+				LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circPts[0]);
+				for (Point p : left) {
+					poly.addFirst(p);
+				}
+			} else {
+				LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), leftInt[0]);
+				for (Point p : left) {
+					poly.addFirst(p);
+				}
+				poly.addFirst(tanPts[1]);
+			}
+			
+			// rhs
+			Point[] rightInt = MiscGeom.calcCircleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tanPts[2], tanPts[3]);
+			if (rightInt[0] == null) {
+				LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circPts[1]);
+				for (Point p : right) {
+					poly.addLast(p);
+				}
+			} else {
+				LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), rightInt[0]);
+				for (Point p : right) {
+					poly.addLast(p);
+				}
+				poly.addLast(tanPts[3]);
+			}
+			
+		}
+		
+		containingIndex = -1;
 	}
 	
 	

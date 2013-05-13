@@ -365,14 +365,13 @@ public class MiscGeom {
 	}
 	
 	/**
-	 * I think the zero index should be less clockwise on circle 1;
+	 * The zero index point is counterclockwise of the one-index point. 
 	 */
 	public static Point[] circleCircleIntersection (Point c1, float r1, Point c2, float r2) {
-		Point[] intersections = {null, null};
 		final float d = MiscGeom.distance(c1, c2);
 		
 		if (d >= r1+r2 || d < Math.abs(r1 - r2) || d == 0) {
-			return intersections;
+			return null;
 		}
 		
 		final float a = (r1*r1 - r2*r2 + d*d) / (2*d);
@@ -380,9 +379,9 @@ public class MiscGeom {
 		final float px = c1.x + (a/d) * (c2.x - c1.x);		
 		final float py = c1.y + (a/d) * (c2.y - c1.y);
 		
+		Point[] intersections = {null, null};
 		intersections[0] = new Point(px + (h/d)*(c2.y - c1.y), py - (h/d)*(c2.x - c1.x));
 		intersections[1] = new Point(px - (h/d)*(c2.y - c1.y), py + (h/d)*(c2.x - c1.x));
-
 		return intersections;
 	}
 	
