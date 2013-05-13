@@ -102,34 +102,59 @@ public class StrokePolyBuilder {
 			if (sizes.get(sizes.size()-1) <= sizes.get(sizes.size()-2)) {	// new contained by old -> Start containment
 				containingIndex = sizes.size()-2;
 			} else {														// old contained by new -> backtrack
-				// TODO implement all of the backtracking crap
 				backtrack();
 			}
 		}
 
 	}
 	
+	
+/**
+ * right handed first
+ */
+	private static Point[] calcPerpOffset (Point p, Point ref, float dist) {
+		Point perpVect = new Point((ref.y - p.y), (p.x - ref.x));
+		float scalar1 = dist/(2*(float) Math.hypot(perpVect.x, perpVect.y));
+
+		Point[] points = new Point[2];
+		points[0] = new Point(p.x + scalar1*perpVect.x, p.y + scalar1*perpVect.y);
+		points[1] = new Point(p.x - scalar1*perpVect.x, p.y - scalar1*perpVect.y);
+		
+		return points;
+	}
+	
+	
 	private void backtrack () {
 		
 		// calculate the points to trace the circle to
-		Point[] newPts = {null, null};
-		
+		Point[] offsets = calcPerpOffset(points.get(points.size()-1), points.get(points.size()-2), sizes.get(sizes.size()-1));
 		
 		while (poly.size() >= 2) {
 			Point[] pts = MiscGeom.calcCircleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(poly.size()-1), poly.get(poly.size()-2));
 			poly.removeLast();
 			if (pts[0] != null) {
-				// add the intersection, trace the quarter(ish) circle
 				poly.addLast(pts[0]);
-				//TODO: trace to the offsets (not calculated yet)
+
+				LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(points.size()-1), sizes.get(sizes.size()-1), false, poly.getLast(), offsets[1]);
+				for (Point p : right) {
+					poly.addLast(p);
+				}
 				
 				break;
 			}
 		}
 		
 		if (poly.size() < 2) {
-			// the entire existing stroke was encompassed, trace a half circle.
 			poly.clear();
+			
+			if (Float.isNaN(offsets[0].x) == false) {
+				LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(points.size()-1), sizes.get(sizes.size()-1), true, offsets[0], offsets[1]);
+				for (Point p : left) {
+					poly.addFirst(p);
+				}
+			} else {
+				poly = MiscGeom.getCircularPoly(points.get(points.size()-1), sizes.get(sizes.size()-1));
+			}
 			
 			return;
 		}
@@ -138,7 +163,12 @@ public class StrokePolyBuilder {
 			Point[] pts = MiscGeom.calcCircleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(0), poly.get(1));
 			poly.removeFirst();
 			if (pts[0] != null) {
-				// add the intersection, trace the quarter(ish) circle
+				poly.addFirst(pts[0]);
+				
+				LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(points.size()-1), sizes.get(sizes.size()-1), true, poly.getFirst(), offsets[0]);
+				for (Point p : left) {
+					poly.addFirst(p);
+				}
 				
 				break;
 			}
