@@ -5,14 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.calhounhinshaw.freehandalpha.ink.BooleanPolyGeom;
-import com.calhounhinshaw.freehandalpha.ink.MiscGeom;
 import com.calhounhinshaw.freehandalpha.ink.Point;
 import com.calhounhinshaw.freehandalpha.ink.Stroke;
-import com.calhounhinshaw.freehandalpha.ink.StrokeGeom;
 import com.calhounhinshaw.freehandalpha.ink.StrokePolyBuilder;
-import com.calhounhinshaw.freehandalpha.ink.UnitPolyGeom;
-import com.calhounhinshaw.freehandalpha.ink.Vertex;
 import com.calhounhinshaw.freehandalpha.misc.WrapList;
 import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
 
@@ -20,8 +15,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.util.Log;
 
 class NoteEditorPresenter {
 	private LinkedList<Stroke> mStrokes = new LinkedList<Stroke>();
@@ -53,10 +46,10 @@ class NoteEditorPresenter {
 	private float canvasXOffset = -1;
 	
 	
-	private Paint debugPaint1 = new Paint();
-	private Paint debugPaint2 = new Paint();
-	private Paint inPaint = new Paint();
-	private Paint outPaint = new Paint();
+//	private Paint debugPaint1 = new Paint();
+//	private Paint debugPaint2 = new Paint();
+//	private Paint inPaint = new Paint();
+//	private Paint outPaint = new Paint();
 	
 	
 	private final StrokePolyBuilder builder = new StrokePolyBuilder();
@@ -69,23 +62,23 @@ class NoteEditorPresenter {
 		currentPaint.setStrokeWidth(0);
 		currentPaint.setAntiAlias(true);
 
-		debugPaint1.setColor(Color.BLACK);
-		debugPaint1.setStyle(Paint.Style.STROKE);
-		debugPaint1.setStrokeWidth(0);
-		debugPaint1.setAntiAlias(true);
-		
-		debugPaint2.setColor(0xa0ff0000);
-		debugPaint2.setStyle(Paint.Style.STROKE);
-		debugPaint2.setStrokeWidth(1);
-		debugPaint2.setAntiAlias(true);
-		
-		inPaint.setColor(Color.GREEN);
-		inPaint.setStyle(Paint.Style.FILL);
-		inPaint.setAntiAlias(true);
-		
-		outPaint.setColor(Color.BLUE);
-		outPaint.setStyle(Paint.Style.FILL);
-		outPaint.setAntiAlias(true);
+//		debugPaint1.setColor(Color.BLACK);
+//		debugPaint1.setStyle(Paint.Style.STROKE);
+//		debugPaint1.setStrokeWidth(0);
+//		debugPaint1.setAntiAlias(true);
+//		
+//		debugPaint2.setColor(0xa0ff0000);
+//		debugPaint2.setStyle(Paint.Style.STROKE);
+//		debugPaint2.setStrokeWidth(1);
+//		debugPaint2.setAntiAlias(true);
+//		
+//		inPaint.setColor(Color.GREEN);
+//		inPaint.setStyle(Paint.Style.FILL);
+//		inPaint.setAntiAlias(true);
+//		
+//		outPaint.setColor(Color.BLUE);
+//		outPaint.setStyle(Paint.Style.FILL);
+//		outPaint.setAntiAlias(true);
 	}
 	
 	public void setPen (int newColor, float newSize) {

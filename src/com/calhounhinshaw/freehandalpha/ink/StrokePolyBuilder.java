@@ -72,14 +72,11 @@ public class StrokePolyBuilder {
 		if (tangentPoints != null) {
 			startNewStroke(poly, tangentPoints, points.get(0), sizes.get(0));
 		} else {
-			
-			// TODO next line is temporary
-			poly.addAll(MiscGeom.getCircularPoly(points.get(0), sizes.get(0)));
-			
 			if (sizes.get(0) >= sizes.get(1)) {		// first contains second
-				//containingIndex = 0;
+				containingIndex = 0;
+				poly.addAll(MiscGeom.getCircularPoly(points.get(0), sizes.get(0)));
 			} else {								// second contains first
-				// TODO
+				poly.addAll(MiscGeom.getCircularPoly(points.get(1), sizes.get(1)));
 			}
 		}
 	}
@@ -90,7 +87,6 @@ public class StrokePolyBuilder {
 			breakContainment();
 			return;
 		}
-		
 		
 		Point[] tangentPoints = MiscGeom.calcExternalBitangentPoints(points.get(points.size()-2),
 			sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
