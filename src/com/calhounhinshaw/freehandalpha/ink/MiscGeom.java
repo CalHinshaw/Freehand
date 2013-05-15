@@ -322,7 +322,7 @@ public class MiscGeom {
 		return tangentPoints;
 	}
 	
-	public static Point[] calcCircleSegmentIntersection (Point c, float r, Point T, Point H) {
+	public static Point[] circleSegmentIntersection (Point c, float r, Point T, Point H) {
 		
 		Point[] intersections = {null, null};
 		

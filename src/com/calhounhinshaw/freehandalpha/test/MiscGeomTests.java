@@ -48,7 +48,7 @@ public class MiscGeomTests extends AndroidTestCase {
 		Assert.assertNull(result);
 	}
 	
-	public void testCalcCircleSegmentIntersection () {
+	public void testCircleSegmentIntersection () {
 		Point[] result;
 		Point c, T, H;
 		float r;
@@ -58,7 +58,7 @@ public class MiscGeomTests extends AndroidTestCase {
 		T = new Point (0, 0);
 		H = new Point (2, 0);
 		
-		result = MiscGeom.calcCircleSegmentIntersection(c, r, T, H);
+		result = MiscGeom.circleSegmentIntersection(c, r, T, H);
 		Assert.assertEquals(1, result[0].x, 0.00000001f);
 		Assert.assertEquals(0, result[0].y, 0.00000001f);
 		Assert.assertNull(result[1]);
@@ -68,7 +68,7 @@ public class MiscGeomTests extends AndroidTestCase {
 		T = new Point (0.1f, 0.1f);
 		H = new Point (2, 2);
 		
-		result = MiscGeom.calcCircleSegmentIntersection(c, r, T, H);
+		result = MiscGeom.circleSegmentIntersection(c, r, T, H);
 		Assert.assertEquals(r*Math.cos(Math.PI/4), result[0].x, 0.00001f);
 		Assert.assertEquals(r*Math.sin(Math.PI/4), result[0].y, 0.00001f);
 		Assert.assertNull(result[1]);
@@ -78,7 +78,7 @@ public class MiscGeomTests extends AndroidTestCase {
 		T = new Point (0.1f, (float) (r*Math.sin(Math.PI/4)));
 		H = new Point (2, (float) (r*Math.sin(Math.PI/4)));
 		
-		result = MiscGeom.calcCircleSegmentIntersection(c, r, T, H);
+		result = MiscGeom.circleSegmentIntersection(c, r, T, H);
 		Assert.assertEquals(r*Math.cos(Math.PI/4), result[0].x, 0.00001f);
 		Assert.assertEquals(r*Math.sin(Math.PI/4), result[0].y, 0.00001f);
 		Assert.assertNull(result[1]);
@@ -88,7 +88,7 @@ public class MiscGeomTests extends AndroidTestCase {
 		T = new Point (0.1f, (float) (r*Math.sin(Math.PI/4)) + 1);
 		H = new Point (2, (float) (r*Math.sin(Math.PI/4)) + 1);
 		
-		result = MiscGeom.calcCircleSegmentIntersection(c, r, T, H);
+		result = MiscGeom.circleSegmentIntersection(c, r, T, H);
 		Assert.assertEquals(r*Math.cos(Math.PI/4), result[0].x, 0.00001f);
 		Assert.assertEquals(r*Math.sin(Math.PI/4)+1, result[0].y, 0.00001f);
 		Assert.assertNull(result[1]);
@@ -99,7 +99,7 @@ public class MiscGeomTests extends AndroidTestCase {
 		T = new Point (0.5f, 0);
 		H = new Point (-2, 0);
 		
-		result = MiscGeom.calcCircleSegmentIntersection(c, r, T, H);
+		result = MiscGeom.circleSegmentIntersection(c, r, T, H);
 		Assert.assertEquals(-1, result[0].x, 0.00000001f);
 		Assert.assertEquals(0, result[0].y, 0.00000001f);
 		Assert.assertNull(result[1]);
@@ -109,7 +109,7 @@ public class MiscGeomTests extends AndroidTestCase {
 		T = new Point (0, 0);
 		H = new Point (-2, -2);
 		
-		result = MiscGeom.calcCircleSegmentIntersection(c, r, T, H);
+		result = MiscGeom.circleSegmentIntersection(c, r, T, H);
 		Assert.assertEquals(-Math.sqrt(2)/2, result[0].x, 0.000001f);
 		Assert.assertEquals(-Math.sqrt(2)/2, result[0].y, 0.000001f);
 		Assert.assertNull(result[1]);

@@ -70,19 +70,26 @@ public class StrokePolyBuilder {
 	private void startPoly () {
 		Point[] tangentPoints = MiscGeom.calcExternalBitangentPoints(points.get(0), sizes.get(0), points.get(1), sizes.get(1));
 		if (tangentPoints != null) {
+			Log.d("PEN", "normal start");
 			startNewStroke(poly, tangentPoints, points.get(0), sizes.get(0));
 		} else {
+			Log.d("PEN", "abnormal start");
 			if (sizes.get(0) >= sizes.get(1)) {		// first contains second
 				containingIndex = 0;
-				poly.addAll(MiscGeom.getCircularPoly(points.get(0), sizes.get(0)));
+				LinkedList<Point> start = MiscGeom.getCircularPoly(points.get(0), sizes.get(0));
+				for (Point p : start) {
+					poly.addFirst(p);
+				}
 			} else {								// second contains first
-				poly.addAll(MiscGeom.getCircularPoly(points.get(1), sizes.get(1)));
+				LinkedList<Point> start = MiscGeom.getCircularPoly(points.get(1), sizes.get(1));
+				for (Point p : start) {
+					poly.addFirst(p);
+				}
 			}
 		}
 	}
 	
 	private void addToPoly () {
-		
 		if (containingIndex >= 0) {
 			breakContainment();
 			return;
@@ -92,8 +99,8 @@ public class StrokePolyBuilder {
 			sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
 		
 		if (tangentPoints != null) {
-			StrokePolyBuilder.addNewSeg(poly, tangentPoints[0], tangentPoints[1], points.get(points.size()-2), sizes.get(sizes.size()-2), true);
-			StrokePolyBuilder.addNewSeg(poly, tangentPoints[2], tangentPoints[3], points.get(points.size()-2), sizes.get(sizes.size()-2), false);
+			addToLhs(tangentPoints[0], tangentPoints[1], points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
+			addToRhs(tangentPoints[2], tangentPoints[3], points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
 		} else {
 			if (sizes.get(sizes.size()-1) <= sizes.get(sizes.size()-2)) {	// new contained by old -> Start containment
 				containingIndex = sizes.size()-2;
@@ -101,13 +108,12 @@ public class StrokePolyBuilder {
 				backtrack();
 			}
 		}
-
 	}
 	
 	
-/**
- * right handed first
- */
+	/**
+	 * right handed first
+	 */
 	private static Point[] calcPerpOffset (Point p, Point ref, float dist) {
 		Point perpVect = new Point((ref.y - p.y), (p.x - ref.x));
 		float scalar1 = dist/(2*(float) Math.hypot(perpVect.x, perpVect.y));
@@ -126,7 +132,7 @@ public class StrokePolyBuilder {
 		Point[] offsets = calcPerpOffset(points.get(points.size()-1), points.get(points.size()-2), sizes.get(sizes.size()-1));
 		
 		while (poly.size() >= 2) {
-			Point[] pts = MiscGeom.calcCircleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(poly.size()-1), poly.get(poly.size()-2));
+			Point[] pts = MiscGeom.circleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(poly.size()-1), poly.get(poly.size()-2));
 			poly.removeLast();
 			if (pts[0] != null) {
 				poly.addLast(pts[0]);
@@ -156,7 +162,7 @@ public class StrokePolyBuilder {
 		}
 		
 		while (poly.size() >= 2) {
-			Point[] pts = MiscGeom.calcCircleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(0), poly.get(1));
+			Point[] pts = MiscGeom.circleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(0), poly.get(1));
 			poly.removeFirst();
 			if (pts[0] != null) {
 				poly.addFirst(pts[0]);
@@ -175,54 +181,41 @@ public class StrokePolyBuilder {
 		if (MiscGeom.checkCircleContainment(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1)) == true) {
 			return;
 		}
-
-		Point[] tanPts = MiscGeom.calcExternalBitangentPoints(points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
-		Point[] circPts = MiscGeom.circleCircleIntersection(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1));
 		
-		if (tanPts == null && circPts == null) {
-			Log.d("PEN", "both tan and circ null - something's wrong");
-		} else if (tanPts == null) {
-			LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circPts[0]);
+		Point[] tanPts = MiscGeom.calcExternalBitangentPoints(points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
+		Point[] tanIntPts = {null, null};
+		if (tanPts != null) {
+			tanIntPts[0] = MiscGeom.circleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tanPts[0], tanPts[1])[0];
+			tanIntPts[1] = MiscGeom.circleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tanPts[2], tanPts[3])[0];
+		}
+		Point[] circIntPts = MiscGeom.circleCircleIntersection(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1));
+		
+		// Left hand side
+		if (tanIntPts[1] != null) {
+			LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), tanIntPts[1]);
 			for (Point p : left) {
 				poly.addFirst(p);
 			}
-			
-			LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circPts[1]);
+			poly.add(tanPts[2]);
+		} else {
+			LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[1]);
+			for (Point p : left) {
+				poly.addFirst(p);
+			}
+		}
+		
+		// Right hand side
+		if (tanIntPts[0] != null) {
+			LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), tanIntPts[0]);
 			for (Point p : right) {
 				poly.addLast(p);
 			}
+			poly.add(tanPts[0]);
 		} else {
-			// lhs
-			Point[] leftInt = MiscGeom.calcCircleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tanPts[0], tanPts[1]);
-			
-			if (leftInt[0] == null) {
-				LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circPts[0]);
-				for (Point p : left) {
-					poly.addFirst(p);
-				}
-			} else {
-				LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), leftInt[0]);
-				for (Point p : left) {
-					poly.addFirst(p);
-				}
-				poly.addFirst(tanPts[1]);
+			LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[0]);
+			for (Point p : right) {
+				poly.addLast(p);
 			}
-			
-			// rhs
-			Point[] rightInt = MiscGeom.calcCircleSegmentIntersection(points.get(containingIndex), sizes.get(containingIndex), tanPts[2], tanPts[3]);
-			if (rightInt[0] == null) {
-				LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circPts[1]);
-				for (Point p : right) {
-					poly.addLast(p);
-				}
-			} else {
-				LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), rightInt[0]);
-				for (Point p : right) {
-					poly.addLast(p);
-				}
-				poly.addLast(tanPts[3]);
-			}
-			
 		}
 		
 		containingIndex = -1;
@@ -280,50 +273,47 @@ public class StrokePolyBuilder {
 	}
 	
 	
-	
-	private static void addNewSeg (LinkedList<Point> currentPoly, Point tail, Point head, Point joinCenter, float joinRad, boolean leftHanded) {
-		if (leftHanded == true) {
-			if (MiscGeom.cross(currentPoly.get(0), currentPoly.get(1), head, tail) >= 0) {
-				Point intersection = MiscGeom.calcIntersection(currentPoly.get(0), currentPoly.get(1), head, tail);
-				if (intersection == null) {
-					currentPoly.addFirst(tail);
-					currentPoly.addFirst(head);
-				} else {
-					currentPoly.removeFirst();
-					currentPoly.addFirst(intersection);
-					currentPoly.addFirst(head);
-				}
-			} else {
-				LinkedList<Point> join = MiscGeom.traceCircularPath(joinCenter, joinRad, true, currentPoly.getFirst(), tail);
-				for (Point p : join) {
-					currentPoly.addFirst(p);
-				}
-				currentPoly.addFirst(tail);
-				currentPoly.addFirst(head);
+	private void addToLhs (Point tail, Point head, Point joinCenter, float joinRad, Point newCenter, float newRad) {
+		
+		if (MiscGeom.cross(poly.get(0), poly.get(1), head, poly.get(1)) <= 0) {
+			LinkedList<Point> join = MiscGeom.traceCircularPath(joinCenter, joinRad, true, poly.getFirst(), tail);
+			for (Point p : join) {
+				poly.addFirst(p);
 			}
+			poly.addFirst(tail);
+			poly.addFirst(head);
 		} else {
-			if (MiscGeom.cross(currentPoly.get(currentPoly.size()-1), currentPoly.get(currentPoly.size()-2), head, tail) <= 0) {
-				Point intersection = MiscGeom.calcIntersection(currentPoly.get(currentPoly.size()-1), currentPoly.get(currentPoly.size()-2), head, tail);
-				if (intersection == null) {
-					currentPoly.addLast(tail);
-					currentPoly.addLast(head);
-				} else {
-					currentPoly.removeLast();
-					currentPoly.addLast(intersection);
-					currentPoly.addLast(head);
-				}
+			Point intersection = MiscGeom.calcIntersection(poly.get(0), poly.get(1), head, tail);
+			if (intersection == null) {
+				poly.addFirst(tail);
+				poly.addFirst(head);
 			} else {
-				LinkedList<Point> join = MiscGeom.traceCircularPath(joinCenter, joinRad, false, currentPoly.getLast(), tail);
-				for (Point p : join) {
-					currentPoly.addLast(p);
-				}
-				currentPoly.addLast(tail);
-				currentPoly.addLast(head);
+				poly.removeFirst();
+				poly.addFirst(intersection);
+				poly.addFirst(head);
 			}
 		}
-		
-		
-		
-		
 	}
+	
+	private void addToRhs (Point tail, Point head, Point joinCenter, float joinRad, Point newCenter, float newRad) {
+		if (MiscGeom.cross(poly.get(poly.size()-1), poly.get(poly.size()-2), head, poly.get(poly.size()-2)) >= 0) {
+			LinkedList<Point> join = MiscGeom.traceCircularPath(joinCenter, joinRad, false, poly.getLast(), tail);
+			for (Point p : join) {
+				poly.addLast(p);
+			}
+			poly.addLast(tail);
+			poly.addLast(head);
+		} else {
+			Point intersection = MiscGeom.calcIntersection(poly.get(poly.size()-1), poly.get(poly.size()-2), head, tail);
+			if (intersection == null) {
+				poly.addLast(tail);
+				poly.addLast(head);
+			} else {
+				poly.removeLast();
+				poly.addLast(intersection);
+				poly.addLast(head);
+			}
+		}
+	}
+	
 }

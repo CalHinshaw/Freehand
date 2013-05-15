@@ -126,7 +126,7 @@ class NoteEditorPresenter {
 		for (int i = 0; i < times.size(); i++) {
 			// First scale the input to the current canvas position and pressure sensitivity
 			Point currentPoint = new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier);
-			float currentSize = penSize*0.33333f + pressures.get(i)*penSize*0.66666f;
+			float currentSize = penSize*0.5f + pressures.get(i)*penSize*0.5f;
 			
 			// Second add the points to the historical data
 			rawPoints.add(currentPoint);
