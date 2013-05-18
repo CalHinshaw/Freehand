@@ -96,12 +96,14 @@ public class NoteView extends View {
 			xs.add(event.getHistoricalX(i));
 			ys.add(event.getHistoricalY(i));
 			pressures.add(event.getHistoricalPressure(i));
+			//Log.d("PEN", Float.toString(event.getHistoricalX(i)) + "  " + Float.toString(event.getHistoricalY(i)) + "  " + Float.toString(event.getHistoricalPressure(i)));
 		}
 		
 		times.add(event.getEventTime());
 		xs.add(event.getX());
 		ys.add(event.getY());
 		pressures.add(event.getPressure());
+		//Log.d("PEN", Float.toString(event.getX()) + "  " + Float.toString(event.getY()) + "  " + Float.toString(event.getPressure()));
 		
 		mPresenter.penAction(times, xs, ys, pressures, event.getAction() == MotionEvent.ACTION_UP);
 		

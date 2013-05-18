@@ -24,7 +24,7 @@ public class Stroke {
 		mPoly = poly;
 		
 		mPaint.setColor(color);
-		mPaint.setStyle(Paint.Style.STROKE);
+		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setStrokeWidth(0);
 		mPaint.setAntiAlias(true);
 		

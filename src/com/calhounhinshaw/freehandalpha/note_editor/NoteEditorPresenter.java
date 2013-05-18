@@ -58,7 +58,7 @@ class NoteEditorPresenter {
 	
 	public NoteEditorPresenter () {
 		currentPaint.setColor(penColor);
-		currentPaint.setStyle(Paint.Style.STROKE);
+		currentPaint.setStyle(Paint.Style.FILL);
 		currentPaint.setStrokeWidth(0);
 		currentPaint.setAntiAlias(true);
 

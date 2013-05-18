@@ -214,6 +214,8 @@ public class MiscGeom {
 			return path;
 		}
 		
+		//Log.d("PEN", Integer.toString(fromIndex) + "   " + Integer.toString(toIndex));
+		
 		Point[] scaledCircle = new Point[CIRCLE.length];
 		for (int i = 0; i < scaledCircle.length; i++) {
 			scaledCircle[i] = new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y);
@@ -254,7 +256,7 @@ public class MiscGeom {
 	 */
 	public static int findAdjacentCircleIndex (Point p, Point center, boolean clockwise) {
 		
-		float mag = MiscGeom.distance(p.x, p.y, center.x, center.y);
+		float mag = MiscGeom.distance(p, center);
 		
 		double angle;
 		if (p.y - center.y >= 0) {
@@ -267,14 +269,15 @@ public class MiscGeom {
 		int toReturn;
 		
 		if (clockwise == true) {
-			toReturn = (int) Math.floor(continuousIndex);
+			toReturn = (int) (continuousIndex);
 		} else {
-			toReturn = (int) Math.ceil(continuousIndex);
-			if (toReturn >= CIRCLE.length) {
-				toReturn = 0;
-			}
+			toReturn = (int) (continuousIndex+1);
 		}
-
+		
+		if (toReturn >= CIRCLE.length) {
+			toReturn -= CIRCLE.length;
+		}
+		
 		return toReturn;
 	}
 

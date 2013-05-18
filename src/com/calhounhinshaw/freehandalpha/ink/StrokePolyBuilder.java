@@ -54,9 +54,6 @@ public class StrokePolyBuilder {
 			return;
 		}
 		
-		//Log.d("PEN", Integer.toString(containingIndex));
-		
-		
 		points.add(p);
 		sizes.add(s);
 		
@@ -70,10 +67,8 @@ public class StrokePolyBuilder {
 	private void startPoly () {
 		Point[] tangentPoints = MiscGeom.calcExternalBitangentPoints(points.get(0), sizes.get(0), points.get(1), sizes.get(1));
 		if (tangentPoints != null) {
-			Log.d("PEN", "normal start");
 			startNewStroke(poly, tangentPoints, points.get(0), sizes.get(0));
 		} else {
-			Log.d("PEN", "abnormal start");
 			if (sizes.get(0) >= sizes.get(1)) {		// first contains second
 				containingIndex = 0;
 				LinkedList<Point> start = MiscGeom.getCircularPoly(points.get(0), sizes.get(0));
@@ -197,11 +192,19 @@ public class StrokePolyBuilder {
 				poly.addFirst(p);
 			}
 			poly.add(tanPts[2]);
-		} else {
+		} else if (circIntPts != null) {
+			
+			if (circIntPts[1] == null) {
+				Log.d("PEN", "circIntPts[1] == null");
+			}
+			
 			LinkedList<Point> left = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[1]);
 			for (Point p : left) {
 				poly.addFirst(p);
 			}
+		} else {
+			Log.d("PEN", "containment broken but no intersections");
+			return;
 		}
 		
 		// Right hand side
@@ -211,11 +214,19 @@ public class StrokePolyBuilder {
 				poly.addLast(p);
 			}
 			poly.add(tanPts[0]);
-		} else {
+		} else if (circIntPts != null) {
+			
+			if (circIntPts[0] == null) {
+				Log.d("PEN", "circIntPts[0] == null");
+			}
+			
 			LinkedList<Point> right = MiscGeom.traceCircularPath(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[0]);
 			for (Point p : right) {
 				poly.addLast(p);
 			}
+		} else {
+			Log.d("PEN", "containment broken but no intersections");
+			return;
 		}
 		
 		containingIndex = -1;
@@ -231,9 +242,9 @@ public class StrokePolyBuilder {
 		debug.setStrokeWidth(0);
 		debug.setAntiAlias(true);
 		
-		for (int i = 0; i < sizes.size(); i++) {
-			c.drawCircle(points.get(i).x, points.get(i).y, sizes.get(i), debug);
-		}
+//		for (int i = 0; i < sizes.size(); i++) {
+//			c.drawCircle(points.get(i).x, points.get(i).y, sizes.get(i), debug);
+//		}
 		
 		if (poly != null && poly.size() >= 3) {
 			path.reset();
