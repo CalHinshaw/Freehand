@@ -74,14 +74,12 @@ public class StrokePolyBuilder {
 			if (sizes.get(0) >= sizes.get(1)) {		// first contains second
 				containingIndex = 0;
 				LinkedList<Point> start = MiscGeom.getCircularPoly(points.get(0), sizes.get(0));
-				for (Point p : start) {
-					poly.addFirst(p);
+				for (int i = 0; i < start.size()/2; i++) {
+					poly.addLast(start.get(i));
 				}
-			} else {								// second contains first
-				LinkedList<Point> start = MiscGeom.getCircularPoly(points.get(1), sizes.get(1));
-				for (Point p : start) {
-					poly.addFirst(p);
-				}
+			} else {								// second contains first. THIS IS THE PROBLEM ONE!!!!
+				points.remove(0);
+				sizes.remove(0);
 			}
 		}
 	}
@@ -128,16 +126,13 @@ public class StrokePolyBuilder {
 		}
 		
 		if (poly.size() < 2) {
+			Point tempPoint = points.get(points.size()-1);
+			float tempSize = sizes.get(sizes.size()-1);
 			poly.clear();
-			
-			if (Float.isNaN(offsets[0].x) == false) {
-				LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), true, offsets[0], offsets[1]);
-				for (Point p : left) {
-					poly.addFirst(p);
-				}
-			} else {
-				poly = MiscGeom.getCircularPoly(points.get(points.size()-1), sizes.get(sizes.size()-1));
-			}
+			points.clear();
+			sizes.clear();
+			points.add(tempPoint);
+			sizes.add(tempSize);
 			
 			return;
 		}
