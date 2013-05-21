@@ -199,22 +199,30 @@ public class MiscGeom {
 	}
 
 
-	/**
-	 * Only guaranteed to work if from and to are within 1 ulp of being on the circle. Will almost definitely work if they're close, though. I think...
-	 */
-	public static LinkedList<Point> traceCircularPath (final Point center, final float radius, final boolean clockwise, final Point from, final Point to) {
+	public static LinkedList<Point> approximateCircularArc (final Point center, final float radius, final boolean clockwise, final Point from, final Point to) {
 		LinkedList<Point> path = new LinkedList<Point>();
 		
 		// Find the indexes of the points on the circle the path is starting and ending at
-		int fromIndex = findAdjacentCircleIndex(from, center, clockwise);
-		int toIndex = findAdjacentCircleIndex(to, center, !clockwise);
-		
-		if ((fromIndex == toIndex+1 && clockwise == false) || (fromIndex == 0 && toIndex == CIRCLE.length-1 && clockwise == false ) ||
-			(fromIndex == toIndex-1 && clockwise == true) || (fromIndex == CIRCLE.length-1 && toIndex == 0 && clockwise == true)) {
+		final double rawFrom = findAngleFromHorizontal(from, center) / STEP_SIZE;
+		final double rawTo = findAngleFromHorizontal(to, center) / STEP_SIZE;
+
+		if (Math.abs(rawFrom-rawTo) <= 1.5) {
+			return path;
+		} else if ((int) rawFrom == 0 && (int) rawTo == 19 && Math.abs(rawFrom-rawTo + 20.0) <= 1.5) {
+			return path;
+		}else if ((int) rawFrom == 19 && (int) rawTo == 0 && Math.abs(rawFrom-rawTo - 20.0) <= 1.5) {
 			return path;
 		}
 		
-		//Log.d("PEN", Integer.toString(fromIndex) + "   " + Integer.toString(toIndex));
+		int fromIndex;
+		int toIndex;
+		if (clockwise == true) {
+			fromIndex = (int) rawFrom;
+			toIndex = (rawTo+1 >= 20) ? 0 : (int) (rawTo+1);
+		} else {
+			fromIndex = (rawFrom+1 >= 20) ? 0 : (int) (rawFrom+1);
+			toIndex = (int) rawTo;
+		}
 		
 		Point[] scaledCircle = new Point[CIRCLE.length];
 		for (int i = 0; i < scaledCircle.length; i++) {
@@ -244,41 +252,17 @@ public class MiscGeom {
 				counter = scaledCircle.length - 1;
 			}
 		}
-		
+
 		return path;
 	}
 	
-	/**
-	 * @param p The point on the circle you're trying to find the adjacent point to
-	 * @param center The center of the circle
-	 * @param clockwise	if true, return the index of the point directly clockwise. if false return the index of the point directly counterclockwise.
-	 * @return The index of the point in circle that's next to p in the direction specified by clockwise or -1 if something went wrong.
-	 */
-	public static int findAdjacentCircleIndex (Point p, Point center, boolean clockwise) {
-		
-		float mag = MiscGeom.distance(p, center);
-		
-		double angle;
-		if (p.y - center.y >= 0) {
-			angle = Math.acos((p.x-center.x)/mag);
+	public static double findAngleFromHorizontal (Point p, Point c) {
+		final double angle = Math.atan2(p.y-c.y, p.x-c.x);
+		if (angle < 0) {
+			return angle + 2*Math.PI;
 		} else {
-			angle = 2*Math.PI - Math.acos((p.x-center.x)/mag);
+			return angle;
 		}
-		double continuousIndex = angle/STEP_SIZE;
-
-		int toReturn;
-		
-		if (clockwise == true) {
-			toReturn = (int) (continuousIndex);
-		} else {
-			toReturn = (int) (continuousIndex+1);
-		}
-		
-		if (toReturn >= CIRCLE.length) {
-			toReturn -= CIRCLE.length;
-		}
-		
-		return toReturn;
 	}
 
 	/**
@@ -393,6 +377,20 @@ public class MiscGeom {
 		final float dr = checkR - refR;
 		
 		return distSq <= dr*dr && refR >= checkR;
+	}
+	
+	/**
+	 * right handed first
+	 */
+	public static Point[] calcPerpOffset (Point p, Point ref, float dist) {
+		final Point perpVect = new Point((ref.y - p.y), (p.x - ref.x));
+		final float scalar1 = dist/(2*(float) Math.hypot(perpVect.x, perpVect.y));
+
+		Point[] points = new Point[2];
+		points[0] = new Point(p.x + scalar1*perpVect.x, p.y + scalar1*perpVect.y);
+		points[1] = new Point(p.x - scalar1*perpVect.x, p.y - scalar1*perpVect.y);
+		
+		return points;
 	}
 	
 	

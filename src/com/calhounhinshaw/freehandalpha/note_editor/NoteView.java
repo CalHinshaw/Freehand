@@ -2,31 +2,19 @@ package com.calhounhinshaw.freehandalpha.note_editor;
 
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Vector;
-
 import com.calhounhinshaw.freehandalpha.ink.MiscGeom;
-import com.calhounhinshaw.freehandalpha.note_orginazion.INoteHierarchyItem;
-
+import com.calhounhinshaw.freehandalpha.ink.Point;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PointF;
-import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
-import android.widget.Toast;
 
 public class NoteView extends View {
 	private NoteEditorPresenter mPresenter;
+	
 	
 //************************************* Constructors ************************************************
 
@@ -158,5 +146,43 @@ public class NoteView extends View {
 	@Override
 	public void onDraw (Canvas c) {
 		mPresenter.drawNote(c);
+	}
+	
+	
+	
+	private void mathTests (Canvas c) {
+		c.drawColor(0xffffffff);
+		
+		Paint p = new Paint();
+		p.setColor(Color.BLUE);
+		p.setStyle(Paint.Style.STROKE);
+		p.setAntiAlias(true);
+		
+		Point c1 = new Point(300, 700);
+		float r1 = 40;
+		Point c2 = new Point(330, 750);
+		float r2 = 100;
+		
+		c.drawCircle(c1.x, c1.y, r1, p);
+		c.drawCircle(c2.x, c2.y, r2, p);
+		
+		Point[] tangents = MiscGeom.calcExternalBitangentPoints(c1, r1, c2, r2);
+		if (tangents != null) {
+			Point v1 = new Point(tangents[0].x - tangents[1].x, tangents[0].y - tangents[1].y);
+			Point v2 = new Point(tangents[2].x - tangents[3].x, tangents[2].y - tangents[3].y);
+			
+			p.setColor(Color.RED);
+			c.drawLine(tangents[0].x - 1000*v1.x, tangents[0].y - 1000*v1.y, tangents[0].x + 1000*v1.x, tangents[0].y + 1000*v1.y, p);
+			c.drawLine(tangents[2].x - 1000*v2.x, tangents[2].y - 1000*v2.y, tangents[2].x + 1000*v2.x, tangents[2].y + 1000*v2.y, p);
+		}
+		
+		Point[] intersections = MiscGeom.circleCircleIntersection(c1, r1, c2, r2);
+		if (intersections != null) {
+			p.setColor(Color.GREEN);
+			p.setStyle(Paint.Style.FILL);
+			
+			c.drawCircle(intersections[0].x, intersections[0].y, 3, p);
+			c.drawCircle(intersections[1].x, intersections[1].y, 3, p);
+		}
 	}
 }
