@@ -366,7 +366,7 @@ public class MiscGeom {
 		final float px = c1.x + (a/d) * (c2.x - c1.x);		
 		final float py = c1.y + (a/d) * (c2.y - c1.y);
 		
-		Point[] intersections = {null, null};
+		Point[] intersections = new Point[2];
 		intersections[0] = new Point(px + (h/d)*(c2.y - c1.y), py - (h/d)*(c2.x - c1.x));
 		intersections[1] = new Point(px - (h/d)*(c2.y - c1.y), py + (h/d)*(c2.x - c1.x));
 		return intersections;

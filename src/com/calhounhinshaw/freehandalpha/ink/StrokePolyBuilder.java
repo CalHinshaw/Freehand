@@ -172,44 +172,38 @@ public class StrokePolyBuilder {
 		Point[] circIntPts = MiscGeom.circleCircleIntersection(points.get(containingIndex), sizes.get(containingIndex), points.get(points.size()-1), sizes.get(sizes.size()-1));
 		
 		// Left hand side
-		if (tanIntPts[1] != null) {
-			LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), tanIntPts[1]);
+		if (tanIntPts[0] != null) {
+			LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), tanIntPts[0]);
 			for (Point p : left) {
 				poly.addFirst(p);
 			}
-			poly.add(tanPts[2]);
+			poly.addFirst(tanIntPts[0]);
+			poly.add(tanPts[1]);
 		} else if (circIntPts != null) {
-			
-			if (circIntPts[1] == null) {
-				Log.d("PEN", "circIntPts[1] == null");
-			}
-			
-			LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[1]);
+			LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[0]);
 			for (Point p : left) {
 				poly.addFirst(p);
 			}
+			poly.addFirst(circIntPts[0]);
 		} else {
 			Log.d("PEN", "containment broken but no intersections");
 			return;
 		}
 		
 		// Right hand side
-		if (tanIntPts[0] != null) {
-			LinkedList<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), tanIntPts[0]);
+		if (tanIntPts[1] != null) {
+			LinkedList<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), tanIntPts[1]);
 			for (Point p : right) {
 				poly.addLast(p);
 			}
-			poly.add(tanPts[0]);
+			poly.addLast(tanIntPts[1]);
+			poly.addLast(tanPts[3]);
 		} else if (circIntPts != null) {
-			
-			if (circIntPts[0] == null) {
-				Log.d("PEN", "circIntPts[0] == null");
-			}
-			
-			LinkedList<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[0]);
+			LinkedList<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[1]);
 			for (Point p : right) {
 				poly.addLast(p);
 			}
+			poly.addLast(circIntPts[1]);
 		} else {
 			Log.d("PEN", "containment broken but no intersections");
 			return;
