@@ -40,9 +40,20 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 			if (hasCheckedState) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
-			
 				mActivity.requestNewPen(PenRadioButton.this, color, size);
 			}
+		}
+	};
+	
+	private OnLongClickListener mLongClickListener = new OnLongClickListener () {
+		public boolean onLongClick(View v) {
+			PenRadioButton.this.setChecked(true);
+			
+			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+			vibrator.vibrate(40);
+			mActivity.requestNewPen(PenRadioButton.this, color, size);
+			
+			return true;
 		}
 	};
 	
@@ -67,6 +78,7 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 		pressedPaint.setColor(0x600099CC);
 		
 		this.setOnClickListener(mClickListener);
+		this.setOnLongClickListener(mLongClickListener);
 	}
 	
 	/**
