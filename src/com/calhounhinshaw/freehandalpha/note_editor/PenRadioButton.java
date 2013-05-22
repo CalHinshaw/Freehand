@@ -35,7 +35,7 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 	/**
 	 * Listens for the second click that signals this button to open it's pen creator menu.
 	 */
-	private OnClickListener mClickListener = new OnClickListener () {	
+	private OnClickListener mClickListener = new OnClickListener () {
 		public void onClick(View v) {
 			if (hasCheckedState) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
@@ -55,12 +55,14 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 		samplePaint.setColor(color);
 		samplePaint.setStrokeWidth(size);
 		samplePaint.setStrokeCap(Paint.Cap.ROUND);
+		samplePaint.setAntiAlias(true);
 		
 		selectedPaint.setColor(0xFF33B5E5);
 		selectedPaint.setStrokeWidth(6);
 		selectedPaint.setStyle(Paint.Style.STROKE);
 		selectedPaint.setStrokeJoin(Paint.Join.MITER);
 		selectedPaint.setStrokeCap(Paint.Cap.BUTT);
+		selectedPaint.setAntiAlias(true);
 		
 		pressedPaint.setColor(0x600099CC);
 		
@@ -127,6 +129,8 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 		if (mPresenter != null) {
 			mPresenter.setPen(color, size);
 		}
+		
+		invalidate();
 	}
 	
 	public boolean onTouchEvent (MotionEvent e) {
