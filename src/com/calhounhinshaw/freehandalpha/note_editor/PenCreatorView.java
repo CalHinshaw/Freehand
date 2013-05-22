@@ -303,6 +303,7 @@ class PenCreatorView extends View {
 		float[] hsv = new float[]{mHue,mSat,mVal};
 		int color = Color.HSVToColor(hsv);
 		Paint sizePaint = new Paint();
+		sizePaint.setAntiAlias(true);
 		sizePaint.setColor(color);
 		sizePaint.setStyle(Paint.Style.FILL);
 		
