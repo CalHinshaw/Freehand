@@ -49,35 +49,35 @@
         	android:layout_height = "40dip"
         	/>
         
-        <com.calhounhinshaw.freehandalpha.note_editor.PenRadioButton
+        <com.freehand.note_editor.PenRadioButton
         	android:id="@+id/pen1Button"
         	android:layout_width = "40dip"
         	android:layout_height = "40dip"
         	android:layout_marginLeft="5dip" 
         	/>
         
-        <com.calhounhinshaw.freehandalpha.note_editor.PenRadioButton
+        <com.freehand.note_editor.PenRadioButton
         	android:id="@+id/pen2Button"
         	android:layout_width = "40dip"
         	android:layout_height = "40dip"  
         	android:layout_marginLeft="5dip"
         	/>
         
-        <com.calhounhinshaw.freehandalpha.note_editor.PenRadioButton
+        <com.freehand.note_editor.PenRadioButton
         	android:id="@+id/pen3Button"
         	android:layout_width = "40dip"
         	android:layout_height = "40dip" 
         	android:layout_marginLeft="5dip"
         	/>
         
-        <com.calhounhinshaw.freehandalpha.note_editor.PenRadioButton
+        <com.freehand.note_editor.PenRadioButton
         	android:id="@+id/pen4Button"
         	android:layout_width = "40dip"
         	android:layout_height = "40dip"  
         	android:layout_marginLeft="5dip"
         	/>
         
-        <com.calhounhinshaw.freehandalpha.note_editor.PenRadioButton
+        <com.freehand.note_editor.PenRadioButton
         	android:id="@+id/pen5Button"
         	android:layout_width = "40dip"
         	android:layout_height = "40dip"  
@@ -87,7 +87,7 @@
     </RadioGroup>
         
 
-	<com.calhounhinshaw.freehandalpha.note_editor.NoteView
+	<com.freehand.note_editor.NoteView
 	    android:id = "@+id/note"
 	    android:layout_width = "fill_parent"
 	    android:layout_below = "@id/undo"

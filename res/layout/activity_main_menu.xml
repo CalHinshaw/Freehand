@@ -63,7 +63,7 @@
         </LinearLayout>
         	   
 	    
-	<com.calhounhinshaw.freehandalpha.main_menu.FolderBrowserScrollView
+	<com.freehand.main_menu.FolderBrowserScrollView
 	    android:id="@+id/scrollView"
 	    
 	    android:layout_alignParentLeft="true"
