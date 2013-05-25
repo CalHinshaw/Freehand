@@ -15,8 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 public class NoteView extends View {
-	private NoteEditorPresenter mPresenter;
-	
+	private INoteCanvasListener mListener;
 	
 //************************************* Constructors ************************************************
 
@@ -35,8 +34,8 @@ public class NoteView extends View {
 //---------------------------------------------------------------------------------------	
 	
 
-	public void setPresenter (NoteEditorPresenter newPresenter) {
-		mPresenter = newPresenter;
+	public void setListener (INoteCanvasListener newListener) {
+		mListener = newListener;
 	}
 
 
@@ -60,7 +59,7 @@ public class NoteView extends View {
 			previousDistance = Float.NaN;
 		}
 		
-		if (event.getPointerCount() == 1 && canDraw == true && event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
+		if (event.getPointerCount() == 1 && canDraw == true) {
 			processDraw(event);
 		} else if (event.getPointerCount() >= 2) {
 			canDraw = false;
@@ -95,7 +94,11 @@ public class NoteView extends View {
 		pressures.add(event.getPressure());
 		//Log.d("PEN", Float.toString(event.getX()) + "  " + Float.toString(event.getY()) + "  " + Float.toString(event.getPressure()));
 		
-		mPresenter.penAction(times, xs, ys, pressures, event.getAction() == MotionEvent.ACTION_UP);
+		if (event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
+			mListener.stylusAction(times, xs, ys, pressures, event.getAction() == MotionEvent.ACTION_UP);
+		} else if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
+			mListener.fingerAction(times, xs, ys, pressures, event.getAction() == MotionEvent.ACTION_UP);
+		}
 		
 		invalidate();
 	}
@@ -111,7 +114,7 @@ public class NoteView extends View {
 			float dx = currentX/dZoom - previousX;
 			float dy = currentY/dZoom - previousY;
 			
-			mPresenter.panZoomAction(currentX, currentY, dx, dy, dZoom);
+			mListener.panZoomAction(currentX, currentY, dx, dy, dZoom);
 		}
 		
 		previousDistance = currentDistance;
@@ -139,7 +142,7 @@ public class NoteView extends View {
 		xs.add(event.getX());
 		ys.add(event.getY());//
 		
-		mPresenter.hoverAction(times, xs, ys);
+		mListener.hoverAction(times, xs, ys, event.getAction() == MotionEvent.ACTION_HOVER_EXIT);
 		
 		return true;
 	}
@@ -147,7 +150,7 @@ public class NoteView extends View {
 	
 	@Override
 	public void onDraw (Canvas c) {
-		mPresenter.drawNote(c);
+		mListener.drawNote(c);
 	}
 	
 	

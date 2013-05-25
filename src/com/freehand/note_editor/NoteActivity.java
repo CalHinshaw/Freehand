@@ -9,8 +9,10 @@ import com.freehand.storage.INoteHierarchyItem;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -31,13 +33,13 @@ import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-public class NoteActivity extends Activity {
+public class NoteActivity extends Activity implements IViewOverlayHandler {
 	private RelativeLayout mLayout;
 	
-	private NoteEditorPresenter mPresenter;
+	private NoteEditorController mPresenter;
 	
 	private NoteView mNoteView;
-	private PenCreatorView mPenView;
+	private View overlayView;
 	
 	private RadioGroup mRadioGroup;
 	private RadioButton mEraseButton;
@@ -50,7 +52,7 @@ public class NoteActivity extends Activity {
 	private CompoundButton.OnCheckedChangeListener eraseButtonListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
-				mPresenter.setEraser();
+				mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, 6, 0);
 			}
 		}
 	};
@@ -58,7 +60,7 @@ public class NoteActivity extends Activity {
 	private CompoundButton.OnCheckedChangeListener selectButtonListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
-				mPresenter.setSelector();
+				//mPresenter.setSelector();
 			}
 		}
 	};
@@ -102,19 +104,19 @@ public class NoteActivity extends Activity {
 		redoButton = (Button) findViewById(R.id.redo);
 		redoButton.setOnClickListener(redoButtonListener);
 		
-		mPresenter = new NoteEditorPresenter();		
-		mNoteView.setPresenter(mPresenter);
+		mPresenter = new NoteEditorController();		
+		mNoteView.setListener(mPresenter);
 		
 		// setting up the note view
 		final Object oldData = getLastNonConfigurationInstance();
 		if (oldData == null) {
 			Parcelable noteItem = getIntent().getParcelableExtra("com.calhounhinshaw.freehandalpha.note_editor.INoteHierarchyItem");
 			
-			if (noteItem != null) {
-				mPresenter.openNote((INoteHierarchyItem) noteItem);
-			}
+//			if (noteItem != null) {
+//				mPresenter.openNote((INoteHierarchyItem) noteItem);
+//			}
 		} else {
-			mPresenter = ((NoteEditorPresenter) oldData);
+			mPresenter = ((NoteEditorController) oldData);
 		}
 	}
 	
@@ -158,7 +160,7 @@ public class NoteActivity extends Activity {
 	@Override
 	public void onPause() {
 		super.onPause();
-		mPresenter.saveNote();
+		//mPresenter.saveNote();
 		
 		SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
 		SharedPreferences.Editor editor = mPrefs.edit();
@@ -218,9 +220,9 @@ public class NoteActivity extends Activity {
 					return false;
 				}
 				
-				penButtons.get(i).setPresenter(mPresenter);
+				penButtons.get(i).setListener(mPresenter);
 				penButtons.get(i).setPen(tempColor, tempSize);
-				penButtons.get(i).setActivity(this);
+				penButtons.get(i).setOverlayHandler(this);
 			}
 			
 			return true;
@@ -230,62 +232,67 @@ public class NoteActivity extends Activity {
 		}
 	}
 
-	public void requestNewPen(IPenChangedListener listener, int startColor, float startSize) {
-		if (mPenView != null && listener == mPenView.getListener()) {
-			mLayout.removeView(mPenView);
-			mPenView = null;
-			return;
+//	public void requestNewPen (IPenChangedListener listener, int startColor, float startSize) {
+//		if (mPenView != null && listener == mPenView.getListener()) {
+//			mLayout.removeView(mPenView);
+//			mPenView = null;
+//			return;
+//		}
+//		
+//		mLayout.removeView(mPenView);
+//		mPenView = null;
+//		
+//		int windowWidth = getWindowManager().getDefaultDisplay().getWidth();
+//		
+//		int buttonWidth = mRadioGroup.getWidth() / 7;
+//		int newPenViewWidth = mRadioGroup.getLeft() + 3*buttonWidth;
+//		
+//		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(newPenViewWidth, (int) (newPenViewWidth * PenCreatorView.HEIGHT_SCALAR));
+//		params.addRule(RelativeLayout.BELOW, undoButton.getId());
+//		
+//		for (int i = 0; i < penButtons.size(); i++) {
+//			if (listener == penButtons.get(i)) {
+//				int leftMargin = i * buttonWidth;
+//				params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
+//				break;
+//			}
+//		}
+//		
+//		mPenView = new PenCreatorView(this, listener, startColor, startSize);
+//		
+//		mPenView.setLayoutParams(params);
+//		
+//		mLayout.addView(mPenView);
+//	}
+	
+	public void setOverlayView(View newOverlayView) {
+		if (overlayView != null) {
+			mLayout.removeView(overlayView);
 		}
 		
-		mLayout.removeView(mPenView);
-		mPenView = null;
-		
-		int windowWidth = getWindowManager().getDefaultDisplay().getWidth();
-		
-		int buttonWidth = mRadioGroup.getWidth() / 7;
-		int newPenViewWidth = mRadioGroup.getLeft() + 3*buttonWidth;
-		
-		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(newPenViewWidth, (int) (newPenViewWidth * PenCreatorView.HEIGHT_SCALAR));
-		params.addRule(RelativeLayout.BELOW, undoButton.getId());
-		
-		for (int i = 0; i < penButtons.size(); i++) {
-			if (listener == penButtons.get(i)) {
-				int leftMargin = i * buttonWidth;
-				params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
-				break;
-			}
-		}
-		
-		mPenView = new PenCreatorView(this, listener, startColor, startSize);
-		
-		mPenView.setLayoutParams(params);
-		
-		mLayout.addView(mPenView);
+		overlayView = newOverlayView;
+		mLayout.addView(overlayView);
 	}
 	
+	public Context getContextForView() {
+		return this;
+	}
 	
+	// Overriding this to close overlayViews when the users touches outside of them
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent e) {
-		if (mPenView != null && e.getAction() == MotionEvent.ACTION_DOWN) {
-			PenRadioButton button = (PenRadioButton) mPenView.getListener();
-			Rect buttonRect = new Rect();
-			button.getGlobalVisibleRect(buttonRect);
+		if (overlayView != null && e.getAction() == MotionEvent.ACTION_DOWN) {
+			Rect boundingRect = new Rect();
+			overlayView.getGlobalVisibleRect(boundingRect);
 			
-			Rect newPenCreatorRect = new Rect();
-			
-			mPenView.getGlobalVisibleRect(newPenCreatorRect);
-			
-			if (!newPenCreatorRect.contains((int) e.getX(), (int) e.getY()) && !buttonRect.contains((int) e.getX(), (int) e.getY())) {
-				mLayout.removeView(mPenView);
-				mPenView = null;
+			if (boundingRect.contains((int) e.getX(), (int) e.getY()) == false) {
+				mLayout.removeView(overlayView);
+				overlayView = null;
+				return true;
 			}
 		}
 		
-		Rect activitySize = new Rect();
-		getWindow().getDecorView().getWindowVisibleDisplayFrame(activitySize);
-		e.offsetLocation(0, -activitySize.top);
-		
-		return mLayout.dispatchTouchEvent(e);
+		return super.dispatchTouchEvent(e);
 	}
 	
 	
@@ -297,12 +304,11 @@ public class NoteActivity extends Activity {
 	}
 	
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean onOptionsItemSelected (MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.saveItem:
-			mPresenter.saveNote();
+			//mPresenter.saveNote();
 			return true;
 			
 		case R.id.renameItem:
@@ -317,7 +323,7 @@ public class NoteActivity extends Activity {
 	   		         String text=edit.getText().toString();
 
 	   		         dialog.dismiss();
-	   		         mPresenter.rename(text);
+	   		         //mPresenter.rename(text);
 	   		     }
 	   		 });   
 	   		 dialog.show();
@@ -364,8 +370,16 @@ public class NoteActivity extends Activity {
 	
 	@Override
 	public void onBackPressed() {
+		if (overlayView != null) {
+			mLayout.removeView(overlayView);
+			overlayView = null;
+			return;
+		}
+		
 		this.finish();
 		overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
 		super.onBackPressed();
 	}
+
+
 }

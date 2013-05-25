@@ -12,10 +12,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RadioButton;
 
-public class PenRadioButton extends RadioButton implements IPenChangedListener {
+public class PenRadioButton extends RadioButton implements PenCreatorView.IPenChangedListener {
 	
-	private NoteEditorPresenter mPresenter;
-	private NoteActivity mActivity;
+	private IActionBarListener mListener = null;
+	private IViewOverlayHandler mOverlayHandler = null;
 	
 	private int color = Color.BLACK;
 	private float size = 6.5f;
@@ -40,7 +40,9 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 			if (hasCheckedState) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
-				mActivity.requestNewPen(PenRadioButton.this, color, size);
+
+				PenCreatorView creatorView = new PenCreatorView(mOverlayHandler.getContextForView(), PenRadioButton.this, color, size);
+				mOverlayHandler.setOverlayView(creatorView);
 			}
 		}
 	};
@@ -51,7 +53,9 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 			
 			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			vibrator.vibrate(40);
-			mActivity.requestNewPen(PenRadioButton.this, color, size);
+			
+			PenCreatorView creatorView = new PenCreatorView(mOverlayHandler.getContextForView(), PenRadioButton.this, color, size);
+			mOverlayHandler.setOverlayView(creatorView);
 			
 			return true;
 		}
@@ -94,12 +98,12 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 		samplePaint.setColor(color);
 	}
 	
-	public void setPresenter (NoteEditorPresenter newPresenter) {
-		mPresenter = newPresenter;
+	public void setListener (IActionBarListener newListener) {
+		mListener = newListener;
 	}
 	
-	public void setActivity (NoteActivity newActivity) {
-		mActivity = newActivity;
+	public void setOverlayHandler (IViewOverlayHandler newOverlayHandler) {
+		mOverlayHandler = newOverlayHandler;
 	}
 	
 	@Override
@@ -128,8 +132,8 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 	
 	@Override
 	public void setChecked (boolean checked) {
-		if (checked == true && mPresenter != null) {
-			mPresenter.setPen(color, size);
+		if (checked == true && mListener != null) {
+			mListener.setTool(IActionBarListener.Tool.PEN, size, color);
 		}
 		
 		super.setChecked(checked);
@@ -138,8 +142,8 @@ public class PenRadioButton extends RadioButton implements IPenChangedListener {
 	public void onPenChanged(int newColor, float newSize) {
 		setPen(newColor, newSize);
 		
-		if (mPresenter != null) {
-			mPresenter.setPen(color, size);
+		if (mListener != null) {
+			mListener.setTool(IActionBarListener.Tool.PEN, size, color);
 		}
 		
 		invalidate();

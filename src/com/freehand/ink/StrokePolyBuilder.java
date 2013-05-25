@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.Log;
@@ -13,16 +14,21 @@ import com.freehand.misc.WrapList;
 public class StrokePolyBuilder {
 	private ArrayList<Point> points = new ArrayList<Point>(1000);
 	private ArrayList<Float> sizes = new ArrayList<Float>(1000);
+	
 	private Path path = new Path();
+	private Paint paint = new Paint();
 	
 	private LinkedList<Point> poly = new LinkedList<Point>();
 	private LinkedList<Point> cap = new LinkedList<Point>();
 	
 	private int containingIndex = -1;
 	
-	
 	public StrokePolyBuilder () {
 		path.setFillType(Path.FillType.WINDING);
+		
+		paint.setColor(Color.BLACK);
+		paint.setStyle(Paint.Style.FILL);
+		paint.setAntiAlias(true);
 	}
 	
 	public void reset () {
@@ -31,6 +37,10 @@ public class StrokePolyBuilder {
 		poly.clear();
 		cap.clear();
 		containingIndex = -1;
+	}
+	
+	public void setColor(int newColor) {
+		paint.setColor(newColor);
 	}
 	
 	public WrapList<Point> getFinalPoly () {
@@ -208,18 +218,18 @@ public class StrokePolyBuilder {
 	}
 	
 	
-	public void draw (Canvas c, Paint paint) {
+	public void draw (Canvas c) {
 		updateCap();
 		
-		Paint debug = new Paint();
-		debug.setColor(0x40ff0000);
-		debug.setStyle(Paint.Style.STROKE);
-		debug.setStrokeWidth(0);
-		debug.setAntiAlias(true);
+//		Paint debug = new Paint();
+//		debug.setColor(0x40ff0000);
+//		debug.setStyle(Paint.Style.STROKE);
+//		debug.setStrokeWidth(0);
+//		debug.setAntiAlias(true);
 		
-		for (int i = 0; i < sizes.size(); i++) {
-			c.drawCircle(points.get(i).x, points.get(i).y, sizes.get(i), debug);
-		}
+//		for (int i = 0; i < sizes.size(); i++) {
+//			c.drawCircle(points.get(i).x, points.get(i).y, sizes.get(i), debug);
+//		}
 		
 		if (poly != null && poly.size() >= 3) {
 			path.reset();

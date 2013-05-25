@@ -12,7 +12,7 @@ public class Stroke {
 	private final Paint mPaint = new Paint();
 	private final Path mPath = new Path();
 	
-	private final Paint mDebugPaint = new Paint();
+	//private final Paint mDebugPaint = new Paint();
 
 	/**
 	 * Creates a new immutable Stroke object from the List<Point> object argument. polygon must have at least three points. If it doesn't
@@ -26,15 +26,15 @@ public class Stroke {
 		mPoly = poly;
 		
 		mPaint.setColor(color);
-		mPaint.setAlpha(0x50);
+//		mPaint.setAlpha(0x50);
 		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setAntiAlias(true);
 		
-		mDebugPaint.setColor(color);
-		mDebugPaint.setAlpha(0xFF);
-		mDebugPaint.setStyle(Paint.Style.STROKE);
-		mDebugPaint.setStrokeWidth(0);
-		mDebugPaint.setAntiAlias(true);
+//		mDebugPaint.setColor(color);
+//		mDebugPaint.setAlpha(0xFF);
+//		mDebugPaint.setStyle(Paint.Style.STROKE);
+//		mDebugPaint.setStrokeWidth(0);
+//		mDebugPaint.setAntiAlias(true);
 		
 		mPath.setFillType(Path.FillType.WINDING);
 		
@@ -47,6 +47,6 @@ public class Stroke {
 	
 	public void draw (Canvas c) {
 		c.drawPath(mPath, mPaint);
-		c.drawPath(mPath, mDebugPaint);
+//		c.drawPath(mPath, mDebugPaint);
 	}
 }

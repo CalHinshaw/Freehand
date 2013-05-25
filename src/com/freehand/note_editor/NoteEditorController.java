@@ -16,29 +16,26 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 
-class NoteEditorPresenter {
+class NoteEditorController implements IActionBarListener, INoteCanvasListener {
+	// The note data about all of the old strokes
 	private LinkedList<Stroke> mStrokes = new LinkedList<Stroke>();
-	
-	// Hold the current stroke's raw data
+
+	// The data for the current stroke
 	private ArrayList<Point> rawPoints = new ArrayList<Point>();
 	private ArrayList<Float> rawPressures = new ArrayList<Float>();
+	private final StrokePolyBuilder mBuilder = new StrokePolyBuilder();
 	
-	private Paint currentPaint = new Paint();
-	
-	// The zoom scalar that all values going into and out of the note are multiplied by after translation by windowX and windowY
+	// The information about where the screen is on the canvas
 	private float zoomMultiplier = 1;
-	
-	// The x and y values of the upper left corner of the screen relative to the note data
 	private float windowX = 0;
 	private float windowY = 0;
-	
-	private int penColor = 0xff000000;
-	private float penSize = 6.5f;
-	
-	
-	
 	private Matrix transformMatrix = new Matrix();
 	private float[] matVals = {1, 0, 0, 0, 1, 0, 0, 0, 1};
+	
+	// Current tool information
+	private IActionBarListener.Tool currentTool = IActionBarListener.Tool.PEN;
+	private int toolColor = 0xff000000;
+	private float toolSize = 6.5f;
 	
 	// The transformation matrix transforms the stuff drawn to the canvas as if (0, 0) is the upper left hand corner of the screen,
 	// not the View the canvas is drawing to.
@@ -46,110 +43,23 @@ class NoteEditorPresenter {
 	private float canvasXOffset = -1;
 	
 	
-//	private Paint debugPaint1 = new Paint();
-//	private Paint debugPaint2 = new Paint();
-//	private Paint inPaint = new Paint();
-//	private Paint outPaint = new Paint();
+	//*********************************** INoteCanvasListener Methods ****************************************************************
 	
-	
-	private final StrokePolyBuilder builder = new StrokePolyBuilder();
-	
-	
-	
-	public NoteEditorPresenter () {
-		currentPaint.setColor(penColor);
-		currentPaint.setStyle(Paint.Style.STROKE);
-		currentPaint.setStrokeWidth(0);
-		currentPaint.setAntiAlias(true);
-
-//		debugPaint1.setColor(Color.BLACK);
-//		debugPaint1.setStyle(Paint.Style.STROKE);
-//		debugPaint1.setStrokeWidth(0);
-//		debugPaint1.setAntiAlias(true);
-//		
-//		debugPaint2.setColor(0xa0ff0000);
-//		debugPaint2.setStyle(Paint.Style.STROKE);
-//		debugPaint2.setStrokeWidth(1);
-//		debugPaint2.setAntiAlias(true);
-//		
-//		inPaint.setColor(Color.GREEN);
-//		inPaint.setStyle(Paint.Style.FILL);
-//		inPaint.setAntiAlias(true);
-//		
-//		outPaint.setColor(Color.BLUE);
-//		outPaint.setStyle(Paint.Style.FILL);
-//		outPaint.setAntiAlias(true);
-	}
-	
-	public void setPen (int newColor, float newSize) {
-		penColor = newColor;
-		currentPaint.setColor(penColor);
-		penSize = newSize;
-	}
-	
-	public void setEraser () {
-		//TODO
-	}
-	
-	public void setSelector () {
-		//TODO
-	}
-	
-	public void undo () {
-		//TODO
-	}
-	
-	public void redo () {
-		//TODO
-	}
-	
-	public void openNote (INoteHierarchyItem newNote) {
-		//TODO
-	}
-	
-	public void saveNote () {
-		//TODO
-	}
-	
-	public void rename (String newName) {
-		//TODO
-	}
-	
-	public void hoverAction (ArrayList<Long> times, ArrayList<Float> xs, ArrayList<Float> ys) {
-		//TODO
-	}
-
-	
-	public void penAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean penUp) {
-		
-		// Process the new points coming in from the stylus
-		for (int i = 0; i < times.size(); i++) {
-			// First scale the input to the current canvas position and pressure sensitivity
-			Point currentPoint = new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier);
-			float currentSize = penSize*0.5f + pressures.get(i)*penSize*0.5f;
-			
-			// Second add the points to the historical data
-			rawPoints.add(currentPoint);
-			rawPressures.add(pressures.get(i));
-			
-			builder.add(currentPoint, currentSize, zoomMultiplier);
-		}
-
-		// Terminate strokes when they end
-		if (penUp == true) {
-			WrapList<Point> finalPoly = builder.getFinalPoly();
-			if (finalPoly.size() >= 3) {
-				mStrokes.add(new Stroke(penColor, finalPoly));
-			}
-			builder.reset();
-			
-			rawPoints.clear();
-			rawPressures.clear();
+	public void stylusAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean stylusUp) {
+		switch (currentTool) {
+			case PEN:
+				processPen(times, xs, ys, pressures, stylusUp);
+				break;
 		}
 	}
 	
+	public void fingerAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean fingerUp) {
+		// TODO Implement based on user settings gathered at first launch and changed in the menu
+	}
 	
-	
+	public void hoverAction (ArrayList<Long> times, ArrayList<Float> xs, ArrayList<Float> ys, boolean hoverEnded) {
+		// TODO Implement for logging. This method shouldn't effect the cached node representation.
+	}
 	
 	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom) {
 		windowX += screenDx/zoomMultiplier;
@@ -157,7 +67,41 @@ class NoteEditorPresenter {
 		zoomMultiplier *= dZoom;
 	}
 	
-	private void calcPanZoom (Canvas c) {
+	public void drawNote (Canvas c) {
+		updatePanZoom(c);
+		c.drawColor(0xffffffff);
+		
+		for (Stroke s : mStrokes) {
+			s.draw(c);
+		}
+		
+		mBuilder.draw(c);
+	}
+	
+	
+	
+	//************************************************** IActionBarListener Methods *******************************************************
+	
+	public void setTool (Tool newTool, float size, int color) {
+		currentTool = newTool;
+		toolSize = size;
+		toolColor = color;
+		mBuilder.setColor(color);		
+	}
+
+	public void undo () {
+		// TODO
+	}
+
+	public void redo () {
+		// TODO
+	}
+	
+	
+	
+	//********************************************** Helper Methods **********************************************
+	
+	private void updatePanZoom (Canvas c) {
 		// Set the transformMatrix's offsets if they haven't been set yet
 		if (canvasYOffset < 0 || canvasXOffset < 0) {
 			float[] values = new float[9];
@@ -175,22 +119,63 @@ class NoteEditorPresenter {
 		c.setMatrix(transformMatrix);
 	}
 	
-	
-	public void drawNote (Canvas c) {
-		calcPanZoom(c);
-		c.drawColor(0xffffffff);
-		
-		for (Stroke s : mStrokes) {
-			s.draw(c);
+	private void processPen (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean stylusUp) {
+		// Process the new points coming in from the stylus
+		for (int i = 0; i < times.size(); i++) {
+			// First scale the input to the current canvas position and pressure sensitivity
+			Point currentPoint = new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier);
+			float currentSize = toolSize*0.5f + pressures.get(i)*toolSize*0.5f;
+			
+			// Second add the points to the historical data
+			rawPoints.add(currentPoint);
+			rawPressures.add(pressures.get(i));
+			
+			mBuilder.add(currentPoint, currentSize, zoomMultiplier);
 		}
-		
-		builder.draw(c, currentPaint);
+
+		// Terminate strokes when they end
+		if (stylusUp == true) {
+			WrapList<Point> finalPoly = mBuilder.getFinalPoly();
+			if (finalPoly.size() >= 3) {
+				mStrokes.add(new Stroke(toolColor, finalPoly));
+			}
+			mBuilder.reset();
+			
+			rawPoints.clear();
+			rawPressures.clear();
+		}
 	}
 	
 	
-	
-	
 //	private void visualPolyTests (Canvas c) {
+	
+	//	private Paint debugPaint1 = new Paint();
+	//	private Paint debugPaint2 = new Paint();
+	//	private Paint inPaint = new Paint();
+	//	private Paint outPaint = new Paint();
+	
+	
+	//	debugPaint1.setColor(Color.BLACK);
+	//	debugPaint1.setStyle(Paint.Style.STROKE);
+	//	debugPaint1.setStrokeWidth(0);
+	//	debugPaint1.setAntiAlias(true);
+	//	
+	//	debugPaint2.setColor(0xa0ff0000);
+	//	debugPaint2.setStyle(Paint.Style.STROKE);
+	//	debugPaint2.setStrokeWidth(1);
+	//	debugPaint2.setAntiAlias(true);
+	//	
+	//	inPaint.setColor(Color.GREEN);
+	//	inPaint.setStyle(Paint.Style.FILL);
+	//	inPaint.setAntiAlias(true);
+	//	
+	//	outPaint.setColor(Color.BLUE);
+	//	outPaint.setStyle(Paint.Style.FILL);
+	//	outPaint.setAntiAlias(true);
+	
+	
+	
+	
 //		WrapList<Point> square1 = new WrapList<Point>();
 //		WrapList<Point> square3 = new WrapList<Point>();
 //		
@@ -348,21 +333,5 @@ class NoteEditorPresenter {
 //			}
 //		}
 //	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 }

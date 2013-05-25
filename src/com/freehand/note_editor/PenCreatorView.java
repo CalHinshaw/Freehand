@@ -596,4 +596,9 @@ class PenCreatorView extends View {
 	public IPenChangedListener getListener () {
 		return mListener;
 	}
+	
+	
+	public interface IPenChangedListener {
+		public void onPenChanged(int color, float size);
+	}
 }
