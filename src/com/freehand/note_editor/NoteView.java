@@ -1,8 +1,6 @@
 package com.freehand.note_editor;
 
 
-import java.util.ArrayList;
-
 import com.freehand.ink.MiscGeom;
 import com.freehand.ink.Point;
 
@@ -74,30 +72,21 @@ public class NoteView extends View {
 		return true;
 	}
 	
-	private void processDraw (MotionEvent event) {
-		ArrayList<Long> times = new ArrayList<Long>(event.getHistorySize()+1);
-		ArrayList<Float> xs = new ArrayList<Float>(event.getHistorySize()+1);
-		ArrayList<Float> ys = new ArrayList<Float>(event.getHistorySize()+1);
-		ArrayList<Float> pressures = new ArrayList<Float>(event.getHistorySize()+1);
-		
-		for(int i = 0; i < event.getHistorySize(); i++) {
-			times.add(event.getHistoricalEventTime(i));
-			xs.add(event.getHistoricalX(i));
-			ys.add(event.getHistoricalY(i));
-			pressures.add(event.getHistoricalPressure(i));
-			//Log.d("PEN", Float.toString(event.getHistoricalX(i)) + "  " + Float.toString(event.getHistoricalY(i)) + "  " + Float.toString(event.getHistoricalPressure(i)));
+	private void processDraw (MotionEvent e) {
+		for(int i = 0; i < e.getHistorySize(); i++) {
+			if (e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
+				mListener.stylusAction(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i),
+					e.getHistoricalPressure(i), false);
+			} else if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
+				mListener.fingerAction(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i),
+					e.getHistoricalPressure(i), false);
+			}
 		}
-		
-		times.add(event.getEventTime());
-		xs.add(event.getX());
-		ys.add(event.getY());
-		pressures.add(event.getPressure());
-		//Log.d("PEN", Float.toString(event.getX()) + "  " + Float.toString(event.getY()) + "  " + Float.toString(event.getPressure()));
-		
-		if (event.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
-			mListener.stylusAction(times, xs, ys, pressures, event.getAction() == MotionEvent.ACTION_UP);
-		} else if (event.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
-			mListener.fingerAction(times, xs, ys, pressures, event.getAction() == MotionEvent.ACTION_UP);
+
+		if (e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
+			mListener.stylusAction(e.getEventTime(), e.getX(), e.getY(), e.getPressure(), e.getAction() == MotionEvent.ACTION_UP);
+		} else if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
+			mListener.fingerAction(e.getEventTime(), e.getX(), e.getY(), e.getPressure(), e.getAction() == MotionEvent.ACTION_UP);
 		}
 		
 		invalidate();
@@ -126,23 +115,12 @@ public class NoteView extends View {
 	
 	
 	@Override
-	public boolean onHoverEvent (MotionEvent event) {
-		
-		ArrayList<Long> times = new ArrayList<Long>(event.getHistorySize()+1);
-		ArrayList<Float> xs = new ArrayList<Float>(event.getHistorySize()+1);
-		ArrayList<Float> ys = new ArrayList<Float>(event.getHistorySize()+1);
-		
-		for(int i = 0; i < event.getHistorySize(); i++) {
-			times.add(event.getHistoricalEventTime(i));
-			xs.add(event.getHistoricalX(i));
-			ys.add(event.getHistoricalY(i));
+	public boolean onHoverEvent (MotionEvent e) {
+		for(int i = 0; i < e.getHistorySize(); i++) {
+			mListener.hoverAction(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), false);
 		}
 		
-		times.add(event.getEventTime());
-		xs.add(event.getX());
-		ys.add(event.getY());//
-		
-		mListener.hoverAction(times, xs, ys, event.getAction() == MotionEvent.ACTION_HOVER_EXIT);
+		mListener.hoverAction(e.getEventTime(), e.getX(), e.getY(), e.getAction() == MotionEvent.ACTION_HOVER_EXIT);
 		
 		return true;
 	}

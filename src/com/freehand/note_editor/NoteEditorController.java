@@ -3,18 +3,12 @@ package com.freehand.note_editor;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.ink.StrokePolyBuilder;
 import com.freehand.misc.WrapList;
-import com.freehand.storage.INoteHierarchyItem;
-
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 
 class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	// The note data about all of the old strokes
@@ -45,19 +39,19 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
 	
-	public void stylusAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean stylusUp) {
+	public void stylusAction (long time, float x, float y, float pressure, boolean stylusUp) {
 		switch (currentTool) {
 			case PEN:
-				processPen(times, xs, ys, pressures, stylusUp);
+				processPen(time, x, y, pressure, stylusUp);
 				break;
 		}
 	}
 	
-	public void fingerAction (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean fingerUp) {
+	public void fingerAction (long time, float x, float y, float pressure, boolean fingerUp) {
 		// TODO Implement based on user settings gathered at first launch and changed in the menu
 	}
 	
-	public void hoverAction (ArrayList<Long> times, ArrayList<Float> xs, ArrayList<Float> ys, boolean hoverEnded) {
+	public void hoverAction (long time, float x, float y, boolean hoverEnded) {
 		// TODO Implement for logging. This method shouldn't effect the cached node representation.
 	}
 	
@@ -119,19 +113,18 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		c.setMatrix(transformMatrix);
 	}
 	
-	private void processPen (List<Long> times, List<Float> xs, List<Float> ys, List<Float> pressures, boolean stylusUp) {
-		// Process the new points coming in from the stylus
-		for (int i = 0; i < times.size(); i++) {
+	private void processPen (long time, float x, float y, float pressure, boolean stylusUp) {
+
 			// First scale the input to the current canvas position and pressure sensitivity
-			Point currentPoint = new Point(-windowX + xs.get(i)/zoomMultiplier, -windowY + ys.get(i)/zoomMultiplier);
-			float currentSize = toolSize*0.5f + pressures.get(i)*toolSize*0.5f;
+			Point currentPoint = new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
+			float currentSize = toolSize*0.5f + pressure*toolSize*0.5f;
 			
 			// Second add the points to the historical data
 			rawPoints.add(currentPoint);
-			rawPressures.add(pressures.get(i));
+			rawPressures.add(pressure);
 			
 			mBuilder.add(currentPoint, currentSize, zoomMultiplier);
-		}
+
 
 		// Terminate strokes when they end
 		if (stylusUp == true) {
