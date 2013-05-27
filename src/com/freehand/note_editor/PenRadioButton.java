@@ -42,7 +42,7 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 				vibrator.vibrate(40);
 
 				PenCreatorView creatorView = new PenCreatorView(mOverlayHandler.getContextForView(), PenRadioButton.this, color, size);
-				mOverlayHandler.setOverlayView(creatorView);
+				mOverlayHandler.setOverlayView(creatorView, v);
 			}
 		}
 	};
@@ -55,7 +55,7 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 			vibrator.vibrate(40);
 			
 			PenCreatorView creatorView = new PenCreatorView(mOverlayHandler.getContextForView(), PenRadioButton.this, color, size);
-			mOverlayHandler.setOverlayView(creatorView);
+			mOverlayHandler.setOverlayView(creatorView, v);
 			
 			return true;
 		}

@@ -17,6 +17,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -28,18 +29,20 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.PopupWindow;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 public class NoteActivity extends Activity implements IViewOverlayHandler {
-	private RelativeLayout mLayout;
-	
 	private NoteEditorController mPresenter;
 	
 	private NoteView mNoteView;
-	private View overlayView;
+	
+	private PopupWindow popup = null;
+	private Rect popupRect = new Rect();
+	private View anchorView = null;
 	
 	private RadioGroup mRadioGroup;
 	private RadioButton mEraseButton;
@@ -88,7 +91,6 @@ public class NoteActivity extends Activity implements IViewOverlayHandler {
 		overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
 		
 		// getting views from xml layout
-		mLayout = (RelativeLayout) findViewById(R.id.note_activity_layout);
 		mNoteView = (NoteView) findViewById(R.id.note);
 		mRadioGroup = (RadioGroup) findViewById(R.id.penSelectorRadioGroup);
 		
@@ -265,13 +267,31 @@ public class NoteActivity extends Activity implements IViewOverlayHandler {
 //		mLayout.addView(mPenView);
 //	}
 	
-	public void setOverlayView(View newOverlayView) {
-		if (overlayView != null) {
-			mLayout.removeView(overlayView);
+	public void setOverlayView(View newOverlayView, View anchor) {
+		
+		if (popup != null && anchorView != null && anchor == anchorView) {
+			popup.dismiss();
+			popup = null;
+			anchorView = null;
+			return;
 		}
 		
-		overlayView = newOverlayView;
-		mLayout.addView(overlayView);
+		if (popup == null) {
+			popup = new PopupWindow(this);
+		} else if (popup.isShowing()) {
+			popup.dismiss();
+		}
+		
+		anchorView = anchor;
+		
+		popup.setContentView(newOverlayView);
+		popup.setWidth(500);
+		popup.setHeight(1000);
+		popup.showAsDropDown(anchor);
+		
+		newOverlayView.getGlobalVisibleRect(popupRect);
+		
+		
 	}
 	
 	public Context getContextForView() {
@@ -281,14 +301,15 @@ public class NoteActivity extends Activity implements IViewOverlayHandler {
 	// Overriding this to close overlayViews when the users touches outside of them
 	@Override
 	public boolean dispatchTouchEvent(MotionEvent e) {
-		if (overlayView != null && e.getAction() == MotionEvent.ACTION_DOWN) {
-			Rect boundingRect = new Rect();
-			overlayView.getGlobalVisibleRect(boundingRect);
-			
-			if (boundingRect.contains((int) e.getX(), (int) e.getY()) == false) {
-				mLayout.removeView(overlayView);
-				overlayView = null;
-				return true;
+		if (popup != null && popup.isShowing() && e.getAction() == MotionEvent.ACTION_DOWN) {
+			if (popupRect.contains((int) e.getX(), (int) e.getY()) == false) {
+				popup.dismiss();
+				
+//				Rect noteRect = new Rect();
+//				mNoteView.getGlobalVisibleRect(noteRect);
+//				if (noteRect.contains((int) e.getX(), (int) e.getY())) {
+//					return true;
+//				}
 			}
 		}
 		
@@ -370,9 +391,8 @@ public class NoteActivity extends Activity implements IViewOverlayHandler {
 	
 	@Override
 	public void onBackPressed() {
-		if (overlayView != null) {
-			mLayout.removeView(overlayView);
-			overlayView = null;
+		if (popup != null) {
+			popup.dismiss();
 			return;
 		}
 		

@@ -6,5 +6,5 @@ import android.view.View;
 
 interface IViewOverlayHandler {
 	public Context getContextForView();
-	public void setOverlayView(View newOverlayView);
+	public void setOverlayView(View newOverlayView, View anchor);
 }
