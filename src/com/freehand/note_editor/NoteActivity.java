@@ -35,7 +35,7 @@ import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-public class NoteActivity extends Activity implements IViewOverlayHandler {
+public class NoteActivity extends Activity {
 	private NoteEditorController mPresenter;
 	
 	private NoteView mNoteView;
@@ -224,7 +224,6 @@ public class NoteActivity extends Activity implements IViewOverlayHandler {
 				
 				penButtons.get(i).setListener(mPresenter);
 				penButtons.get(i).setPen(tempColor, tempSize);
-				penButtons.get(i).setOverlayHandler(this);
 			}
 			
 			return true;
@@ -232,88 +231,6 @@ public class NoteActivity extends Activity implements IViewOverlayHandler {
 			Log.d("PEN", "Something is wrong with one of the PenRadioButton's SharedPreferences entries.");
 			return false;
 		}
-	}
-
-//	public void requestNewPen (IPenChangedListener listener, int startColor, float startSize) {
-//		if (mPenView != null && listener == mPenView.getListener()) {
-//			mLayout.removeView(mPenView);
-//			mPenView = null;
-//			return;
-//		}
-//		
-//		mLayout.removeView(mPenView);
-//		mPenView = null;
-//		
-//		int windowWidth = getWindowManager().getDefaultDisplay().getWidth();
-//		
-//		int buttonWidth = mRadioGroup.getWidth() / 7;
-//		int newPenViewWidth = mRadioGroup.getLeft() + 3*buttonWidth;
-//		
-//		RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(newPenViewWidth, (int) (newPenViewWidth * PenCreatorView.HEIGHT_SCALAR));
-//		params.addRule(RelativeLayout.BELOW, undoButton.getId());
-//		
-//		for (int i = 0; i < penButtons.size(); i++) {
-//			if (listener == penButtons.get(i)) {
-//				int leftMargin = i * buttonWidth;
-//				params.setMargins(leftMargin, 0, windowWidth-leftMargin-newPenViewWidth, 0);
-//				break;
-//			}
-//		}
-//		
-//		mPenView = new PenCreatorView(this, listener, startColor, startSize);
-//		
-//		mPenView.setLayoutParams(params);
-//		
-//		mLayout.addView(mPenView);
-//	}
-	
-	public void setOverlayView(View newOverlayView, View anchor) {
-		
-		if (popup != null && anchorView != null && anchor == anchorView) {
-			popup.dismiss();
-			popup = null;
-			anchorView = null;
-			return;
-		}
-		
-		if (popup == null) {
-			popup = new PopupWindow(this);
-		} else if (popup.isShowing()) {
-			popup.dismiss();
-		}
-		
-		anchorView = anchor;
-		
-		popup.setContentView(newOverlayView);
-		popup.setWidth(500);
-		popup.setHeight(1000);
-		popup.showAsDropDown(anchor);
-		
-		newOverlayView.getGlobalVisibleRect(popupRect);
-		
-		
-	}
-	
-	public Context getContextForView() {
-		return this;
-	}
-	
-	// Overriding this to close overlayViews when the users touches outside of them
-	@Override
-	public boolean dispatchTouchEvent(MotionEvent e) {
-		if (popup != null && popup.isShowing() && e.getAction() == MotionEvent.ACTION_DOWN) {
-			if (popupRect.contains((int) e.getX(), (int) e.getY()) == false) {
-				popup.dismiss();
-				
-//				Rect noteRect = new Rect();
-//				mNoteView.getGlobalVisibleRect(noteRect);
-//				if (noteRect.contains((int) e.getX(), (int) e.getY())) {
-//					return true;
-//				}
-			}
-		}
-		
-		return super.dispatchTouchEvent(e);
 	}
 	
 	

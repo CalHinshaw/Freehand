@@ -5,17 +5,19 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.PopupWindow;
 import android.widget.RadioButton;
 
 public class PenRadioButton extends RadioButton implements PenCreatorView.IPenChangedListener {
 	
 	private IActionBarListener mListener = null;
-	private IViewOverlayHandler mOverlayHandler = null;
 	
 	private int color = Color.BLACK;
 	private float size = 6.5f;
@@ -31,18 +33,27 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 	private Paint pressedPaint = new Paint();
 	
 	private boolean hasCheckedState = false;
+	private boolean dontDisplay = false;
+	
+	private PopupWindow mPenCreatorWindow;
+	private PenCreatorView mPenCreatorView;
+	
 	
 	/**
 	 * Listens for the second click that signals this button to open it's pen creator menu.
 	 */
 	private OnClickListener mClickListener = new OnClickListener () {
 		public void onClick(View v) {
+			
+			if (dontDisplay == true) {
+				dontDisplay = false;
+				return;
+			}
+			
 			if (hasCheckedState) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
-
-				PenCreatorView creatorView = new PenCreatorView(mOverlayHandler.getContextForView(), PenRadioButton.this, color, size);
-				mOverlayHandler.setOverlayView(creatorView, v);
+				PenRadioButton.this.displayPenCreator();
 			}
 		}
 	};
@@ -50,16 +61,47 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 	private OnLongClickListener mLongClickListener = new OnLongClickListener () {
 		public boolean onLongClick(View v) {
 			PenRadioButton.this.setChecked(true);
-			
 			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			vibrator.vibrate(40);
-			
-			PenCreatorView creatorView = new PenCreatorView(mOverlayHandler.getContextForView(), PenRadioButton.this, color, size);
-			mOverlayHandler.setOverlayView(creatorView, v);
+			PenRadioButton.this.displayPenCreator();
 			
 			return true;
 		}
 	};
+	
+	private void displayPenCreator () {
+		mPenCreatorWindow.setContentView(mPenCreatorView);
+		mPenCreatorWindow.setWidth(500);
+		mPenCreatorWindow.setHeight(1000);
+		
+		mPenCreatorWindow.setOutsideTouchable(true);
+		mPenCreatorWindow.setBackgroundDrawable(new BitmapDrawable());
+		
+		mPenCreatorWindow.setTouchInterceptor(new OnTouchListener () {
+			public boolean onTouch(View v, MotionEvent e) {
+				int coordOffset[] = new int[2];
+				v.getLocationOnScreen(coordOffset);
+				
+				Rect buttonRect = new Rect();
+				PenRadioButton.this.getGlobalVisibleRect(buttonRect);
+				
+				buttonRect.left -= coordOffset[0];
+				buttonRect.right -= coordOffset[0];
+				buttonRect.top -= coordOffset[1];
+				buttonRect.bottom -= coordOffset[1];
+				
+				if (buttonRect.contains((int) e.getX(), (int) e.getY())) {
+					dontDisplay = true;
+				} else {
+					dontDisplay = false;
+				}
+
+				return false;
+			}
+		});
+
+		mPenCreatorWindow.showAsDropDown(this);
+	}
 	
 	
 	public PenRadioButton (Context context, AttributeSet attrs) {
@@ -83,6 +125,10 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		
 		this.setOnClickListener(mClickListener);
 		this.setOnLongClickListener(mLongClickListener);
+		
+		mPenCreatorWindow = new PopupWindow();
+		mPenCreatorView = new PenCreatorView(this.getContext(), this, color, size);
+		
 	}
 	
 	/**
@@ -100,10 +146,6 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 	
 	public void setListener (IActionBarListener newListener) {
 		mListener = newListener;
-	}
-	
-	public void setOverlayHandler (IViewOverlayHandler newOverlayHandler) {
-		mOverlayHandler = newOverlayHandler;
 	}
 	
 	@Override
@@ -135,7 +177,7 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		if (checked == true && mListener != null) {
 			mListener.setTool(IActionBarListener.Tool.PEN, size, color);
 		}
-		
+
 		super.setChecked(checked);
 	}
 	
