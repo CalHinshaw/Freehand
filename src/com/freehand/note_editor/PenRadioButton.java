@@ -33,10 +33,8 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 	private Paint pressedPaint = new Paint();
 	
 	private boolean hasCheckedState = false;
-	private boolean dontDisplay = false;
 	
-	private PopupWindow mPenCreatorWindow;
-	private PenCreatorView mPenCreatorView;
+	private AnchorWindow mPenCreator;
 	
 	
 	/**
@@ -45,15 +43,14 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 	private OnClickListener mClickListener = new OnClickListener () {
 		public void onClick(View v) {
 			
-			if (dontDisplay == true) {
-				dontDisplay = false;
+			if (PenRadioButton.this.mPenCreator.lastClosedByAnchorTouch() == true) {
 				return;
 			}
 			
 			if (hasCheckedState) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
-				PenRadioButton.this.displayPenCreator();
+				PenRadioButton.this.mPenCreator.show();
 			}
 		}
 	};
@@ -63,46 +60,11 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 			PenRadioButton.this.setChecked(true);
 			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			vibrator.vibrate(40);
-			PenRadioButton.this.displayPenCreator();
+			PenRadioButton.this.mPenCreator.show();
 			
 			return true;
 		}
 	};
-	
-	private void displayPenCreator () {
-		mPenCreatorWindow.setContentView(mPenCreatorView);
-		mPenCreatorWindow.setWidth(500);
-		mPenCreatorWindow.setHeight(1000);
-		
-		mPenCreatorWindow.setOutsideTouchable(true);
-		mPenCreatorWindow.setBackgroundDrawable(new BitmapDrawable());
-		
-		mPenCreatorWindow.setTouchInterceptor(new OnTouchListener () {
-			public boolean onTouch(View v, MotionEvent e) {
-				int coordOffset[] = new int[2];
-				v.getLocationOnScreen(coordOffset);
-				
-				Rect buttonRect = new Rect();
-				PenRadioButton.this.getGlobalVisibleRect(buttonRect);
-				
-				buttonRect.left -= coordOffset[0];
-				buttonRect.right -= coordOffset[0];
-				buttonRect.top -= coordOffset[1];
-				buttonRect.bottom -= coordOffset[1];
-				
-				if (buttonRect.contains((int) e.getX(), (int) e.getY())) {
-					dontDisplay = true;
-				} else {
-					dontDisplay = false;
-				}
-
-				return false;
-			}
-		});
-
-		mPenCreatorWindow.showAsDropDown(this);
-	}
-	
 	
 	public PenRadioButton (Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -126,9 +88,8 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		this.setOnClickListener(mClickListener);
 		this.setOnLongClickListener(mLongClickListener);
 		
-		mPenCreatorWindow = new PopupWindow();
-		mPenCreatorView = new PenCreatorView(this.getContext(), this, color, size);
-		
+		PenCreatorView v = new PenCreatorView(this.getContext(), this, color, size);
+		mPenCreator = new AnchorWindow(this, v, 450, (int) (450*PenCreatorView.HEIGHT_SCALAR));
 	}
 	
 	/**
