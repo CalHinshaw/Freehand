@@ -5,16 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.CompoundButton;
-import android.widget.PopupWindow;
-import android.widget.RadioButton;
 
 public class PenRadioButton extends PreviousStateAwareRadioButton implements PenCreatorView.IPenChangedListener {
 	private Drawable mBackground;

@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 class SizeSliderView extends View {
@@ -17,14 +18,17 @@ class SizeSliderView extends View {
 	public SizeSliderView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		
+		Log.d("PEN", "created");
+		
 		trianglePaint = new Paint();
-		trianglePaint.setColor(Color.BLACK);
+		trianglePaint.setColor(Color.RED);
 		trianglePaint.setStyle(Paint.Style.FILL);
 		trianglePaint.setAntiAlias(true);
 	}
 	
 	@Override
-	public void onDraw (Canvas c) {
+	protected void onDraw (Canvas c) {
+		Log.d("PEN", "drawing");
 		if (trianglePath == null) {
 			trianglePath = new Path();
 			trianglePath.moveTo(getWidth()-BUFFER, getHeight()/2);

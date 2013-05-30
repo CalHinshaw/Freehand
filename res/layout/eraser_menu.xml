@@ -3,7 +3,8 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width = "fill_parent"
-    android:layout_height = "fill_parent" 
+    android:layout_height = "fill_parent"
+    android:orientation="vertical"
     android:background="@color/dkgray" >
     
     <RadioGroup 
@@ -13,25 +14,30 @@
         android:layout_marginTop="4dip" >
     
     	<RadioButton 
-    	    android:id="@+id/stroke_erase_button"
-    	    android:layout_width="fill_parent"
-    	    android:layout_height="wrap_content"
-			android:text="Erase Strokes" />
-    
-    	<RadioButton 
     	    android:id="@+id/natural_erase_button"
     	    android:layout_width="fill_parent"
     	    android:layout_height="wrap_content"
-    	    android:text="Erase Smoothly" />
+    	    android:text="Erase Smoothly"
+    	    android:textColor="@color/ltgray"
+    	    android:checked="true" />
     
-    
+    	<RadioButton 
+    	    android:id="@+id/stroke_erase_button"
+    	    android:layout_width="fill_parent"
+    	    android:layout_height="wrap_content"
+			android:text="Erase Strokes"
+			android:textColor="@color/ltgray" />
+    	
     </RadioGroup>
     
 
 	<com.freehand.note_editor.SizeSliderView
 	    android:id="@+id/eraser_size_slider"
 	    android:layout_width="fill_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="30dip"
+        android:layout_marginLeft="5dip"
+        android:layout_marginRight="5dip"
+        android:layout_marginBottom="5dip" />
     
     
     

@@ -138,7 +138,7 @@ public class NoteActivity extends Activity {
 		View eraseMenu = this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
 		
 		
-		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, 400);
+		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
 		
 		
 		
