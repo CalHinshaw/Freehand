@@ -9,6 +9,7 @@ import com.freehand.ink.StrokePolyBuilder;
 import com.freehand.misc.WrapList;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
+import android.util.Log;
 
 class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	// The note data about all of the old strokes
@@ -43,6 +44,9 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		switch (currentTool) {
 			case PEN:
 				processPen(time, x, y, pressure, stylusUp);
+				break;
+			case STROKE_ERASER:
+				processStrokeErase(time, x, y, pressure, stylusUp);
 				break;
 		}
 	}
@@ -134,6 +138,17 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 			}
 			mBuilder.reset();
 			
+			rawPoints.clear();
+			rawPressures.clear();
+		}
+	}
+	
+	private void processStrokeErase (long time, float x, float y, float pressure, boolean stylusUp) {
+		
+		Log.d("PEN", "Stroke Erase");
+		
+		
+		if (stylusUp == true) {
 			rawPoints.clear();
 			rawPressures.clear();
 		}

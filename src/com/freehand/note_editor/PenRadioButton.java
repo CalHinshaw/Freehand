@@ -12,16 +12,16 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
 
-public class PenRadioButton extends RadioButton implements PenCreatorView.IPenChangedListener {
-	
+public class PenRadioButton extends PreviousStateAwareRadioButton implements PenCreatorView.IPenChangedListener {
+	private Drawable mBackground;
 	private IActionBarListener mListener = null;
 	
 	private int color = Color.BLACK;
 	private float size = 6.5f;
-	private Drawable mBackground;
 	
 	private float sampleX = 0;
 	private float sampleY = 0;
@@ -29,12 +29,10 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 	
 	private Rect selectedRect;
 	private Paint selectedPaint = new Paint();
-	
 	private Paint pressedPaint = new Paint();
 	
-	private boolean hasCheckedState = false;
-	
 	private AnchorWindow mPenCreator;
+	private PenCreatorView mPenCreatorView;
 	
 	
 	/**
@@ -42,12 +40,11 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 	 */
 	private OnClickListener mClickListener = new OnClickListener () {
 		public void onClick(View v) {
-			
 			if (PenRadioButton.this.mPenCreator.lastClosedByAnchorTouch() == true) {
 				return;
 			}
 			
-			if (hasCheckedState) {
+			if (previousStateWasChecked()) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
 				PenRadioButton.this.mPenCreator.show();
@@ -66,9 +63,17 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		}
 	};
 	
+	private OnCheckedChangeListener mCheckListener = new OnCheckedChangeListener () {
+		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+			if (isChecked == true && mListener != null) {
+				mListener.setTool(IActionBarListener.Tool.PEN, size, color);
+			}
+		}
+	};
+	
 	public PenRadioButton (Context context, AttributeSet attrs) {
 		super(context, attrs);
-		
+
 		mBackground = new AlphaPatternDrawable((int) (5*getContext().getResources().getDisplayMetrics().density));
 		
 		samplePaint.setColor(color);
@@ -87,9 +92,10 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		
 		this.setOnClickListener(mClickListener);
 		this.setOnLongClickListener(mLongClickListener);
+		this.setOnCheckedChangeListener(mCheckListener);
 		
-		PenCreatorView v = new PenCreatorView(this.getContext(), this, color, size);
-		mPenCreator = new AnchorWindow(this, v, 450, (int) (450*PenCreatorView.HEIGHT_SCALAR));
+		mPenCreatorView = new PenCreatorView(this.getContext(), this, color, size);
+		mPenCreator = new AnchorWindow(this, mPenCreatorView, 450, (int) (450*PenCreatorView.HEIGHT_SCALAR));
 	}
 	
 	/**
@@ -103,6 +109,7 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		size = newSize;
 		
 		samplePaint.setColor(color);
+		mPenCreatorView.setPen(color, size);
 	}
 	
 	public void setListener (IActionBarListener newListener) {
@@ -133,15 +140,6 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		}
 	}
 	
-	@Override
-	public void setChecked (boolean checked) {
-		if (checked == true && mListener != null) {
-			mListener.setTool(IActionBarListener.Tool.PEN, size, color);
-		}
-
-		super.setChecked(checked);
-	}
-	
 	public void onPenChanged(int newColor, float newSize) {
 		setPen(newColor, newSize);
 		
@@ -150,16 +148,6 @@ public class PenRadioButton extends RadioButton implements PenCreatorView.IPenCh
 		}
 		
 		invalidate();
-	}
-	
-	public boolean onTouchEvent (MotionEvent e) {
-		if (e.getAction() == MotionEvent.ACTION_UP) {
-			hasCheckedState = isChecked();
-		} else {
-			hasCheckedState = false;
-		}
-		
-		return super.onTouchEvent(e);
 	}
 	
 	public int getColor() {

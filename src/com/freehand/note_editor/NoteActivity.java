@@ -16,6 +16,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -24,6 +25,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
@@ -40,23 +42,45 @@ public class NoteActivity extends Activity {
 	
 	private NoteView mNoteView;
 	
-	private PopupWindow popup = null;
-	private Rect popupRect = new Rect();
-	private View anchorView = null;
-	
 	private RadioGroup mRadioGroup;
-	private RadioButton mEraseButton;
-	private RadioButton mSelectButton;
+	private PreviousStateAwareRadioButton mEraseButton;
+	private AnchorWindow mEraseMenuWindow;
+	private PreviousStateAwareRadioButton mSelectButton;
 	private ArrayList<PenRadioButton> penButtons = new ArrayList<PenRadioButton>(5);
 	
 	private Button undoButton;
 	private Button redoButton;
 	
-	private CompoundButton.OnCheckedChangeListener eraseButtonListener = new CompoundButton.OnCheckedChangeListener() {
+	private CompoundButton.OnCheckedChangeListener eraseButtonCheckListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
 				mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, 6, 0);
 			}
+		}
+	};
+	
+	private View.OnClickListener eraseButtonClickListener = new View.OnClickListener() {
+		public void onClick(View v) {
+			if (mEraseMenuWindow.lastClosedByAnchorTouch() == true) {
+				return;
+			}
+			
+			if (mEraseButton.previousStateWasChecked()) {
+				Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+				vibrator.vibrate(40);
+				mEraseMenuWindow.show();
+			}
+		}
+	};
+	
+	private OnLongClickListener eraseButtonLongClickListener = new OnLongClickListener () {
+		public boolean onLongClick(View v) {
+			mEraseButton.setChecked(true);
+			Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+			vibrator.vibrate(40);
+			mEraseMenuWindow.show();
+			
+			return true;
 		}
 	};
 	
@@ -94,10 +118,12 @@ public class NoteActivity extends Activity {
 		mNoteView = (NoteView) findViewById(R.id.note);
 		mRadioGroup = (RadioGroup) findViewById(R.id.penSelectorRadioGroup);
 		
-		mEraseButton = (RadioButton) findViewById(R.id.erase);
-		mEraseButton.setOnCheckedChangeListener(eraseButtonListener);
+		mEraseButton = (PreviousStateAwareRadioButton) findViewById(R.id.erase);
+		mEraseButton.setOnCheckedChangeListener(eraseButtonCheckListener);
+		mEraseButton.setOnClickListener(eraseButtonClickListener);
+		mEraseButton.setOnLongClickListener(eraseButtonLongClickListener);
 		
-		mSelectButton = (RadioButton) findViewById(R.id.select);
+		mSelectButton = (PreviousStateAwareRadioButton) findViewById(R.id.select);
 		mSelectButton.setOnCheckedChangeListener(selectButtonListener);
 		
 		undoButton = (Button) findViewById(R.id.undo);
@@ -108,6 +134,17 @@ public class NoteActivity extends Activity {
 		
 		mPresenter = new NoteEditorController();		
 		mNoteView.setListener(mPresenter);
+		
+		View eraseMenu = this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
+		
+		
+		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, 400);
+		
+		
+		
+		
+		
+		
 		
 		// setting up the note view
 		final Object oldData = getLastNonConfigurationInstance();
@@ -308,11 +345,6 @@ public class NoteActivity extends Activity {
 	
 	@Override
 	public void onBackPressed() {
-		if (popup != null) {
-			popup.dismiss();
-			return;
-		}
-		
 		this.finish();
 		overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
 		super.onBackPressed();

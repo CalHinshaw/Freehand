@@ -2,7 +2,6 @@ package com.freehand.note_editor;
 
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -16,6 +15,7 @@ class AnchorWindow {
 	
 	private boolean closedByAnchorTouch = false;
 	
+	@SuppressWarnings("deprecation")
 	public AnchorWindow (View anchorView, View contentView, int width, int height) {
 		mAnchor = anchorView;
 		mContent = contentView;
@@ -41,11 +41,8 @@ class AnchorWindow {
 				anchorRect.top -= offsetArr[1];
 				anchorRect.bottom -= offsetArr[1];
 				
-				Log.d("PEN", Integer.toString(offsetArr[0]) + "   " + Integer.toString(offsetArr[1]));
-				
 				if (anchorRect.contains((int) e.getX(), (int) e.getY())) {
 					closedByAnchorTouch = true;
-					Log.d("PEN", "in anchorRect");
 				} else {
 					closedByAnchorTouch = false;
 				}

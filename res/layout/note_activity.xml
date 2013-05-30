@@ -34,7 +34,7 @@
         android:layout_toRightOf="@id/redo"
         android:layout_marginTop="5dip" >
         
-        <RadioButton 
+        <com.freehand.note_editor.PreviousStateAwareRadioButton 
         	android:id="@+id/erase"
         	android:button="@drawable/erase_button_selector"
         	android:layout_width = "40dip"
@@ -42,7 +42,7 @@
         	android:layout_marginRight="5dip"  
         	/>
         
-        <RadioButton 
+        <com.freehand.note_editor.PreviousStateAwareRadioButton 
       		android:id="@+id/select"
         	android:button="@drawable/select_button_selector"
         	android:layout_width = "40dip"

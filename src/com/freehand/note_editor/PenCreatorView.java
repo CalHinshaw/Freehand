@@ -84,38 +84,13 @@ class PenCreatorView extends View {
 	
 	private IPenChangedListener mListener = null;
 	
-	
-	public PenCreatorView(Context context){
-		this(context, null);
-	}
-	
-	public PenCreatorView(Context context, AttributeSet attrs) {
-		this(context, attrs, 0);
-	}
-	
-	public PenCreatorView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
-		init();
-	}
-	
 	public PenCreatorView(Context context, IPenChangedListener newListener, int newColor, float newSize) {
-		this(context);
+		super(context);
+		init();
 		
 		mListener = newListener;
-		
-		float[] newHSV = {0,0,0};
-		
-		Color.colorToHSV(newColor, newHSV);
-		
-		mHue = newHSV[0];
-		mSat = newHSV[1];
-		mVal = newHSV[2];
-		mAlpha = Color.alpha(newColor);
-		mSize = newSize;
+		this.setPen(newColor, newSize);
 	}
-	
-	
-	
 		
 	public void setOnPenChangedListener (IPenChangedListener temp) {
 		mListener = temp;
@@ -506,8 +481,6 @@ class PenCreatorView extends View {
 			update = true;
 		}
 		else if(mSatValRect.contains(startX, startY)){
-							
-			
 			float[] result = pointToSatVal(event.getX(), event.getY());
 			
 			mSat = result[0];
@@ -595,6 +568,16 @@ class PenCreatorView extends View {
 	
 	public IPenChangedListener getListener () {
 		return mListener;
+	}
+	
+	public void setPen(int newColor, float newSize) {
+		float[] newHSV = {0,0,0};
+		Color.colorToHSV(newColor, newHSV);
+		mHue = newHSV[0];
+		mSat = newHSV[1];
+		mVal = newHSV[2];
+		mAlpha = Color.alpha(newColor);
+		mSize = newSize;
 	}
 	
 	
