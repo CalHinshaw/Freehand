@@ -26,11 +26,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -45,6 +47,8 @@ public class NoteActivity extends Activity {
 	private RadioGroup mRadioGroup;
 	private PreviousStateAwareRadioButton mEraseButton;
 	private AnchorWindow mEraseMenuWindow;
+	private float eraserSize = 6f;
+	private boolean eraseStrokes = false;
 	private PreviousStateAwareRadioButton mSelectButton;
 	private ArrayList<PenRadioButton> penButtons = new ArrayList<PenRadioButton>(5);
 	
@@ -54,7 +58,11 @@ public class NoteActivity extends Activity {
 	private CompoundButton.OnCheckedChangeListener eraseButtonCheckListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
-				mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, 6, 0);
+				if (eraseStrokes == true) {
+					mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
+				} else {
+					mPresenter.setTool(IActionBarListener.Tool.SMOOTH_ERASER, eraserSize, 0);
+				}
 			}
 		}
 	};
@@ -135,16 +143,24 @@ public class NoteActivity extends Activity {
 		mPresenter = new NoteEditorController();		
 		mNoteView.setListener(mPresenter);
 		
-		View eraseMenu = this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
-		
-		
+		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
 		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
 		
+		final RadioButton smoothEraseButton = (RadioButton) eraseMenu.findViewById(R.id.smooth_erase_button);
+		final SizeSliderView eraseSizeSlider = (SizeSliderView) eraseMenu.findViewById(R.id.eraser_size_slider);
 		
-		
-		
-		
-		
+		mEraseMenuWindow.setDismissListener(new PopupWindow.OnDismissListener() {
+			public void onDismiss() {
+				eraserSize = eraseSizeSlider.getSize();
+				if (smoothEraseButton.isChecked()) {
+					eraseStrokes = false;
+					mPresenter.setTool(IActionBarListener.Tool.SMOOTH_ERASER, eraserSize, 0);
+				} else {
+					mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
+					eraseStrokes = true;
+				}
+			}
+		});
 		
 		// setting up the note view
 		final Object oldData = getLastNonConfigurationInstance();

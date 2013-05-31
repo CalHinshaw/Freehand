@@ -61,4 +61,8 @@ class AnchorWindow {
 	public void show () {
 		mWindow.showAsDropDown(mAnchor);
 	}
+	
+	public void setDismissListener (PopupWindow.OnDismissListener newListener) {
+		mWindow.setOnDismissListener(newListener);
+	}
 }

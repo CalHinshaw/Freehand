@@ -96,7 +96,7 @@ class PenCreatorView extends View {
 		mListener = temp;
 	}
 	
-	private void init(){
+	private void init () {
 		mDensity = getContext().getResources().getDisplayMetrics().density;
 		PALETTE_CIRCLE_TRACKER_RADIUS *= mDensity;		
 		RECTANGLE_TRACKER_OFFSET *= mDensity;

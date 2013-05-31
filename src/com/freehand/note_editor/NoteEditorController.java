@@ -145,7 +145,7 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	private void processStrokeErase (long time, float x, float y, float pressure, boolean stylusUp) {
 		
-		Log.d("PEN", "Stroke Erase");
+		Log.d("PEN", "Stroke Erase  " + Float.toString(toolSize));
 		
 		
 		if (stylusUp == true) {
