@@ -95,7 +95,7 @@ public class NoteActivity extends Activity {
 	private CompoundButton.OnCheckedChangeListener selectButtonListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
-				//mPresenter.setSelector();
+				mPresenter.setTool(IActionBarListener.Tool.STROKE_SELECTOR, 0, 0);
 			}
 		}
 	};
