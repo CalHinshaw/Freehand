@@ -1,8 +1,11 @@
 package com.freehand.ink;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
+import android.graphics.RectF;
 import android.util.Log;
 
 import com.freehand.misc.WrapList;
@@ -190,13 +193,23 @@ public class MiscGeom {
 	private static final double STEP_SIZE = (2 * Math.PI) / CIRCLE.length;
 
 	
-	public static LinkedList<Point> getCircularPoly(Point center, float radius) {
+	public static LinkedList<Point> getLinkedCircularPoly(Point center, float radius) {
 		LinkedList<Point> toReturn = new LinkedList<Point>();
 		for (int i = CIRCLE.length - 1; i >= 0; i--) {
 			toReturn.add(new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y));
 		}
 		return toReturn;
 	}
+	
+	public static WrapList<Point> getWrapCircularPoly(Point center, float radius) {
+		WrapList<Point> toReturn = new WrapList<Point>(CIRCLE.length);
+		for (int i = CIRCLE.length - 1; i >= 0; i--) {
+			toReturn.add(new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y));
+		}
+		return toReturn;
+	}
+	
+	
 
 
 	public static LinkedList<Point> approximateCircularArc (final Point center, final float radius, final boolean clockwise, final Point from, final Point to) {
@@ -392,8 +405,4 @@ public class MiscGeom {
 		
 		return points;
 	}
-	
-	
-	
-	
 }

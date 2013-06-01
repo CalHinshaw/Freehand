@@ -8,8 +8,6 @@ import com.freehand.ink.Vertex;
 import com.freehand.misc.WrapList;
 
 import android.test.AndroidTestCase;
-import android.util.Log;
-
 import junit.framework.Assert;
 
 public class BooleanPolyGeomTests extends AndroidTestCase {
@@ -88,35 +86,6 @@ public class BooleanPolyGeomTests extends AndroidTestCase {
 		// Point-on-point triangles
 		result = BooleanPolyGeom.intersectPolys(tri1, tri2);
 		Assert.assertEquals(4, result.size());
-	}
-	
-	
-	public void testPointInPoly () {
-		boolean result;
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(0.5f, 0.5f), square1);
-		Assert.assertTrue(result);
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(2, 2), square1);
-		Assert.assertFalse(result);
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(1, 0.5f), square1);
-		Assert.assertTrue(result);
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(1, 1), square1);
-		Assert.assertTrue(result);
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(0.99999999999999f, 0.99999999999999f), square1);
-		Assert.assertTrue(result);
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(0.00000000000001f, 0.00000000000001f), square1);
-		Assert.assertTrue(result);
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(1, 0.00000000000001f), square1);
-		Assert.assertTrue(result);
-		
-		result = BooleanPolyGeom.pointInPoly(new Point(1, 0.99999999999999999f), square1);
-		Assert.assertTrue(result);
 	}
 	
 	

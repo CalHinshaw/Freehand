@@ -1,5 +1,6 @@
 package com.freehand.test;
 
+import android.graphics.RectF;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -159,7 +160,12 @@ public class MiscGeomTests extends AndroidTestCase {
 		Assert.assertFalse(MiscGeom.checkCircleContainment(refP, refR, checkP, checkR));
 	}
 	
-	
+	public void testRectF () {
+		RectF a = new RectF(0, 0, 1, 1);
+		RectF b = new RectF(0.25f, 0.25f, 0.75f, 0.75f);
+		
+		Assert.assertTrue(RectF.intersects(a, b));
+	}
 	
 	
 	

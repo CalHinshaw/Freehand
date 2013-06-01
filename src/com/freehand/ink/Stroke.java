@@ -5,12 +5,15 @@ import com.freehand.misc.WrapList;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
 
 public class Stroke {
 	private final WrapList<Point> mPoly;
 	
 	private final Paint mPaint = new Paint();
 	private final Path mPath = new Path();
+	
+	private RectF aabb = null;
 	
 	//private final Paint mDebugPaint = new Paint();
 
@@ -48,5 +51,20 @@ public class Stroke {
 	public void draw (Canvas c) {
 		c.drawPath(mPath, mPaint);
 //		c.drawPath(mPath, mDebugPaint);
+	}
+	
+	/**
+	 * @return this stroke's axis aligned bounding box
+	 */
+	public RectF getAABoundingBox () {
+		if (aabb == null) {
+			aabb = MiscPolyGeom.calcAABoundingBox(mPoly);
+		}
+		
+		return aabb;
+	}
+	
+	public WrapList<Point> getPoly () {
+		return mPoly;
 	}
 }

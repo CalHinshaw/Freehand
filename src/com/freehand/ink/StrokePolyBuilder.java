@@ -83,7 +83,7 @@ public class StrokePolyBuilder {
 		} else {
 			if (sizes.get(0) >= sizes.get(1)) {		// first contains second
 				containingIndex = 0;
-				LinkedList<Point> start = MiscGeom.getCircularPoly(points.get(0), sizes.get(0));
+				LinkedList<Point> start = MiscGeom.getLinkedCircularPoly(points.get(0), sizes.get(0));
 				for (int i = 0; i < start.size()/2; i++) {
 					poly.addLast(start.get(i));
 				}
@@ -247,7 +247,7 @@ public class StrokePolyBuilder {
 	
 	private void updateCap () {
 		if (points.size() == 1) {
-			cap = MiscGeom.getCircularPoly(points.get(0), sizes.get(0));
+			cap = MiscGeom.getLinkedCircularPoly(points.get(0), sizes.get(0));
 		} else if (containingIndex >= 0) {
 			cap = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), poly.getFirst());
 		} else if (points.size() > 1) {

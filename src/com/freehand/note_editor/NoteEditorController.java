@@ -2,13 +2,21 @@ package com.freehand.note_editor;
 
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
+
+import com.freehand.ink.MiscGeom;
+import com.freehand.ink.MiscPolyGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.ink.StrokePolyBuilder;
 import com.freehand.misc.WrapList;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.Log;
 
 class NoteEditorController implements IActionBarListener, INoteCanvasListener {
@@ -74,6 +82,30 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		}
 		
 		mBuilder.draw(c);
+		
+//		// test code below
+//		
+//		Point p2 = new Point (50, 50);
+//		Point p1 = new Point (150, 150);
+//		
+//		WrapList<Point> testPoly = MiscPolyGeom.buildUnitPoly(p1, 10, p2, 30);
+//		Path testPath = new Path();
+//		testPath.moveTo(testPoly.get(0).x, testPoly.get(0).y);
+//		for (Point p : testPoly) {
+//			testPath.lineTo(p.x, p.y);
+//		}
+//		
+//		Paint testPaint = new Paint();
+//		testPaint.setStyle(Paint.Style.STROKE);
+//		testPaint.setAntiAlias(true);
+//		
+//		c.drawPath(testPath, testPaint);
+//		
+//		RectF eraseBox = MiscGeom.calcAABoundingBox(testPoly);
+//		testPaint.setColor(Color.RED);
+//		
+//		c.drawRect(eraseBox, testPaint);
+		
 	}
 	
 	
@@ -119,15 +151,15 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	private void processPen (long time, float x, float y, float pressure, boolean stylusUp) {
 
-			// First scale the input to the current canvas position and pressure sensitivity
-			Point currentPoint = new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
-			float currentSize = toolSize*0.5f + pressure*toolSize*0.5f;
-			
-			// Second add the points to the historical data
-			rawPoints.add(currentPoint);
-			rawPressures.add(pressure);
-			
-			mBuilder.add(currentPoint, currentSize, zoomMultiplier);
+		// First scale the input to the current canvas position and pressure sensitivity
+		Point currentPoint = new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
+		float currentSize = toolSize*0.5f + pressure*toolSize*0.5f;
+		
+		// Second add the points to the historical data
+		rawPoints.add(currentPoint);
+		rawPressures.add(pressure);
+		
+		mBuilder.add(currentPoint, currentSize, zoomMultiplier);
 
 
 		// Terminate strokes when they end
@@ -145,7 +177,37 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	private void processStrokeErase (long time, float x, float y, float pressure, boolean stylusUp) {
 		
-		Log.d("PEN", "Stroke Erase  " + Float.toString(toolSize));
+		// First scale the input to the current canvas position and pressure sensitivity
+		Point currentPoint = new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
+		float currentSize = toolSize*0.5f + pressure*toolSize*0.5f;
+		
+		// Second add the points to the historical data
+		rawPoints.add(currentPoint);
+		rawPressures.add(currentSize);
+		
+		
+		WrapList<Point> erasePoly;
+		
+		if (rawPoints.size() == 1) {
+			erasePoly = MiscGeom.getWrapCircularPoly(currentPoint, currentSize);
+		} else {
+			erasePoly = MiscPolyGeom.buildUnitPoly(rawPoints.get(rawPoints.size()-2), rawPressures.get(rawPressures.size()-2),
+				rawPoints.get(rawPoints.size()-1), rawPressures.get(rawPressures.size()-1));
+		}
+
+		RectF eraseBox = MiscPolyGeom.calcAABoundingBox(erasePoly);
+		
+		
+		Iterator<Stroke> iter = mStrokes.iterator();
+		
+		while (iter.hasNext()) {
+			Stroke s = iter.next();
+			if (RectF.intersects(eraseBox, s.getAABoundingBox())) {
+				if (MiscPolyGeom.checkPolyIntersection(erasePoly, s.getPoly()) == true) {
+					iter.remove();
+				}
+			}
+		}
 		
 		
 		if (stylusUp == true) {

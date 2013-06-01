@@ -126,47 +126,9 @@ public class BooleanPolyGeom {
 		}
 	}
 	
-	/**
-	 * UNTESTED, DON'T TRUST! (it's from the prototype ink when I was using polylines and PointF)
-	 * Is supposed to be closed.
-	 */
-	public static boolean pointInPoly (Point point, WrapList<Point> poly) {
-		// -1 if not valid, else 0 if below and 1 if above
-		int ptState = -1;
-		int intersections = 0;
-		
-		for (int i = 0; i <= poly.size(); i++) {
-			if (poly.get(i).x < point.x) {
-				ptState = -1;
-			} else {
-				if (ptState == -1) {
-					if (poly.get(i).y >= point.y) {
-						ptState = 1;
-					} else if (poly.get(i).y < point.y){
-						ptState = 0;
-					}
-				} else if ((poly.get(i).y >= point.y) && ptState == 0) {
-					intersections++;
-					ptState = 1;
-				} else if ((poly.get(i).y <= point.y) && ptState == 1) {
-					intersections++;
-					ptState = 0;
-				}
-			}
-		}
-		
-		
-		if (intersections >=1 && intersections%2 == 1) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	
 	public static void setInOut (WrapList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
 		Collections.sort(graph, new Vertex.p1Comparator());
-		boolean currentlyOut = !pointInPoly(p1.get(0), p2);
+		boolean currentlyOut = !MiscPolyGeom.jctPointInPoly(p1.get(0), p2);
 		
 		for (Vertex v : graph) {
 			v.poly1Entry = currentlyOut;
@@ -231,7 +193,7 @@ public class BooleanPolyGeom {
 	public static ArrayList<WrapList<Point>> rawUnion (WrapList<Vertex> graph, WrapList<Point> p1, WrapList<Point> p2) {
 		
 		if (graph.size() < 2) {
-			if (pointInPoly(p1.get(0), p2)) {
+			if (MiscPolyGeom.jctPointInPoly(p1.get(0), p2)) {
 				ArrayList<WrapList<Point>> raw = new ArrayList<WrapList<Point>>(5);
 				raw.add(p2);
 				return raw;
@@ -368,12 +330,12 @@ public class BooleanPolyGeom {
 		if (points.size() == 0) {
 			return new WrapList<Point>(0);
 		} else if (points.size() == 1) {
-			return UnitPolyGeom.getCircularPoly(points.get(0), sizes.get(0));
+			return MiscGeom.getWrapCircularPoly(points.get(0), sizes.get(0));
 		} else {
-			WrapList<Point> current = UnitPolyGeom.buildUnitPoly(sizes.get(0), sizes.get(1), points.get(0), points.get(1));
+			WrapList<Point> current = MiscPolyGeom.buildUnitPoly(points.get(0), sizes.get(0), points.get(1), sizes.get(1));
 			
 			for (int i = 1; i < points.size()-1; i++) {
-				WrapList<Point> newPoly = UnitPolyGeom.buildUnitPoly(sizes.get(i), sizes.get(i+1), points.get(i), points.get(i+1));
+				WrapList<Point> newPoly = MiscPolyGeom.buildUnitPoly(points.get(i), sizes.get(i), points.get(i+1), sizes.get(i+1));
 				current = union(current, newPoly);
 			}
 			
