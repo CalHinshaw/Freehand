@@ -15,9 +15,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.RectF;
-import android.util.Log;
 
 class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	// The note data about all of the old strokes
@@ -25,7 +23,7 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 
 	// The data for the current stroke
 	private ArrayList<Point> rawPoints = new ArrayList<Point>();
-	private ArrayList<Float> rawPressures = new ArrayList<Float>();
+	private ArrayList<Float> rawSizes = new ArrayList<Float>();
 	private final StrokePolyBuilder mBuilder = new StrokePolyBuilder();
 	
 	// The information about where the screen is on the canvas
@@ -45,18 +43,47 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	private float canvasYOffset = -1;
 	private float canvasXOffset = -1;
 	
+	private Point eCircCent;
+	private float eCircRad;
+	private Paint eCircPaint;
+	
+	public NoteEditorController () {
+		eCircPaint = new Paint(Color.BLACK);
+		eCircPaint.setStyle(Paint.Style.STROKE);
+		eCircPaint.setStrokeWidth(2.5f);
+		eCircPaint.setAntiAlias(true);
+	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
 	
-	public void stylusAction (long time, float x, float y, float pressure, boolean stylusUp) {
+	public void stylusAction (long time, float x, float y, float pressure, boolean stylusUp) {		
 		switch (currentTool) {
 			case PEN:
-				processPen(time, x, y, pressure, stylusUp);
+				rawPoints.add(scaleRawPoint(x, y));
+				rawSizes.add(scaleRawPressure(pressure));
+				processPen(stylusUp);
 				break;
 			case STROKE_ERASER:
-				processStrokeErase(time, x, y, pressure, stylusUp);
+				Point currentPoint = scaleRawPoint(x, y);
+				
+				if (rawPoints.size() == 0 || MiscGeom.distance(currentPoint, rawPoints.get(rawPoints.size()-1)) > 2.5f/zoomMultiplier) {
+					rawPoints.add(currentPoint);
+					processStrokeErase(stylusUp);
+				}
+				
+				if (stylusUp == false) {
+					updateEraseCircle(currentPoint);
+				} else {
+					resetEraseCircle();
+					rawPoints.clear();
+					rawSizes.clear();
+				}
+				
 				break;
 		}
+		
+
+		
 	}
 	
 	public void fingerAction (long time, float x, float y, float pressure, boolean fingerUp) {
@@ -65,6 +92,12 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	public void hoverAction (long time, float x, float y, boolean hoverEnded) {
 		// TODO Implement for logging. This method shouldn't effect the cached node representation.
+		
+		if (hoverEnded == false) {
+			updateEraseCircle(scaleRawPoint(x, y));
+		} else {
+			resetEraseCircle();
+		}
 	}
 	
 	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom) {
@@ -82,6 +115,10 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		}
 		
 		mBuilder.draw(c);
+		
+		if (currentTool == IActionBarListener.Tool.STROKE_ERASER && eCircCent != null) {
+			c.drawCircle(eCircCent.x, eCircCent.y, eCircRad, eCircPaint);
+		}
 		
 //		// test code below
 //		
@@ -149,18 +186,8 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		c.setMatrix(transformMatrix);
 	}
 	
-	private void processPen (long time, float x, float y, float pressure, boolean stylusUp) {
-
-		// First scale the input to the current canvas position and pressure sensitivity
-		Point currentPoint = new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
-		float currentSize = toolSize*0.5f + pressure*toolSize*0.5f;
-		
-		// Second add the points to the historical data
-		rawPoints.add(currentPoint);
-		rawPressures.add(pressure);
-		
-		mBuilder.add(currentPoint, currentSize, zoomMultiplier);
-
+	private void processPen (boolean stylusUp) {		
+		mBuilder.add(rawPoints.get(rawPoints.size()-1), rawSizes.get(rawSizes.size()-1), zoomMultiplier);
 
 		// Terminate strokes when they end
 		if (stylusUp == true) {
@@ -171,35 +198,21 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 			mBuilder.reset();
 			
 			rawPoints.clear();
-			rawPressures.clear();
+			rawSizes.clear();
 		}
 	}
 	
-	private void processStrokeErase (long time, float x, float y, float pressure, boolean stylusUp) {
-		
-		// First scale the input to the current canvas position and pressure sensitivity
-		Point currentPoint = new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
-		float currentSize = toolSize*0.5f + pressure*toolSize*0.5f;
-		
-		// Second add the points to the historical data
-		rawPoints.add(currentPoint);
-		rawPressures.add(currentSize);
-		
-		
+	private void processStrokeErase (boolean stylusUp) {
 		WrapList<Point> erasePoly;
 		
 		if (rawPoints.size() == 1) {
-			erasePoly = MiscGeom.getWrapCircularPoly(currentPoint, currentSize);
+			erasePoly = MiscGeom.getWrapCircularPoly(rawPoints.get(rawPoints.size()-1), toolSize);
 		} else {
-			erasePoly = MiscPolyGeom.buildUnitPoly(rawPoints.get(rawPoints.size()-2), rawPressures.get(rawPressures.size()-2),
-				rawPoints.get(rawPoints.size()-1), rawPressures.get(rawPressures.size()-1));
+			erasePoly = MiscPolyGeom.buildUnitPoly(rawPoints.get(rawPoints.size()-2), toolSize, rawPoints.get(rawPoints.size()-1), toolSize);
 		}
-
 		RectF eraseBox = MiscPolyGeom.calcAABoundingBox(erasePoly);
 		
-		
 		Iterator<Stroke> iter = mStrokes.iterator();
-		
 		while (iter.hasNext()) {
 			Stroke s = iter.next();
 			if (RectF.intersects(eraseBox, s.getAABoundingBox())) {
@@ -208,14 +221,25 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 				}
 			}
 		}
-		
-		
-		if (stylusUp == true) {
-			rawPoints.clear();
-			rawPressures.clear();
-		}
 	}
 	
+	private Point scaleRawPoint (float x, float y) {
+		return new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
+	}
+	
+	private float scaleRawPressure (float pressure) {
+		return toolSize*0.6f + pressure*toolSize*0.4f;
+	}
+	
+	private void updateEraseCircle (Point newPoint) {
+		eCircCent = newPoint;
+		eCircRad = toolSize;
+	}
+	
+	private void resetEraseCircle () {
+		eCircCent = null;
+		eCircRad = 0;
+	}
 	
 //	private void visualPolyTests (Canvas c) {
 	

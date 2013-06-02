@@ -418,17 +418,12 @@ class PenCreatorView extends View {
 	}
 	
 	private float pointToSize (float x) {
-		final RectF rect = mAlphaRect;
-		final int width = (int) rect.width();
-		
-		if(x < rect.left){
+		if (x < mAlphaRect.left) {
 			x = 0;
-		}
-		else if(x > rect.right){
-			x = width;
-		}
-		else{
-			x = x - (int)rect.left;
+		} else if (x > mAlphaRect.right) {
+			x = mAlphaRect.width();
+		} else {
+			x = x - (int)mAlphaRect.left;
 		}
 		
 		return mSizeRect.height() - (x*mSizeRect.height() / width);

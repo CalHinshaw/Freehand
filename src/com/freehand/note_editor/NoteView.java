@@ -69,6 +69,7 @@ public class NoteView extends View {
 			canDraw = true;
 		}
 		
+		invalidate();
 		return true;
 	}
 	
@@ -88,8 +89,6 @@ public class NoteView extends View {
 		} else if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
 			mListener.fingerAction(e.getEventTime(), e.getX(), e.getY(), e.getPressure(), e.getAction() == MotionEvent.ACTION_UP);
 		}
-		
-		invalidate();
 	}
 	
 	private void processPanZoom (MotionEvent event) {
@@ -109,8 +108,6 @@ public class NoteView extends View {
 		previousDistance = currentDistance;
 		previousX = currentX;
 		previousY = currentY;
-		
-		invalidate();
 	}
 	
 	
@@ -122,6 +119,7 @@ public class NoteView extends View {
 		
 		mListener.hoverAction(e.getEventTime(), e.getX(), e.getY(), e.getAction() == MotionEvent.ACTION_HOVER_EXIT);
 		
+		invalidate();
 		return true;
 	}
 	
