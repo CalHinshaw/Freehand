@@ -22,8 +22,9 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	private LinkedList<Stroke> mStrokes = new LinkedList<Stroke>();
 
 	// The data for the current stroke
-	private ArrayList<Point> rawPoints = new ArrayList<Point>();
-	private ArrayList<Float> rawSizes = new ArrayList<Float>();
+	private ArrayList<Point> points = new ArrayList<Point>();
+	private ArrayList<Float> sizes = new ArrayList<Float>();
+	private ArrayList<Long> times = new ArrayList<Long>();
 	private final StrokePolyBuilder mBuilder = new StrokePolyBuilder();
 	
 	// The information about where the screen is on the canvas
@@ -56,18 +57,19 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
 	
-	public void stylusAction (long time, float x, float y, float pressure, boolean stylusUp) {		
+	public void stylusAction (long time, float x, float y, float pressure, boolean stylusUp) {
 		switch (currentTool) {
 			case PEN:
-				rawPoints.add(scaleRawPoint(x, y));
-				rawSizes.add(scaleRawPressure(pressure));
+				points.add(scaleRawPoint(x, y));
+				sizes.add(scaleRawPressure(pressure));
 				processPen(stylusUp);
 				break;
 			case STROKE_ERASER:
 				Point currentPoint = scaleRawPoint(x, y);
 				
-				if (rawPoints.size() == 0 || MiscGeom.distance(currentPoint, rawPoints.get(rawPoints.size()-1)) > 2.5f/zoomMultiplier) {
-					rawPoints.add(currentPoint);
+				if (points.size() == 0 || MiscGeom.distance(currentPoint, points.get(points.size()-1)) > 10.0f/zoomMultiplier || time-times.get(times.size()-1) >= 100) {
+					times.add(time);
+					points.add(currentPoint);
 					processStrokeErase(stylusUp);
 				}
 				
@@ -75,15 +77,13 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 					updateEraseCircle(currentPoint);
 				} else {
 					resetEraseCircle();
-					rawPoints.clear();
-					rawSizes.clear();
+					points.clear();
+					sizes.clear();
+					times.clear();
 				}
 				
 				break;
 		}
-		
-
-		
 	}
 	
 	public void fingerAction (long time, float x, float y, float pressure, boolean fingerUp) {
@@ -187,7 +187,7 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	}
 	
 	private void processPen (boolean stylusUp) {		
-		mBuilder.add(rawPoints.get(rawPoints.size()-1), rawSizes.get(rawSizes.size()-1), zoomMultiplier);
+		mBuilder.add(points.get(points.size()-1), sizes.get(sizes.size()-1), zoomMultiplier);
 
 		// Terminate strokes when they end
 		if (stylusUp == true) {
@@ -197,18 +197,18 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 			}
 			mBuilder.reset();
 			
-			rawPoints.clear();
-			rawSizes.clear();
+			points.clear();
+			sizes.clear();
 		}
 	}
 	
 	private void processStrokeErase (boolean stylusUp) {
 		WrapList<Point> erasePoly;
 		
-		if (rawPoints.size() == 1) {
-			erasePoly = MiscGeom.getWrapCircularPoly(rawPoints.get(rawPoints.size()-1), toolSize);
+		if (points.size() == 1) {
+			erasePoly = MiscGeom.getWrapCircularPoly(points.get(points.size()-1), toolSize);
 		} else {
-			erasePoly = MiscPolyGeom.buildUnitPoly(rawPoints.get(rawPoints.size()-2), toolSize, rawPoints.get(rawPoints.size()-1), toolSize);
+			erasePoly = MiscPolyGeom.buildUnitPoly(points.get(points.size()-2), toolSize, points.get(points.size()-1), toolSize);
 		}
 		RectF eraseBox = MiscPolyGeom.calcAABoundingBox(erasePoly);
 		

@@ -3,6 +3,7 @@ package com.freehand.ink;
 import java.util.List;
 
 import android.graphics.RectF;
+import android.util.Log;
 
 import com.freehand.misc.WrapList;
 
@@ -106,7 +107,6 @@ public class MiscPolyGeom {
 	}
 	
 	public static boolean checkPolyIntersection (WrapList<Point> p1, WrapList<Point> p2) {
-		
 		if (nzPointInPoly(p1.get(0), p2) == true) {
 			return true;
 		}
