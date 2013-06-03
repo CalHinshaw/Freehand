@@ -405,4 +405,74 @@ public class MiscGeom {
 		
 		return points;
 	}
+	
+	
+	public static float segDistSquared (Point aT, Point aH, Point bT, Point bH) {
+		if (aT.equals(aH)) {
+			aH = new Point(aH.x + 0.00001f, aH.y + 0.00001f);
+		}
+		
+		if (bT.equals(bH)) {
+			bH = new Point(bH.x + 0.00001f, aH.y + 0.00001f);
+		}
+		
+		float denominator = (bH.y-bT.y)*(aH.x-aT.x)-(bH.x-bT.x)*(aH.y-aT.y);
+
+		if (denominator == 0) {
+			denominator+= 0.001f;
+		}
+
+		float Ta = ((bH.x-bT.x)*(aT.y-bT.y)-(bH.y-bT.y)*(aT.x-bT.x))/denominator;
+		float Tb = ((aH.x-aT.x)*(aT.y-bT.y)-(aH.y-aT.y)*(aT.x-bT.x))/denominator;
+
+		if (Ta <= 1 && Ta >= 0 && Tb <= 1 && Tb >= 0) {
+			return 0;     //segments intersect
+		}
+
+		float lowestDist = Float.MAX_VALUE;
+		float tempDist;
+
+		if (Ta<0) {
+			tempDist = ptSegDistSq(bT, bH, aT);
+			if (tempDist < lowestDist) {
+				lowestDist = tempDist;
+			}
+		} else if (Ta>1) {
+			tempDist = ptSegDistSq(bT, bH, aH);
+			if (tempDist < lowestDist) {
+				lowestDist = tempDist;
+			}
+		}
+
+		if (Tb < 0) {
+			tempDist = ptSegDistSq(aT, aH, bT);
+			if (tempDist < lowestDist) {
+				lowestDist = tempDist;
+			}
+		} else if (Tb>1) {
+			tempDist = ptSegDistSq(aT, aH, bH);
+			if (tempDist < lowestDist) {
+				lowestDist = tempDist;
+			}
+		}
+
+		return lowestDist;
+	}
+
+	public static float ptSegDistSq (Point sT, Point sH, Point p) {
+		if (sT.equals(sH)) {
+			return distSq(sT, p);
+		}
+
+		float u = ((p.x-sT.x)*(sH.x-sT.x) + (p.y-sT.y)*(sH.x-sT.y))/distSq(sT, sH);
+
+		if (u < 0) {
+			return distSq(sT, p);
+		} else if (u > 1) {
+			return distSq(sH, p);
+		} else {
+			Point closePtOnSeg = new Point(sT.x + u*(sH.x-sT.x), sT.y + u*(sH.y-sT.y));
+			return distSq(closePtOnSeg, p);
+		}
+	}
 }
