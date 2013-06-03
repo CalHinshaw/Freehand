@@ -115,11 +115,28 @@ public class MiscPolyGeom {
 			return true;
 		}
 		
-		for (int i = 0; i <= p1.size(); i++) {
-			for (int j = 0; j <= p2.size(); j++) {
+		for (int i = 0; i < p1.size(); i++) {
+			for (int j = 0; j < p2.size(); j++) {
 				if (MiscGeom.calcIntersection(p1.get(i+1), p1.get(i), p2.get(j+1), p2.get(j)) != null) {
 					return true;
 				}
+			}
+		}
+		
+		return false;
+	}
+	
+	public static boolean checkCapsulePolyIntersection (WrapList<Point> poly, Point sT, Point sH, float rad) {
+		// Check to see if the capsule is inside of the poly
+		if (nzPointInPoly(sT, poly) == true) {
+			return true;
+		}
+		
+		// Check to see if any of the edges of poly are within the radius of the capsule
+		float radSq = rad*rad;
+		for (int i = 0; i < poly.size(); i++) {
+			if (MiscGeom.segDistSquared(sT, sH, poly.get(i), poly.get(i+1)) <= radSq) {
+				return true;
 			}
 		}
 		

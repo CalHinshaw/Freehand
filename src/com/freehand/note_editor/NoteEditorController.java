@@ -118,8 +118,10 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		mBuilder.draw(c);
 		
 		if (currentTool == IActionBarListener.Tool.STROKE_ERASER && eCircCent != null) {
-			eCircPaint.setStrokeWidth(2f/zoomMultiplier);
-			c.drawCircle(eCircCent.x, eCircCent.y, eCircRad, eCircPaint);
+			float scaledWidth = 2.0f/zoomMultiplier;
+			
+			eCircPaint.setStrokeWidth(scaledWidth);
+			c.drawCircle(eCircCent.x, eCircCent.y, eCircRad/zoomMultiplier - scaledWidth, eCircPaint);
 		}
 		
 //		// test code below
@@ -205,21 +207,31 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	}
 	
 	private void processStrokeErase (boolean stylusUp) {
-		WrapList<Point> erasePoly;
+		
+		float scaledSize = toolSize/zoomMultiplier;
 		
 		if (points.size() == 1) {
-			erasePoly = MiscGeom.getWrapCircularPoly(points.get(points.size()-1), toolSize);
-		} else {
-			erasePoly = MiscPolyGeom.buildUnitPoly(points.get(points.size()-2), toolSize, points.get(points.size()-1), toolSize);
-		}
-		RectF eraseBox = MiscPolyGeom.calcAABoundingBox(erasePoly);
-		
-		Iterator<Stroke> iter = mStrokes.iterator();
-		while (iter.hasNext()) {
-			Stroke s = iter.next();
-			if (RectF.intersects(eraseBox, s.getAABoundingBox())) {
-				if (MiscPolyGeom.checkPolyIntersection(erasePoly, s.getPoly()) == true) {
-					iter.remove();
+			RectF eraseBox = MiscGeom.calcCapsuleAABB(points.get(0), points.get(0), scaledSize);
+			
+			Iterator<Stroke> iter = mStrokes.iterator();
+			while (iter.hasNext()) {
+				Stroke s = iter.next();
+				if (RectF.intersects(eraseBox, s.getAABoundingBox())) {
+					if (MiscPolyGeom.checkCapsulePolyIntersection(s.getPoly(), points.get(0), points.get(0), scaledSize) == true) {
+						iter.remove();
+					}
+				}
+			}
+		} else if (points.size() >= 2) {
+			RectF eraseBox = MiscGeom.calcCapsuleAABB(points.get(points.size()-2), points.get(points.size()-1), scaledSize);
+			
+			Iterator<Stroke> iter = mStrokes.iterator();
+			while (iter.hasNext()) {
+				Stroke s = iter.next();
+				if (RectF.intersects(eraseBox, s.getAABoundingBox())) {
+					if (MiscPolyGeom.checkCapsulePolyIntersection(s.getPoly(), points.get(points.size()-2), points.get(points.size()-1), scaledSize) == true) {
+						iter.remove();
+					}
 				}
 			}
 		}

@@ -408,12 +408,16 @@ public class MiscGeom {
 	
 	
 	public static float segDistSquared (Point aT, Point aH, Point bT, Point bH) {
-		if (aT.equals(aH)) {
-			aH = new Point(aH.x + 0.00001f, aH.y + 0.00001f);
-		}
 		
-		if (bT.equals(bH)) {
-			bH = new Point(bH.x + 0.00001f, aH.y + 0.00001f);
+		boolean aIsEqual = aT.equals(aH);
+		boolean bIsEqual = bT.equals(bH);
+		
+		if (aIsEqual && bIsEqual) {
+			return distSq(aT, bT);
+		} else if (bIsEqual) {
+			return ptSegDistSq(aT, aH, bT);
+		} else if (aIsEqual) {
+			return ptSegDistSq(bT, bH, aT);
 		}
 		
 		float denominator = (bH.y-bT.y)*(aH.x-aT.x)-(bH.x-bT.x)*(aH.y-aT.y);
@@ -474,5 +478,27 @@ public class MiscGeom {
 			Point closePtOnSeg = new Point(sT.x + u*(sH.x-sT.x), sT.y + u*(sH.y-sT.y));
 			return distSq(closePtOnSeg, p);
 		}
+	}
+	
+	public static RectF calcCapsuleAABB (Point capT, Point capH, float rad) {
+		RectF aabb = new RectF();
+		
+		if (capT.y < capH.y) {
+			aabb.top = capT.y - rad;
+			aabb.bottom = capH.y + rad;
+		} else {
+			aabb.top = capH.y - rad;
+			aabb.bottom = capT.y + rad;
+		}
+		
+		if (capT.x < capH.x) {
+			aabb.left = capT.x - rad;
+			aabb.right = capH.x + rad;
+		} else {
+			aabb.left = capH.x - rad;
+			aabb.right = capT.x + rad;
+		}
+		
+		return aabb;
 	}
 }
