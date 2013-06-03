@@ -25,6 +25,8 @@ class SizeSliderView extends View {
 	
 	private float lastSliderX = 0f;
 	private Paint sliderPaint;
+	
+	private IActionBarListener mListener;
 
 	public SizeSliderView(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -61,6 +63,10 @@ class SizeSliderView extends View {
 		c.drawRoundRect(sliderRect, 2*screenDensity, 2*screenDensity, sliderPaint);
 	}
 	
+	public void setActionBarListener (IActionBarListener newListener) {
+		mListener = newListener;
+	}
+	
 	@Override
 	public boolean onTouchEvent (MotionEvent e) {
 		lastSliderX = e.getX();
@@ -69,6 +75,10 @@ class SizeSliderView extends View {
 			lastSliderX = BUFFER;
 		} else if (lastSliderX > getWidth()-BUFFER) {
 			lastSliderX = getWidth()-BUFFER;
+		}
+		
+		if (mListener != null) {
+			mListener.setTool(IActionBarListener.Tool.STROKE_ERASER, getSize(), 0);
 		}
 		
 		invalidate();

@@ -48,10 +48,11 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	private float eCircRad;
 	private Paint eCircPaint;
 	
+	private Paint selectorPaint;
+	
 	public NoteEditorController () {
 		eCircPaint = new Paint(Color.BLACK);
 		eCircPaint.setStyle(Paint.Style.STROKE);
-		eCircPaint.setStrokeWidth(2.5f);
 		eCircPaint.setAntiAlias(true);
 	}
 	
@@ -117,6 +118,7 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		mBuilder.draw(c);
 		
 		if (currentTool == IActionBarListener.Tool.STROKE_ERASER && eCircCent != null) {
+			eCircPaint.setStrokeWidth(2f/zoomMultiplier);
 			c.drawCircle(eCircCent.x, eCircCent.y, eCircRad, eCircPaint);
 		}
 		

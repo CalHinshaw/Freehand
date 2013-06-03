@@ -8,6 +8,7 @@
     android:orientation="vertical"
     android:background="@color/dkgray" >
     
+    <!-- 
     <RadioGroup 
         android:orientation="vertical"
         android:layout_width="fill_parent"
@@ -30,7 +31,7 @@
 			android:textColor="@color/ltgray" />
     	
     </RadioGroup>
-    
+     -->
 
 	<com.freehand.note_editor.SizeSliderView
 	    android:id="@+id/eraser_size_slider"
@@ -38,7 +39,8 @@
         android:layout_height="30dip"
         android:layout_marginLeft="5dip"
         android:layout_marginRight="5dip"
-        android:layout_marginBottom="5dip" />
+        android:layout_marginBottom="5dip"
+        android:layout_marginTop = "5dip" />
     
     
     

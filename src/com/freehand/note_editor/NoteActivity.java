@@ -48,7 +48,7 @@ public class NoteActivity extends Activity {
 	private PreviousStateAwareRadioButton mEraseButton;
 	private AnchorWindow mEraseMenuWindow;
 	private float eraserSize = 6f;
-	private boolean eraseStrokes = false;
+	private boolean eraseStrokes = true;
 	private PreviousStateAwareRadioButton mSelectButton;
 	private ArrayList<PenRadioButton> penButtons = new ArrayList<PenRadioButton>(5);
 	
@@ -146,19 +146,20 @@ public class NoteActivity extends Activity {
 		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
 		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
 		
-		final RadioButton smoothEraseButton = (RadioButton) eraseMenu.findViewById(R.id.smooth_erase_button);
+		//final RadioButton smoothEraseButton = (RadioButton) eraseMenu.findViewById(R.id.smooth_erase_button);
 		final SizeSliderView eraseSizeSlider = (SizeSliderView) eraseMenu.findViewById(R.id.eraser_size_slider);
+		eraseSizeSlider.setActionBarListener(mPresenter);
 		
 		mEraseMenuWindow.setDismissListener(new PopupWindow.OnDismissListener() {
 			public void onDismiss() {
 				eraserSize = eraseSizeSlider.getSize();
-				if (smoothEraseButton.isChecked()) {
-					eraseStrokes = false;
-					mPresenter.setTool(IActionBarListener.Tool.SMOOTH_ERASER, eraserSize, 0);
-				} else {
+//				if (smoothEraseButton.isChecked()) {
+//					eraseStrokes = false;
+//					mPresenter.setTool(IActionBarListener.Tool.SMOOTH_ERASER, eraserSize, 0);
+//				} else {
 					mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
-					eraseStrokes = true;
-				}
+//					eraseStrokes = true;
+//				}
 			}
 		});
 		
