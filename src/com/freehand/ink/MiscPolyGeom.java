@@ -49,7 +49,7 @@ public class MiscPolyGeom {
 	public static int calcWindingNum (Point point, WrapList<Point> poly) {
 		int windingNum = 0;    // the  winding number counter
 
-		for (int i=0; i <= poly.size(); i++) {
+		for (int i=0; i < poly.size(); i++) {
 			if (poly.get(i).y <= point.y && poly.get(i+1).y > point.y) {
 				// The current polygon edge is crossing the horizontal line y = point.y going up in this branch.
 				// The equalities in the conditional are important to ensure that intersections, even directly on
