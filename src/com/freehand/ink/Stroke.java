@@ -3,6 +3,7 @@ package com.freehand.ink;
 import com.freehand.misc.WrapList;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -16,7 +17,7 @@ public class Stroke {
 	
 	private RectF aabb = null;
 	
-	//private final Paint mDebugPaint = new Paint();
+	private final Paint mDebugPaint = new Paint();
 
 	/**
 	 * Creates a new immutable Stroke object from the List<Point> object argument. polygon must have at least three points. If it doesn't
@@ -30,12 +31,10 @@ public class Stroke {
 		mPoly = poly;
 		
 		mPaint.setColor(color);
-//		mPaint.setAlpha(0x50);
 		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setAntiAlias(true);
 		
 //		mDebugPaint.setColor(color);
-//		mDebugPaint.setAlpha(0xFF);
 //		mDebugPaint.setStyle(Paint.Style.STROKE);
 //		mDebugPaint.setStrokeWidth(0);
 //		mDebugPaint.setAntiAlias(true);
@@ -52,6 +51,12 @@ public class Stroke {
 	public void draw (Canvas c) {
 		c.drawPath(mPath, mPaint);
 //		c.drawPath(mPath, mDebugPaint);
+	}
+	
+	public void drawSelected (Canvas c) {
+		mPaint.setShadowLayer(6, 0, 0, Color.BLACK);
+		c.drawPath(mPath, mPaint);
+		mPaint.setShadowLayer(0, 0, 0, 0);
 	}
 	
 	/**

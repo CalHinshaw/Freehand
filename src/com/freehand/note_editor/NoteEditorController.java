@@ -13,16 +13,22 @@ import com.freehand.ink.StrokePolyBuilder;
 import com.freehand.misc.WrapList;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
+import android.util.Log;
 
 class NoteEditorController implements IActionBarListener, INoteCanvasListener {
+	
+	private NoteView mNoteView;
+	
 	// The note data about all of the old strokes
 	private LinkedList<Stroke> mStrokes = new LinkedList<Stroke>();
 
 	// The data for the current stroke
-	private ArrayList<Point> points = new ArrayList<Point>();
+	private WrapList<Point> points = new WrapList<Point>();
 	private ArrayList<Float> sizes = new ArrayList<Float>();
 	private ArrayList<Long> times = new ArrayList<Long>();
 	private final StrokePolyBuilder mBuilder = new StrokePolyBuilder();
@@ -44,16 +50,42 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	private float canvasYOffset = -1;
 	private float canvasXOffset = -1;
 	
+	// Eraser fields
 	private Point eCircCent;
 	private float eCircRad;
 	private Paint eCircPaint;
 	
-	private Paint selectorPaint;
+	// Selector fields
+	private Paint lassoBorderPaint;
+	private Paint lassoShadePaint;
+	private Path lassoPath = new Path();
+	private Paint selectionRectPaint;
+	private ArrayList<Stroke> selections = null;
+	private RectF selectionRect = null;
 	
-	public NoteEditorController () {
+	public NoteEditorController (NoteView newNoteView) {
+		mNoteView = newNoteView;
+		
 		eCircPaint = new Paint(Color.BLACK);
 		eCircPaint.setStyle(Paint.Style.STROKE);
 		eCircPaint.setAntiAlias(true);
+		
+		lassoPath.setFillType(Path.FillType.WINDING);
+		
+		lassoBorderPaint = new Paint();
+		lassoBorderPaint.setColor(Color.RED);
+		lassoBorderPaint.setStyle(Paint.Style.STROKE);
+		lassoBorderPaint.setAntiAlias(true);
+		
+		lassoShadePaint = new Paint();
+		lassoShadePaint.setColor(0x50CCCCCC);
+		lassoShadePaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		lassoShadePaint.setAntiAlias(true);
+		
+		selectionRectPaint = new Paint();
+		selectionRectPaint.setColor(0xFF33B5E5);
+		selectionRectPaint.setStyle(Paint.Style.STROKE);
+		selectionRectPaint.setAntiAlias(true);
 	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
@@ -82,6 +114,41 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 					sizes.clear();
 					times.clear();
 				}
+				break;
+			case STROKE_SELECTOR:
+				points.add(scaleRawPoint(x, y));
+				
+				if (stylusUp == true) {
+					RectF lassoRect = MiscPolyGeom.calcAABoundingBox(points);
+					selections = new ArrayList<Stroke>();
+					
+					for (Stroke s : mStrokes) {
+						if (RectF.intersects(lassoRect, s.getAABoundingBox())) {
+							if (MiscPolyGeom.checkPolyIntersection(s.getPoly(), points) == true) {
+								selections.add(s);
+							}
+						}
+					}
+					
+					selectionRect = null;
+					if (selections.size() > 0) {
+						for (Stroke s : selections) {
+							if (selectionRect == null) {
+								selectionRect = new RectF(s.getAABoundingBox());
+							} else {
+								selectionRect.union(s.getAABoundingBox());
+							}
+						}
+						
+						float buffer = 15.0f/zoomMultiplier;
+						selectionRect.left -= buffer;
+						selectionRect.top -= buffer;
+						selectionRect.right += buffer;
+						selectionRect.bottom += buffer;
+					}
+					
+					points.clear();
+				}
 				
 				break;
 		}
@@ -101,52 +168,77 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		}
 	}
 	
-	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom) {
-		windowX += screenDx/zoomMultiplier;
-		windowY += screenDy/zoomMultiplier;
-		zoomMultiplier *= dZoom;
+	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, RectF boundingRect) {
+		
+		boolean consumed = false;
+		if (currentTool == IActionBarListener.Tool.STROKE_SELECTOR && selectionRect != null) {
+			scaleRawRect(boundingRect);
+			if (selectionRect.contains(boundingRect)) {
+				Log.d("PEN", "transform");
+				consumed = true;
+			}
+		}
+		
+		if (consumed == false) {
+			windowX += screenDx/zoomMultiplier;
+			windowY += screenDy/zoomMultiplier;
+			zoomMultiplier *= dZoom;
+		}
 	}
 	
 	public void drawNote (Canvas c) {
 		updatePanZoom(c);
 		c.drawColor(0xffffffff);
 		
-		for (Stroke s : mStrokes) {
-			s.draw(c);
-		}
 		
-		mBuilder.draw(c);
 		
-		if (currentTool == IActionBarListener.Tool.STROKE_ERASER && eCircCent != null) {
-			float scaledWidth = 2.0f/zoomMultiplier;
+		if (currentTool == IActionBarListener.Tool.PEN) {
+			for (Stroke s : mStrokes) {
+				s.draw(c);
+			}
+			mBuilder.draw(c);
+		} else if (currentTool == IActionBarListener.Tool.STROKE_ERASER) {
+			for (Stroke s : mStrokes) {
+				s.draw(c);
+			}
 			
-			eCircPaint.setStrokeWidth(scaledWidth);
-			c.drawCircle(eCircCent.x, eCircCent.y, eCircRad/zoomMultiplier - scaledWidth, eCircPaint);
+			if (eCircCent != null) {
+				float scaledWidth = 2.0f/zoomMultiplier;
+				eCircPaint.setStrokeWidth(scaledWidth);
+				c.drawCircle(eCircCent.x, eCircCent.y, eCircRad/zoomMultiplier - scaledWidth, eCircPaint);
+			}
+			
+		} else if (currentTool == IActionBarListener.Tool.STROKE_SELECTOR) {
+			
+			for (Stroke s : mStrokes) {
+				if (selections != null && selections.contains(s) == true) {
+					s.drawSelected(c);
+				} else {
+					s.draw(c);
+				}
+			}
+			
+			if (points.size() > 0) {
+				lassoBorderPaint.setStrokeWidth(3.0f/zoomMultiplier);
+				lassoBorderPaint.setPathEffect(new DashPathEffect(new float[] {12.0f/zoomMultiplier, 7.0f/zoomMultiplier}, 0));
+				
+				lassoPath.reset();
+				lassoPath.moveTo(points.get(0).x, points.get(0).y);
+				for (Point p : points) {
+					lassoPath.lineTo(p.x, p.y);
+				}
+				
+				c.drawPath(lassoPath, lassoShadePaint);
+				c.drawPath(lassoPath, lassoBorderPaint);
+			}
+			
+			if (selectionRect != null) {
+				selectionRectPaint.setStrokeWidth(3.0f/zoomMultiplier);
+				selectionRectPaint.setPathEffect(new DashPathEffect(new float[] {12.0f/zoomMultiplier, 7.0f/zoomMultiplier}, 0));
+				c.drawRect(selectionRect, selectionRectPaint);
+			}
+			
 		}
-		
-//		// test code below
-//		
-//		Point p2 = new Point (50, 50);
-//		Point p1 = new Point (150, 150);
-//		
-//		WrapList<Point> testPoly = MiscPolyGeom.buildUnitPoly(p1, 10, p2, 30);
-//		Path testPath = new Path();
-//		testPath.moveTo(testPoly.get(0).x, testPoly.get(0).y);
-//		for (Point p : testPoly) {
-//			testPath.lineTo(p.x, p.y);
-//		}
-//		
-//		Paint testPaint = new Paint();
-//		testPaint.setStyle(Paint.Style.STROKE);
-//		testPaint.setAntiAlias(true);
-//		
-//		c.drawPath(testPath, testPaint);
-//		
-//		RectF eraseBox = MiscGeom.calcAABoundingBox(testPoly);
-//		testPaint.setColor(Color.RED);
-//		
-//		c.drawRect(eraseBox, testPaint);
-		
 	}
 	
 	
@@ -157,7 +249,9 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		currentTool = newTool;
 		toolSize = size;
 		toolColor = color;
-		mBuilder.setColor(color);		
+		mBuilder.setColor(color);
+		
+		mNoteView.invalidate();
 	}
 
 	public void undo () {
@@ -190,7 +284,7 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		c.setMatrix(transformMatrix);
 	}
 	
-	private void processPen (boolean stylusUp) {		
+	private void processPen (boolean stylusUp) {
 		mBuilder.add(points.get(points.size()-1), sizes.get(sizes.size()-1), zoomMultiplier);
 
 		// Terminate strokes when they end
@@ -239,6 +333,13 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	private Point scaleRawPoint (float x, float y) {
 		return new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
+	}
+	
+	private void scaleRawRect (RectF rect) {
+		rect.left = -windowX + rect.left/zoomMultiplier;
+		rect.right = -windowX + rect.right/zoomMultiplier;
+		rect.top = -windowY + rect.top/zoomMultiplier;
+		rect.bottom = -windowY + rect.bottom/zoomMultiplier;
 	}
 	
 	private float scaleRawPressure (float pressure) {

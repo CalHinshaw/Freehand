@@ -140,7 +140,7 @@ public class NoteActivity extends Activity {
 		redoButton = (Button) findViewById(R.id.redo);
 		redoButton.setOnClickListener(redoButtonListener);
 		
-		mPresenter = new NoteEditorController();		
+		mPresenter = new NoteEditorController(mNoteView);		
 		mNoteView.setListener(mPresenter);
 		
 		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);

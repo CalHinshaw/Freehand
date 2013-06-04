@@ -8,6 +8,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -102,7 +103,13 @@ public class NoteView extends View {
 			float dx = currentX/dZoom - previousX;
 			float dy = currentY/dZoom - previousY;
 			
-			mListener.panZoomAction(currentX, currentY, dx, dy, dZoom);
+			RectF boundingRect = new RectF(event.getX(0), event.getY(0), event.getX(0), event.getY(0));
+			
+			for (int i = 1; i < event.getPointerCount(); i++) {
+				boundingRect.union(event.getX(i), event.getY(i));
+			}
+			
+			mListener.panZoomAction(currentX, currentY, dx, dy, dZoom, boundingRect);
 		}
 		
 		previousDistance = currentDistance;
