@@ -4,6 +4,9 @@ package com.freehand.note_editor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import com.freehand.ink.MiscGeom;
 import com.freehand.ink.MiscPolyGeom;
@@ -50,18 +53,24 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	private float canvasYOffset = -1;
 	private float canvasXOffset = -1;
 	
-	// Eraser fields
+	// Eraser UI fields
 	private Point eCircCent;
 	private float eCircRad;
 	private Paint eCircPaint;
 	
-	// Selector fields
+	// Selector UI fields
 	private Paint lassoBorderPaint;
 	private Paint lassoShadePaint;
 	private Path lassoPath = new Path();
 	private Paint selectionRectPaint;
-	private ArrayList<Stroke> selections = null;
-	private RectF selectionRect = null;
+	private RectF initSelRect = null;
+	private RectF curSelRect = null;
+	
+	// Selector data fields
+	private TreeSet<Integer> selections = null;
+	private float selZoomMult = 1;
+	private Point initSelAnchor;
+	private Point curSelAnchor;
 	
 	public NoteEditorController (NoteView newNoteView) {
 		mNoteView = newNoteView;
@@ -120,31 +129,35 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 				
 				if (stylusUp == true) {
 					RectF lassoRect = MiscPolyGeom.calcAABoundingBox(points);
-					selections = new ArrayList<Stroke>();
+					selections = new TreeSet<Integer>();
 					
-					for (Stroke s : mStrokes) {
+					for (int i = 0; i < mStrokes.size(); i++) {
+						Stroke s = mStrokes.get(i);
 						if (RectF.intersects(lassoRect, s.getAABoundingBox())) {
 							if (MiscPolyGeom.checkPolyIntersection(s.getPoly(), points) == true) {
-								selections.add(s);
+								selections.add(Integer.valueOf(i));
 							}
 						}
 					}
 					
-					selectionRect = null;
+					initSelRect = null;
+					curSelRect = null;
 					if (selections.size() > 0) {
-						for (Stroke s : selections) {
-							if (selectionRect == null) {
-								selectionRect = new RectF(s.getAABoundingBox());
+						for (Integer i : selections) {
+							if (initSelRect == null) {
+								initSelRect = new RectF(mStrokes.get(i).getAABoundingBox());
 							} else {
-								selectionRect.union(s.getAABoundingBox());
+								initSelRect.union(mStrokes.get(i).getAABoundingBox());
 							}
 						}
 						
 						float buffer = 15.0f/zoomMultiplier;
-						selectionRect.left -= buffer;
-						selectionRect.top -= buffer;
-						selectionRect.right += buffer;
-						selectionRect.bottom += buffer;
+						initSelRect.left -= buffer;
+						initSelRect.top -= buffer;
+						initSelRect.right += buffer;
+						initSelRect.bottom += buffer;
+						
+						curSelRect = new RectF(initSelRect);
 					}
 					
 					points.clear();
@@ -159,8 +172,6 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	}
 	
 	public void hoverAction (long time, float x, float y, boolean hoverEnded) {
-		// TODO Implement for logging. This method shouldn't effect the cached node representation.
-		
 		if (hoverEnded == false) {
 			updateEraseCircle(scaleRawPoint(x, y));
 		} else {
@@ -168,15 +179,36 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		}
 	}
 	
-	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, RectF boundingRect) {
-		
+	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, RectF startBoundingRect) {
 		boolean consumed = false;
-		if (currentTool == IActionBarListener.Tool.STROKE_SELECTOR && selectionRect != null) {
-			scaleRawRect(boundingRect);
-			if (selectionRect.contains(boundingRect)) {
-				Log.d("PEN", "transform");
+		if (currentTool == IActionBarListener.Tool.STROKE_SELECTOR && curSelRect != null) {
+			screenRectToCanvRect(startBoundingRect);
+			
+			if (curSelRect.contains(startBoundingRect)) {
+				curSelAnchor = this.scaleRawPoint(midpointX, midpointY);
+				
+				if (initSelAnchor == null) {
+					Log.d("PEN", "initSelAnchor set");
+					initSelAnchor = curSelAnchor;
+				}
+				
+				selZoomMult *= dZoom;
+				
+				curSelRect = new RectF(initSelRect);
+				
+				
+				curSelRect.left = (initSelRect.left-curSelAnchor.x)*selZoomMult + curSelAnchor.x;
+				curSelRect.right = (initSelRect.right-curSelAnchor.x)*selZoomMult + curSelAnchor.x;
+				curSelRect.top = (initSelRect.top-curSelAnchor.y)*selZoomMult + curSelAnchor.y;
+				curSelRect.bottom = (initSelRect.bottom-curSelAnchor.y)*selZoomMult + curSelAnchor.y;
+				
+				curSelRect.offset(curSelAnchor.x - initSelAnchor.x, curSelAnchor.y - initSelAnchor.y);
+				
 				consumed = true;
 			}
+			
+			
+			
 		}
 		
 		if (consumed == false) {
@@ -210,13 +242,16 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 			
 		} else if (currentTool == IActionBarListener.Tool.STROKE_SELECTOR) {
 			
-			for (Stroke s : mStrokes) {
-				if (selections != null && selections.contains(s) == true) {
-					s.drawSelected(c);
-				} else {
-					s.draw(c);
+			for (int i = 0; i < mStrokes.size(); i++) {
+				if (selections == null || selections.contains(i) == false) {
+					mStrokes.get(i).draw(c);
 				}
 			}
+			
+			if (selections != null) {
+				// TODO loop thru all of the selected strokes and draw their transformations by performing the shift and dropping that straight into a Path
+			}
+			
 			
 			if (points.size() > 0) {
 				lassoBorderPaint.setStrokeWidth(3.0f/zoomMultiplier);
@@ -232,12 +267,16 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 				c.drawPath(lassoPath, lassoBorderPaint);
 			}
 			
-			if (selectionRect != null) {
+			if (curSelRect != null) {
 				selectionRectPaint.setStrokeWidth(3.0f/zoomMultiplier);
 				selectionRectPaint.setPathEffect(new DashPathEffect(new float[] {12.0f/zoomMultiplier, 7.0f/zoomMultiplier}, 0));
-				c.drawRect(selectionRect, selectionRectPaint);
+				c.drawRect(curSelRect, selectionRectPaint);
 			}
 			
+		}
+		
+		if (curSelAnchor != null) {
+			c.drawCircle(curSelAnchor.x, curSelAnchor.y, 3, eCircPaint);
 		}
 	}
 	
@@ -250,6 +289,15 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		toolSize = size;
 		toolColor = color;
 		mBuilder.setColor(color);
+		
+		selections = null;
+		initSelRect = null;
+		curSelRect = null;
+		selZoomMult = 1;
+		initSelAnchor = null;
+		curSelAnchor = null;
+		
+		eCircCent = null;
 		
 		mNoteView.invalidate();
 	}
@@ -335,7 +383,7 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		return new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
 	}
 	
-	private void scaleRawRect (RectF rect) {
+	private void screenRectToCanvRect (RectF rect) {
 		rect.left = -windowX + rect.left/zoomMultiplier;
 		rect.right = -windowX + rect.right/zoomMultiplier;
 		rect.top = -windowY + rect.top/zoomMultiplier;
@@ -355,192 +403,5 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		eCircCent = null;
 		eCircRad = 0;
 	}
-	
-//	private void visualPolyTests (Canvas c) {
-	
-	//	private Paint debugPaint1 = new Paint();
-	//	private Paint debugPaint2 = new Paint();
-	//	private Paint inPaint = new Paint();
-	//	private Paint outPaint = new Paint();
-	
-	
-	//	debugPaint1.setColor(Color.BLACK);
-	//	debugPaint1.setStyle(Paint.Style.STROKE);
-	//	debugPaint1.setStrokeWidth(0);
-	//	debugPaint1.setAntiAlias(true);
-	//	
-	//	debugPaint2.setColor(0xa0ff0000);
-	//	debugPaint2.setStyle(Paint.Style.STROKE);
-	//	debugPaint2.setStrokeWidth(1);
-	//	debugPaint2.setAntiAlias(true);
-	//	
-	//	inPaint.setColor(Color.GREEN);
-	//	inPaint.setStyle(Paint.Style.FILL);
-	//	inPaint.setAntiAlias(true);
-	//	
-	//	outPaint.setColor(Color.BLUE);
-	//	outPaint.setStyle(Paint.Style.FILL);
-	//	outPaint.setAntiAlias(true);
-	
-	
-	
-	
-//		WrapList<Point> square1 = new WrapList<Point>();
-//		WrapList<Point> square3 = new WrapList<Point>();
-//		
-//		square1.add(new Point(-100, -400));
-//		square1.add(new Point(-100, 50));
-//		square1.add(new Point(-50, 25));
-//		square1.add(new Point(0, 50));
-//		square1.add(new Point(0, -400));
-//		
-//		square3.add(new Point(200, 40f));
-//		square3.add(new Point(200, -90));
-//		square3.add(new Point(-200, -90));
-//		square3.add(new Point(-200, 40f));
-//		
-//		drawDebugPolys(c, square1, square3);
-//		
-//		
-//		WrapList<Point> shape1 = new WrapList<Point>();
-//		WrapList<Point> shape2 = new WrapList<Point>();
-//		
-//		shape1.add(new Point(-100, 100));
-//		shape1.add(new Point(-100, 550));
-//		shape1.add(new Point(-50, 525));
-//		shape1.add(new Point(0, 550));
-//		shape1.add(new Point(0, 100));
-//		
-//		shape2.add(new Point(0, 550f));
-//		shape2.add(new Point(0, 400));
-//		shape2.add(new Point(-200, 400));
-//		shape2.add(new Point(-200, 550f));
-//		
-//		drawDebugPolys(c, shape1, shape2);
-//		
-//		
-//		WrapList<Point> hole1 = new WrapList<Point>();
-//		WrapList<Point> hole2 = new WrapList<Point>();
-//		
-//		hole1.add(new Point(500, 700));
-//		hole1.add(new Point(550, 750));
-//		hole1.add(new Point(700, 700));
-//		hole1.add(new Point(700, 500));
-//		hole1.add(new Point(500, 500));
-//		
-//		hole2.add(new Point(550, 600));
-//		hole2.add(new Point(550, 450));
-//		hole2.add(new Point(650, 450));
-//		hole2.add(new Point(650, 600));
-//		hole2.add(new Point(700, 600));
-//		hole2.add(new Point(700, 400));
-//		hole2.add(new Point(500, 400));
-//		
-//		drawDebugPolys(c, hole1, hole2);
-//		
-//		
-//		WrapList<Point> inside1 = new WrapList<Point>();
-//		WrapList<Point> inside2 = new WrapList<Point>();
-//		
-//		inside1.add(new Point(600, 100));
-//		inside1.add(new Point(500, 100));
-//		inside1.add(new Point(550, 200));
-//		
-//		inside2.add(new Point(550, 150));
-//		inside2.add(new Point(545, 150));
-//		inside2.add(new Point(547.5f, 155));
-//		
-//		drawDebugPolys(c, inside1, inside2);
-//		
-//		
-//		ArrayList<Point> points = new ArrayList<Point>();
-//		ArrayList<Float> sizes = new ArrayList<Float>();
-//		
-//		points.add(new Point(100, 600));
-//		points.add(new Point(110, 600));
-//		points.add(new Point(110, 615));
-//		points.add(new Point(90, 625));
-//		points.add(new Point(90, 650));
-//		points.add(new Point(90, 650));
-//		points.add(new Point(100, 640));
-//		points.add(new Point(91, 590));
-//		
-//		sizes.add(8f);
-//		sizes.add(7f);
-//		sizes.add(4f);
-//		sizes.add(4f);
-//		sizes.add(5f);
-//		sizes.add(3f);
-//		sizes.add(6f);
-//		sizes.add(3f);
-//		
-//		WrapList<Point> poly = BooleanPolyGeom.buildPolygon(points, sizes);
-//		
-//		currentPath.reset();
-//		currentPath.moveTo(poly.get(0).x, poly.get(0).y);
-//		for (int i = 0; i <= poly.size(); i++) {
-//			currentPath.lineTo(poly.get(i).x, poly.get(i).y);
-//		}
-//		c.drawPath(currentPath, currentPaint);
-//		
-//		
-//		currentPath.reset();
-//		
-//		currentPath.moveTo(100, 800);
-//		currentPath.lineTo(100, 800);
-//		currentPath.lineTo(100, 1000);
-//		currentPath.lineTo(300, 1000);
-//		currentPath.lineTo(300, 1000);
-//		currentPath.lineTo(300, 900);
-//		currentPath.lineTo(50, 900);
-//		currentPath.lineTo(50, 930);
-//		currentPath.lineTo(250, 930);
-//		currentPath.lineTo(250, 960);
-//		currentPath.lineTo(150, 960);
-//		currentPath.lineTo(150, 800);
-//		
-//		c.drawPath(currentPath, currentPaint);
-//		
-//	}
-//	
-//	
-//	
-//	private void drawDebugPolys (Canvas c, WrapList<Point> poly1, WrapList<Point> poly2) {
-//
-//		WrapList<Vertex> graph = BooleanPolyGeom.buildPolyGraph(poly1, poly2);
-//
-//		WrapList<Point> union = BooleanPolyGeom.union(graph, poly1, poly2);
-//		
-//		currentPath.reset();
-//		currentPath.moveTo(poly1.get(0).x, poly1.get(0).y);
-//		for (int i = 0; i <= poly1.size(); i++) {
-//			currentPath.lineTo(poly1.get(i).x, poly1.get(i).y);
-//		}
-//		c.drawPath(currentPath, debugPaint1);
-//		
-//		currentPath.reset();
-//		currentPath.moveTo(poly2.get(0).x, poly2.get(0).y);
-//		for (int i = 0; i <= poly2.size(); i++) {
-//			currentPath.lineTo(poly2.get(i).x, poly2.get(i).y);
-//		}
-//		c.drawPath(currentPath, debugPaint1);
-//		
-//		for (int i = 0; i < union.size(); i++) {
-//			c.drawLine(union.get(i).x, union.get(i).y, union.get(i+1).x, union.get(i+1).y, debugPaint2);
-//		}
-//		
-//		if (graph.size() > 1) {
-//			c.drawCircle(graph.get(0).intersection.x, graph.get(0).intersection.y, 1.5f, inPaint);
-//		}
-//		
-//		
-//		for (Vertex v : graph) {
-//			if (v.poly1Entry == true) {
-//				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, inPaint);
-//			} else {
-//				c.drawCircle(v.intersection.x, v.intersection.y, 0.75f, outPaint);
-//			}
-//		}
-//	}
 
 }

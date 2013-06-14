@@ -73,4 +73,12 @@ public class Stroke {
 	public WrapList<Point> getPoly () {
 		return mPoly;
 	}
+	
+	public Path getPath () {
+		return new Path(mPath);
+	}
+	
+	public Paint getPaint () {
+		return new Paint(mPaint);
+	}
 }
