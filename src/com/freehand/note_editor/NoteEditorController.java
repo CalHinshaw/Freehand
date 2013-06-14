@@ -99,12 +99,23 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
 	
-	public void stylusAction (long time, float x, float y, float pressure, boolean stylusUp) {
+	
+	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, RectF startBoundingRect) {
+
+	}
+	
+	
+	public void startPointerEvent() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void continuePointerEvent(long time, float x, float y, float pressure) {
 		switch (currentTool) {
 			case PEN:
 				points.add(scaleRawPoint(x, y));
 				sizes.add(scaleRawPressure(pressure));
-				processPen(stylusUp);
+				mBuilder.add(points.get(points.size()-1), sizes.get(sizes.size()-1), zoomMultiplier);
 				break;
 			case STROKE_ERASER:
 				Point currentPoint = scaleRawPoint(x, y);
@@ -112,74 +123,87 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 				if (points.size() == 0 || MiscGeom.distance(currentPoint, points.get(points.size()-1)) > 10.0f/zoomMultiplier || time-times.get(times.size()-1) >= 100) {
 					times.add(time);
 					points.add(currentPoint);
-					processStrokeErase(stylusUp);
+					processStrokeErase();
 				}
 				
-				if (stylusUp == false) {
-					updateEraseCircle(currentPoint);
-				} else {
-					resetEraseCircle();
-					points.clear();
-					sizes.clear();
-					times.clear();
-				}
+				updateEraseCircle(currentPoint);
 				break;
+				
 			case STROKE_SELECTOR:
 				points.add(scaleRawPoint(x, y));
 				
-				if (stylusUp == true) {
-					RectF lassoRect = MiscPolyGeom.calcAABoundingBox(points);
-					selections = new TreeSet<Integer>();
-					
-					for (int i = 0; i < mStrokes.size(); i++) {
-						Stroke s = mStrokes.get(i);
-						if (RectF.intersects(lassoRect, s.getAABoundingBox())) {
-							if (MiscPolyGeom.checkPolyIntersection(s.getPoly(), points) == true) {
-								selections.add(Integer.valueOf(i));
-							}
-						}
-					}
-					
-					initSelRect = null;
-					curSelRect = null;
-					if (selections.size() > 0) {
-						for (Integer i : selections) {
-							if (initSelRect == null) {
-								initSelRect = new RectF(mStrokes.get(i).getAABoundingBox());
-							} else {
-								initSelRect.union(mStrokes.get(i).getAABoundingBox());
-							}
-						}
-						
-						float buffer = 15.0f/zoomMultiplier;
-						initSelRect.left -= buffer;
-						initSelRect.top -= buffer;
-						initSelRect.right += buffer;
-						initSelRect.bottom += buffer;
-						
-						curSelRect = new RectF(initSelRect);
-					}
-					
-					points.clear();
-				}
-				
 				break;
 		}
 	}
-	
-	public void fingerAction (long time, float x, float y, float pressure, boolean fingerUp) {
-		// TODO Implement based on user settings gathered at first launch and changed in the menu
+
+	public void canclePointerEvent() {
+		// Empty on purpose
 	}
-	
-	public void hoverAction (long time, float x, float y, boolean hoverEnded) {
-		if (hoverEnded == false) {
-			updateEraseCircle(scaleRawPoint(x, y));
-		} else {
-			resetEraseCircle();
+
+	public void finishPointerEvent() {
+		switch (currentTool) {
+			case PEN:
+				WrapList<Point> finalPoly = mBuilder.getFinalPoly();
+				if (finalPoly.size() >= 3) {
+					mStrokes.add(new Stroke(toolColor, finalPoly));
+				}
+				mBuilder.reset();
+				
+				points.clear();
+				sizes.clear();
+				break;
+				
+			case STROKE_ERASER:
+				resetEraseCircle();
+				points.clear();
+				sizes.clear();
+				times.clear();
+				break;
+				
+			case STROKE_SELECTOR:
+				RectF lassoRect = MiscPolyGeom.calcAABoundingBox(points);
+				selections = new TreeSet<Integer>();
+				
+				for (int i = 0; i < mStrokes.size(); i++) {
+					Stroke s = mStrokes.get(i);
+					if (RectF.intersects(lassoRect, s.getAABoundingBox())) {
+						if (MiscPolyGeom.checkPolyIntersection(s.getPoly(), points) == true) {
+							selections.add(Integer.valueOf(i));
+						}
+					}
+				}
+				
+				initSelRect = null;
+				curSelRect = null;
+				if (selections.size() > 0) {
+					for (Integer i : selections) {
+						if (initSelRect == null) {
+							initSelRect = new RectF(mStrokes.get(i).getAABoundingBox());
+						} else {
+							initSelRect.union(mStrokes.get(i).getAABoundingBox());
+						}
+					}
+					
+					float buffer = 15.0f/zoomMultiplier;
+					initSelRect.left -= buffer;
+					initSelRect.top -= buffer;
+					initSelRect.right += buffer;
+					initSelRect.bottom += buffer;
+					
+					curSelRect = new RectF(initSelRect);
+				}
+				
+				points.clear();
+				break;
 		}
 	}
-	
-	public void panZoomAction (float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, RectF startBoundingRect) {
+
+	public void startPinchEvent() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void continuePinchEvent(float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, RectF startBoundingRect) {
 		boolean consumed = false;
 		if (currentTool == IActionBarListener.Tool.STROKE_SELECTOR && curSelRect != null) {
 			screenRectToCanvRect(startBoundingRect);
@@ -216,7 +240,40 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 			windowY += screenDy/zoomMultiplier;
 			zoomMultiplier *= dZoom;
 		}
+		
 	}
+
+	public void canclePinchEvent() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void finishPinchEvent() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public void startHoverEvent() {
+		// supposed to be blank		
+	}
+
+	public void continueHoverEvent(long time, float x, float y) {
+		updateEraseCircle(scaleRawPoint(x, y));
+		
+	}
+
+	public void cancleHoverEvent() {
+		// supposed to be blank		
+	}
+
+	public void finishHoverEvent() {
+		resetEraseCircle();
+	}
+	
+	
+	
+	
+	
 	
 	public void drawNote (Canvas c) {
 		updatePanZoom(c);
@@ -327,28 +384,12 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		matVals[2] = windowX*zoomMultiplier + canvasXOffset;
 		matVals[4] = zoomMultiplier;
 		matVals[5] = windowY*zoomMultiplier + canvasYOffset;
-		
+
 		transformMatrix.setValues(matVals);
 		c.setMatrix(transformMatrix);
 	}
 	
-	private void processPen (boolean stylusUp) {
-		mBuilder.add(points.get(points.size()-1), sizes.get(sizes.size()-1), zoomMultiplier);
-
-		// Terminate strokes when they end
-		if (stylusUp == true) {
-			WrapList<Point> finalPoly = mBuilder.getFinalPoly();
-			if (finalPoly.size() >= 3) {
-				mStrokes.add(new Stroke(toolColor, finalPoly));
-			}
-			mBuilder.reset();
-			
-			points.clear();
-			sizes.clear();
-		}
-	}
-	
-	private void processStrokeErase (boolean stylusUp) {
+	private void processStrokeErase () {
 		
 		float scaledSize = toolSize/zoomMultiplier;
 		
@@ -403,5 +444,7 @@ class NoteEditorController implements IActionBarListener, INoteCanvasListener {
 		eCircCent = null;
 		eCircRad = 0;
 	}
+
+
 
 }

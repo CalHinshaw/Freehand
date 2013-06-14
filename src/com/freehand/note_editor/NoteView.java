@@ -77,20 +77,24 @@ public class NoteView extends View {
 	}
 	
 	private void processDraw (MotionEvent e) {
+		
+		if (e.getAction() == MotionEvent.ACTION_DOWN) {
+			mListener.startPointerEvent();
+		}
+		
 		for(int i = 0; i < e.getHistorySize(); i++) {
 			if (e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
-				mListener.stylusAction(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i),
-					e.getHistoricalPressure(i), false);
-			} else if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
-				mListener.fingerAction(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i),
-					e.getHistoricalPressure(i), false);
+				mListener.continuePointerEvent(e.getHistoricalEventTime(i), e.getHistoricalX(i),
+					e.getHistoricalY(i), e.getHistoricalPressure(i));
 			}
 		}
 
 		if (e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
-			mListener.stylusAction(e.getEventTime(), e.getX(), e.getY(), e.getPressure(), e.getAction() == MotionEvent.ACTION_UP);
-		} else if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER) {
-			mListener.fingerAction(e.getEventTime(), e.getX(), e.getY(), e.getPressure(), e.getAction() == MotionEvent.ACTION_UP);
+			mListener.continuePointerEvent(e.getEventTime(), e.getX(), e.getY(), e.getPressure());
+		}
+		
+		if (e.getAction() == MotionEvent.ACTION_UP) {
+			mListener.finishPointerEvent();
 		}
 	}
 	
@@ -111,7 +115,11 @@ public class NoteView extends View {
 			float dx = currentX/dZoom - previousX;
 			float dy = currentY/dZoom - previousY;
 			
-			mListener.panZoomAction(currentX, currentY, dx, dy, dZoom, prevBoundingRect);
+			if (event.getPointerCount() == 2 && event.getAction() == MotionEvent.ACTION_POINTER_DOWN) {
+				mListener.startPinchEvent();
+			}
+			
+			mListener.continuePinchEvent(currentX, currentY, dx, dy, dZoom, prevBoundingRect);
 		}
 		
 		previousDistance = currentDistance;
@@ -123,11 +131,20 @@ public class NoteView extends View {
 	
 	@Override
 	public boolean onHoverEvent (MotionEvent e) {
-		for(int i = 0; i < e.getHistorySize(); i++) {
-			mListener.hoverAction(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), false);
+		
+		if (e.getAction() == MotionEvent.ACTION_HOVER_ENTER) {
+			mListener.startHoverEvent();
 		}
 		
-		mListener.hoverAction(e.getEventTime(), e.getX(), e.getY(), e.getAction() == MotionEvent.ACTION_HOVER_EXIT);
+		for(int i = 0; i < e.getHistorySize(); i++) {
+			mListener.continueHoverEvent(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i));
+		}
+		
+		mListener.continueHoverEvent(e.getEventTime(), e.getX(), e.getY());
+		
+		if (e.getAction() == MotionEvent.ACTION_HOVER_EXIT) {
+			mListener.finishHoverEvent();
+		}
 		
 		invalidate();
 		return true;
