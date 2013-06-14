@@ -29,7 +29,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 
-public class Note {
+public class OldNote {
 //*********************************** Member Variables ********************************************
 	
 	private static final int SAVE_FORMAT_VERSION = 1;
@@ -52,12 +52,12 @@ public class Note {
 	
 	
 //*********************************** Constructors ***********************************************
-	public Note () {
+	public OldNote () {
 		backgroundColor = Color.WHITE;
 	}
 	
 	// Opens a note from the SD card
-	public Note(INoteHierarchyItem newFile) {
+	public OldNote(INoteHierarchyItem newFile) {
 		mFile = newFile;
 		
 		if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(Environment.getExternalStorageState())) {

@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.freehand.note_editor.Note;
+import com.freehand.note_editor.OldNote;
 import com.freehand.storage.INoteHierarchyItem;
 
 import android.content.Context;
@@ -46,7 +46,7 @@ public class NoteSharer extends AsyncTask<List<INoteHierarchyItem>, Integer, Int
 		File rootDirectory = new File(Environment.getExternalStorageDirectory().getAbsolutePath().concat("/temp/Freehand"));
 		
 		for (int i = 0; i < itemsToShare.size(); i++) {
-			List<Uri> newUris = (new Note(itemsToShare.get(i))).getJpegUris(rootDirectory);
+			List<Uri> newUris = (new OldNote(itemsToShare.get(i))).getJpegUris(rootDirectory);
 			if (newUris != null) {
 				imageUris.addAll(newUris);
 			}
