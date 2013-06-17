@@ -1,17 +1,30 @@
-package com.freehand.ink;
+package com.freehand.note_editor.tool;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.Log;
 
+import com.freehand.ink.MiscGeom;
+import com.freehand.ink.Point;
+import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
+import com.freehand.note_editor.ICanvasEventListener;
 
-public class StrokePolyBuilder {
+public class Pen implements ICanvasEventListener {
+	
+	private final List<Stroke> mNote;
+	private final DistConverter mConverter;
+	
+	private final float baseSize;
+	private final int color;
+	
 	private ArrayList<Point> points = new ArrayList<Point>(1000);
 	private ArrayList<Float> sizes = new ArrayList<Float>(1000);
 	
@@ -23,27 +36,120 @@ public class StrokePolyBuilder {
 	
 	private int containingIndex = -1;
 	
-	public StrokePolyBuilder () {
+	public Pen (List<Stroke> newNote, DistConverter newConverter, int penColor, float penSize) {
+		mNote = newNote;
+		mConverter = newConverter;
+		color = penColor;
+		baseSize = penSize;
+		
 		path.setFillType(Path.FillType.WINDING);
 		
-		paint.setColor(Color.BLACK);
+		paint.setColor(color);
 		paint.setStyle(Paint.Style.FILL);
 		paint.setAntiAlias(true);
 	}
 	
-	public void reset () {
+	
+	
+	
+	
+	
+	
+	
+
+	public void startPointerEvent() {
 		points.clear();
 		sizes.clear();
 		poly.clear();
 		cap.clear();
 		containingIndex = -1;
 	}
-	
-	public void setColor(int newColor) {
-		paint.setColor(newColor);
+
+	public boolean continuePointerEvent(Point p, long time, float pressure) {
+		float newSize = baseSize * this.scalePressure(pressure);
+		
+//		if (points.size() > 0 && newSize == sizes.get(sizes.size()-1) &&
+//			MiscGeom.distance(p, points.get(points.size()-1)) < mConverter.screenToCanvasDist(2.5f)) {
+//			return true;
+//		}
+		
+		if (points.size() > 0 && MiscGeom.distance(p, points.get(points.size()-1)) <= 0.00001f) {
+			return true;
+		}
+		
+		points.add(p);
+		sizes.add(newSize);
+		
+		if (points.size() == 2) {
+			startPoly();
+		} else if (points.size() > 2) {
+			addToPoly();
+		}
+		
+		return true;
+	}
+
+	public void canclePointerEvent() {
+		points.clear();
+		sizes.clear();
+		poly.clear();
+		cap.clear();
+		containingIndex = -1;
+	}
+
+	public void finishPointerEvent() {
+		WrapList<Point> finalPoly = getFinalPoly();
+		if (finalPoly.size() >= 3) {
+			mNote.add(new Stroke(color, getFinalPoly()));
+		}
+		
+		points.clear();
+		sizes.clear();
+		poly.clear();
+		cap.clear();
+		containingIndex = -1;
+	}
+
+	public void startPinchEvent() { /* blank */	}
+	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, RectF startBoundingRect) { return false; }
+	public void canclePinchEvent() { /* blank */ }
+	public void finishPinchEvent() { /* blank */ }
+	public void startHoverEvent() { /* blank */ }
+	public boolean continueHoverEvent(Point p, long time) { return false; }
+	public void cancleHoverEvent() { /* blank */ }
+	public void finishHoverEvent() { /* blank */ }
+
+	public void drawNote(Canvas c) {
+		for (Stroke s : mNote) {
+			s.draw(c);
+		}
+		
+		if (poly != null && poly.size() >= 3) {
+			updateCap();
+			path.reset();
+			path.moveTo(poly.get(0).x, poly.get(0).y);
+			for (Point p : poly) {
+				path.lineTo(p.x, p.y);
+			}
+			for (Point p : cap) {
+				path.lineTo(p.x, p.y);
+			}
+			c.drawPath(path, paint);
+		}
 	}
 	
-	public WrapList<Point> getFinalPoly () {
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	private WrapList<Point> getFinalPoly () {
 		updateCap();
 		WrapList<Point> finalPoly = new WrapList<Point>(poly.size()+cap.size());
 		
@@ -58,21 +164,7 @@ public class StrokePolyBuilder {
 		return finalPoly;
 	}
 	
-	public void add (Point p, float s, float zoomMultiplier) {
-		if (points.size() > 0 && s == sizes.get(sizes.size()-1) &&
-			MiscGeom.distance(p, points.get(points.size()-1)) < 2.5f/zoomMultiplier) {
-			return;
-		}
-		
-		points.add(p);
-		sizes.add(s);
-		
-		if (points.size() == 2) {
-			startPoly();
-		} else if (points.size() > 2) {
-			addToPoly();
-		}
-	}
+
 
 	
 	
@@ -116,7 +208,6 @@ public class StrokePolyBuilder {
 	}
 	
 	private void backtrack () {
-		
 		// calculate the points to trace the circle to
 		Point[] offsets = MiscGeom.calcPerpOffset(points.get(points.size()-1), points.get(points.size()-2), sizes.get(sizes.size()-1));
 		
@@ -217,34 +308,6 @@ public class StrokePolyBuilder {
 		containingIndex = -1;
 	}
 	
-	
-	public void draw (Canvas c) {
-		updateCap();
-		
-//		Paint debug = new Paint();
-//		debug.setColor(0x40ff0000);
-//		debug.setStyle(Paint.Style.STROKE);
-//		debug.setStrokeWidth(0);
-//		debug.setAntiAlias(true);
-		
-//		for (int i = 0; i < sizes.size(); i++) {
-//			c.drawCircle(points.get(i).x, points.get(i).y, sizes.get(i), debug);
-//		}
-		
-		if (poly != null && poly.size() >= 3) {
-			path.reset();
-			path.moveTo(poly.get(0).x, poly.get(0).y);
-			for (Point p : poly) {
-				path.lineTo(p.x, p.y);
-			}
-			for (Point p : cap) {
-				path.lineTo(p.x, p.y);
-			}
-			c.drawPath(path, paint);
-		}
-	}
-	
-	
 	private void updateCap () {
 		if (points.size() == 1) {
 			cap = MiscGeom.getLinkedCircularPoly(points.get(0), sizes.get(0));
@@ -255,11 +318,6 @@ public class StrokePolyBuilder {
 		}
 	}
 	
-	
-	
-	
-	
-	
 	private static void startNewStroke (LinkedList<Point> currentPoly, Point[] tangentPoints, Point prevPoint, float prevSize) {
 		currentPoly.addAll(MiscGeom.approximateCircularArc(prevPoint, prevSize, false, tangentPoints[0], tangentPoints[2]));
 		currentPoly.addFirst(tangentPoints[0]);
@@ -267,7 +325,6 @@ public class StrokePolyBuilder {
 		currentPoly.addLast(tangentPoints[2]);
 		currentPoly.addLast(tangentPoints[3]);
 	}
-	
 	
 	private void addToLhs (Point tail, Point head, Point joinCenter, float joinRad, Point newCenter, float newRad) {
 		Point intersection = MiscGeom.calcIntersection(poly.get(0), poly.get(1), head, tail);
@@ -302,5 +359,10 @@ public class StrokePolyBuilder {
 			poly.addLast(head);
 		}
 	}
+	
+	private float scalePressure (float pressure) {
+		return 0.6f + pressure*0.4f;
+	}
+
 	
 }

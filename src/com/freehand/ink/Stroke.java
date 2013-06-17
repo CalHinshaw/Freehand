@@ -17,7 +17,9 @@ public class Stroke {
 	
 	private RectF aabb = null;
 	
-	private final Paint mDebugPaint = new Paint();
+	private final Paint selectedPaint = new Paint();
+	
+	//private final Paint mDebugPaint = new Paint();
 
 	/**
 	 * Creates a new immutable Stroke object from the List<Point> object argument. polygon must have at least three points. If it doesn't
@@ -33,6 +35,11 @@ public class Stroke {
 		mPaint.setColor(color);
 		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setAntiAlias(true);
+		
+		selectedPaint.setColor(Color.BLACK);
+		selectedPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		selectedPaint.setAntiAlias(true);
+		selectedPaint.setStrokeWidth(4);
 		
 //		mDebugPaint.setColor(color);
 //		mDebugPaint.setStyle(Paint.Style.STROKE);
@@ -53,10 +60,18 @@ public class Stroke {
 //		c.drawPath(mPath, mDebugPaint);
 	}
 	
-	public void drawSelected (Canvas c) {
-		mPaint.setShadowLayer(6, 0, 0, Color.BLACK);
+	public void drawSelected (Canvas c, float borderSize) {
+		selectedPaint.setStrokeWidth(borderSize);
+		c.drawPath(mPath, selectedPaint);
+		
+		if (mPaint.getAlpha() != 255) {
+			int tempColor = mPaint.getColor();
+			mPaint.setColor(Color.WHITE);
+			c.drawPath(mPath, mPaint);
+			mPaint.setColor(tempColor);
+		}
+		
 		c.drawPath(mPath, mPaint);
-		mPaint.setShadowLayer(0, 0, 0, 0);
 	}
 	
 	/**

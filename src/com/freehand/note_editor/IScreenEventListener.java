@@ -3,7 +3,7 @@ package com.freehand.note_editor;
 import android.graphics.Canvas;
 import android.graphics.RectF;
 
-interface INoteCanvasListener {
+interface IScreenEventListener {
 	
 	public void startPointerEvent();
 	public void continuePointerEvent(long time, float x, float y, float pressure);

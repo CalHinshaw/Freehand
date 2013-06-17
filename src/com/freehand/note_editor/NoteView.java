@@ -14,7 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 public class NoteView extends View {
-	private INoteCanvasListener mListener;
+	private IScreenEventListener mListener;
 	
 //************************************* Constructors ************************************************
 
@@ -33,7 +33,7 @@ public class NoteView extends View {
 //---------------------------------------------------------------------------------------	
 	
 
-	public void setListener (INoteCanvasListener newListener) {
+	public void setListener (IScreenEventListener newListener) {
 		mListener = newListener;
 	}
 
