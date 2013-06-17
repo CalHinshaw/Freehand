@@ -46,6 +46,7 @@ public class NoteView extends View {
 	private float previousDistance = Float.NaN;
 	private RectF prevBoundingRect = null;
 	
+	private boolean currentlyPanZoom = false;
 	private boolean canDraw = true;
 	
 
@@ -61,15 +62,27 @@ public class NoteView extends View {
 		}
 		
 		if (event.getPointerCount() == 1 && canDraw == true) {
+			currentlyPanZoom = false;
 			processDraw(event);
-		} else if (event.getPointerCount() >= 2) {
+		} else if (event.getPointerCount() == 2) {
+			if (currentlyPanZoom == false) {
+				mListener.startPinchEvent();
+			}
+			
 			canDraw = false;
+			currentlyPanZoom = true;
 			processPanZoom(event);
+		} else {
+			if (currentlyPanZoom == true) {
+				mListener.finishPinchEvent();
+			}
+			currentlyPanZoom = false;			
 		}
 		
 		// If a pan/zoom action has ended make sure the user can draw during the next touch event
 		if (event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
 			canDraw = true;
+			currentlyPanZoom = false;
 		}
 		
 		invalidate();
