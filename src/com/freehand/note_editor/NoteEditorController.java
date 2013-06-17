@@ -2,7 +2,6 @@ package com.freehand.note_editor;
 
 
 import java.util.LinkedList;
-import java.util.List;
 
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
@@ -12,6 +11,7 @@ import com.freehand.note_editor.tool.StrokeEraser;
 import com.freehand.note_editor.tool.StrokeSelector;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 
@@ -53,40 +53,31 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
 	public NoteEditorController (NoteView newNoteView) {
 		mNoteView = newNoteView;
+		currentTool = new Pen(mStrokes, mConverter, Color.BLACK, 6.0f);
 	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
 	
 
 	public void startPointerEvent() {
-		if (currentTool != null) {
-			currentTool.startPointerEvent();
-		}
+		currentTool.startPointerEvent();
 	}
 
 	public void continuePointerEvent(long time, float x, float y, float pressure) {
 		Point canvasPoint = this.scaleRawPoint(x, y);
-		if (currentTool != null) {
-			currentTool.continuePointerEvent(canvasPoint, time, pressure);
-		}
+		currentTool.continuePointerEvent(canvasPoint, time, pressure);
 	}
 
 	public void canclePointerEvent() {
-		if (currentTool != null) {
-			currentTool.canclePointerEvent();
-		}
+		currentTool.canclePointerEvent();
 	}
 	
 	public void finishPointerEvent() {
-		if (currentTool != null) {
-			currentTool.finishPointerEvent();
-		}
+		currentTool.finishPointerEvent();
 	}
 
 	public void startPinchEvent() {
-		if (currentTool != null) {
-			currentTool.startPinchEvent();
-		}
+		currentTool.startPinchEvent();
 	}
 
 	public void continuePinchEvent(float midpointX, float midpointY, float midpointDx, float midpointDy, float dZoom, RectF startBoundingRect) {
@@ -95,7 +86,7 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		RectF canvRect = this.screenRectToCanvRect(startBoundingRect);
 		
 		// Return if currentTool consumes the pinch event
-		if (currentTool != null && currentTool.continuePinchEvent(mid, dMid, dZoom, canvRect) == true) {
+		if (currentTool.continuePinchEvent(mid, dMid, dZoom, canvRect) == true) {
 			return;
 		}
 		
@@ -106,62 +97,36 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	}
 
 	public void canclePinchEvent() {
-		if (currentTool != null) {
-			currentTool.canclePinchEvent();
-		}
+		currentTool.canclePinchEvent();
 	}
 
 	public void finishPinchEvent() {
-		if (currentTool != null) {
-			currentTool.finishPinchEvent();
-		}
+		currentTool.finishPinchEvent();
 	}
 	
 	public void startHoverEvent() {
-		if (currentTool != null) {
-			currentTool.startHoverEvent();
-		}
+		currentTool.startHoverEvent();
 	}
 
 	public void continueHoverEvent(long time, float x, float y) {
 		Point canvPoint = this.scaleRawPoint(x, y);
-		
-		if (currentTool != null) {
-			currentTool.continueHoverEvent(canvPoint, time);
-		}
+		currentTool.continueHoverEvent(canvPoint, time);
 	}
 
 	public void cancleHoverEvent() {
-		if (currentTool != null) {
-			currentTool.cancleHoverEvent();
-		}
+		currentTool.cancleHoverEvent();
 	}
 
 	public void finishHoverEvent() {
-		if (currentTool != null) {
-			currentTool.finishHoverEvent();
-		}
+		currentTool.finishHoverEvent();
 	}
-	
-	
-	
-	
-	
 	
 	public void drawNote (Canvas c) {
 		updatePanZoom(c);
 		c.drawColor(0xffffffff);
 		
-		if (currentTool == null) {
-			for (Stroke s : mStrokes) {
-				s.draw(c);
-			}
-		} else {
-			currentTool.drawNote(c);
-		}
+		currentTool.drawNote(c);
 	}
-	
-	
 	
 	//************************************************** IActionBarListener Methods *******************************************************
 	
@@ -190,8 +155,6 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		// TODO
 	}
 	
-	
-	
 	//********************************************** Helper Methods **********************************************
 	
 	private void updatePanZoom (Canvas c) {
@@ -212,8 +175,6 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		c.setMatrix(transformMatrix);
 	}
 	
-
-	
 	private Point scaleRawPoint (float x, float y) {
 		return new Point(-windowX + x/zoomMultiplier, -windowY + y/zoomMultiplier);
 	}
@@ -229,10 +190,4 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		return canvRect;
 	}
 	
-	
-	
-
-
-
-
 }
