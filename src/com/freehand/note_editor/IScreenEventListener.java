@@ -11,7 +11,7 @@ interface IScreenEventListener {
 	public void finishPointerEvent();
 	
 	public void startPinchEvent();
-	public void continuePinchEvent(float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, RectF startBoundingRect);
+	public void continuePinchEvent(float midpointX, float midpointY, float screenDx, float screenDy, float dZoom, float dist, RectF startBoundingRect);
 	public void canclePinchEvent();
 	public void finishPinchEvent();
 	

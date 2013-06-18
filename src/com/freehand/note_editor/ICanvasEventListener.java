@@ -12,7 +12,7 @@ public interface ICanvasEventListener {
 	public void finishPointerEvent();
 	
 	public void startPinchEvent();
-	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, RectF startBoundingRect);
+	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect);
 	public void canclePinchEvent();
 	public void finishPinchEvent();
 	

@@ -80,13 +80,14 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		currentTool.startPinchEvent();
 	}
 
-	public void continuePinchEvent(float midpointX, float midpointY, float midpointDx, float midpointDy, float dZoom, RectF startBoundingRect) {
+	public void continuePinchEvent(float midpointX, float midpointY, float midpointDx, float midpointDy, float dZoom, float dist, RectF startBoundingRect) {
 		Point mid = this.scaleRawPoint(midpointX, midpointY);
 		Point dMid = new Point(midpointDx/zoomMultiplier, midpointDy/zoomMultiplier);
+		float canvDist = mConverter.screenToCanvasDist(dist);
 		RectF canvRect = this.screenRectToCanvRect(startBoundingRect);
 		
 		// Return if currentTool consumes the pinch event
-		if (currentTool.continuePinchEvent(mid, dMid, dZoom, canvRect) == true) {
+		if (currentTool.continuePinchEvent(mid, dMid, dZoom, canvDist, canvRect) == true) {
 			return;
 		}
 		

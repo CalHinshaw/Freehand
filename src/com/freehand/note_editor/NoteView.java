@@ -120,7 +120,7 @@ public class NoteView extends View {
 				mListener.startPinchEvent();
 			}
 			
-			mListener.continuePinchEvent(currentX, currentY, dx, dy, dZoom, prevBoundingRect);
+			mListener.continuePinchEvent(currentX, currentY, dx, dy, dZoom, currentDistance, prevBoundingRect);
 		}
 		
 		previousDistance = currentDistance;

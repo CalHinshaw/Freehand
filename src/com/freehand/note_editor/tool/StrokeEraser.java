@@ -79,7 +79,7 @@ public class StrokeEraser implements ICanvasEventListener {
 		circlePoint = null;
 	}
 
-	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, RectF startBoundingRect) {
+	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect) {
 		return false;
 	}
 	

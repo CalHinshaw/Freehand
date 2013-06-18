@@ -24,21 +24,24 @@ public class StrokeSelector implements ICanvasEventListener {
 	
 	
 	
-	// Selector UI fields
+	// Lasso stuff
 	private final WrapList<Point> lassoPoints = new WrapList<Point>(500);
 	private final Path lassoPath;
 	private final Paint lassoBorderPaint;
 	private final Paint lassoShadePaint;
 	
-	private Paint selectionRectPaint;
-	private RectF initSelRect = null;
-	private RectF curSelRect = null;
-	
-	// Selector data fields
+	// Selection stuff
 	private TreeSet<Integer> selectedStrokes = null;
-	private float selZoomMult = 1;
-	private Point initSelAnchor;
-	private Point curSelAnchor;
+	private Paint selectionRectPaint;
+	private RectF selRect = null;
+	
+	// Translation stuff
+	private Point initMid = null;
+	private Float initDist = null;
+	private Point currentMid = null;
+	private Float currentDist = null;
+	
+	
 	
 	
 	
@@ -76,8 +79,8 @@ public class StrokeSelector implements ICanvasEventListener {
 	public void startPointerEvent() {
 		lassoPoints.clear();
 		selectedStrokes = null;
-		initSelRect = null;
-		curSelRect = null;
+		selRect = null;
+		selRect = null;
 	}
 
 	public boolean continuePointerEvent(Point p, long time, float pressure) {
@@ -85,10 +88,11 @@ public class StrokeSelector implements ICanvasEventListener {
 		return true;
 	}
 
-	public void canclePointerEvent() { /* blank */ }
+	public void canclePointerEvent() {
+		lassoPoints.clear();
+	}
 
 	public void finishPointerEvent() {
-		
 		if (lassoPoints.size() < 3) {
 			lassoPoints.clear();
 			return;
@@ -110,95 +114,65 @@ public class StrokeSelector implements ICanvasEventListener {
 		// Calculate the AABB of selectedStrokes
 		if (selectedStrokes.size() > 0) {
 			for (Integer i : selectedStrokes) {
-				if (initSelRect == null) {
-					initSelRect = new RectF(mNote.get(i).getAABoundingBox());
+				if (selRect == null) {
+					selRect = new RectF(mNote.get(i).getAABoundingBox());
 				} else {
-					initSelRect.union(mNote.get(i).getAABoundingBox());
+					selRect.union(mNote.get(i).getAABoundingBox());
 				}
 			}
 			
 			float buffer = mConverter.screenToCanvasDist(15.0f);
-			initSelRect.left -= buffer;
-			initSelRect.top -= buffer;
-			initSelRect.right += buffer;
-			initSelRect.bottom += buffer;
-			
-			if (initSelRect != null) {
-				curSelRect = new RectF(initSelRect);
-			}
+			selRect.left -= buffer;
+			selRect.top -= buffer;
+			selRect.right += buffer;
+			selRect.bottom += buffer;
 			
 		}
 		
 		lassoPoints.clear();
 	}
 
+	private boolean isTransforming = false;
+	private boolean setIsTransforming = false;
+	
 	public void startPinchEvent() {
-		// TODO Auto-generated method stub
-		
+		setIsTransforming = true;
 	}
 
-	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, RectF startBoundingRect) {
-		
-		
-		if (curSelRect != null) {
-			if (curSelRect.contains(startBoundingRect)) {
-				curSelAnchor = mid;
-				
-				if (initSelAnchor == null) {
-					Log.d("PEN", "initSelAnchor set");
-					initSelAnchor = curSelAnchor;
-				}
-				
-				selZoomMult *= dZoom;
-				
-				curSelRect = new RectF(initSelRect);
-				
-				
-				curSelRect.left = (initSelRect.left-curSelAnchor.x)*selZoomMult + curSelAnchor.x;
-				curSelRect.right = (initSelRect.right-curSelAnchor.x)*selZoomMult + curSelAnchor.x;
-				curSelRect.top = (initSelRect.top-curSelAnchor.y)*selZoomMult + curSelAnchor.y;
-				curSelRect.bottom = (initSelRect.bottom-curSelAnchor.y)*selZoomMult + curSelAnchor.y;
-				
-				curSelRect.offset(curSelAnchor.x - initSelAnchor.x, curSelAnchor.y - initSelAnchor.y);
-				
-				return true;
+	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect) {
+		if (setIsTransforming == true) {
+			if (selRect != null && selRect.contains(startBoundingRect)) {
+				initMid = mid;
+				initDist = dist;
+				isTransforming = true;
+			} else {
+				isTransforming = false;
 			}
-			
-			
-			
+			setIsTransforming = false;
 		}
-		return false;
+		
+		
+		if (isTransforming == true) {
+			currentMid = mid;
+			currentDist = dist;
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public void canclePinchEvent() {
-		// TODO Auto-generated method stub
-		
+		resetTrans();
 	}
 
 	public void finishPinchEvent() {
-		// TODO Auto-generated method stub
-		
+		resetTrans();
 	}
 
-	public void startHoverEvent() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public boolean continueHoverEvent(Point p, long time) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	public void cancleHoverEvent() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void finishHoverEvent() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void startHoverEvent() { /* blank */	}
+	public boolean continueHoverEvent(Point p, long time) {	return false; }
+	public void cancleHoverEvent() { /* blank */ }
+	public void finishHoverEvent() { /* blank */ }
 
 	public void drawNote(Canvas c) {
 
@@ -206,14 +180,19 @@ public class StrokeSelector implements ICanvasEventListener {
 		for (int i = 0; i < mNote.size(); i++) {
 			if (selectedStrokes == null || selectedStrokes.contains(i) == false) {
 				mNote.get(i).draw(c);
-			} else {
-				mNote.get(i).drawSelected(c, mConverter.screenToCanvasDist(10.0f));
 			}
 		}
 		
 		// Draw all of the selectedStrokes with their selection highlights as they're being transformed
 		if (selectedStrokes != null) {
 			// TODO loop thru all of the selected strokes and draw their transformations by performing the shift and dropping that straight into a Path
+			
+			
+			for (Integer index : selectedStrokes) {
+				mNote.get(index).drawSelected(c, mConverter.screenToCanvasDist(10.0f));
+			}
+			
+			
 		}
 		
 		
@@ -232,11 +211,22 @@ public class StrokeSelector implements ICanvasEventListener {
 			c.drawPath(lassoPath, lassoBorderPaint);
 		}
 		
-		if (curSelRect != null) {
+		if (selRect != null) {
 			selectionRectPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
 			selectionRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
-			c.drawRect(curSelRect, selectionRectPaint);
+			c.drawRect(selRect, selectionRectPaint);
 		}
 	}
 	
+	
+	
+	
+	private void resetTrans() {
+		isTransforming = false;
+		setIsTransforming = false;
+		initMid = null;
+		initDist = null;
+		currentMid = null;
+		currentDist = null;
+	}
 }
