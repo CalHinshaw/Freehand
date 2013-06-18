@@ -81,20 +81,20 @@ public class NoteView extends View {
 	}
 	
 	private void processDraw (MotionEvent e) {
+		
+		if (e.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) {
+			return;
+		}
+		
 		if (e.getAction() == MotionEvent.ACTION_DOWN) {
 			mListener.startPointerEvent();
 		}
 		
 		for(int i = 0; i < e.getHistorySize(); i++) {
-			if (e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
-				mListener.continuePointerEvent(e.getHistoricalEventTime(i), e.getHistoricalX(i),
-					e.getHistoricalY(i), e.getHistoricalPressure(i));
-			}
+			mListener.continuePointerEvent(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), e.getHistoricalPressure(i));
 		}
 
-		if (e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS) {
-			mListener.continuePointerEvent(e.getEventTime(), e.getX(), e.getY(), e.getPressure());
-		}
+		mListener.continuePointerEvent(e.getEventTime(), e.getX(), e.getY(), e.getPressure());
 		
 		if (e.getAction() == MotionEvent.ACTION_UP) {
 			mListener.finishPointerEvent();
