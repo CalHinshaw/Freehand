@@ -5,7 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -49,13 +48,7 @@ public class Pen implements ICanvasEventListener {
 		paint.setAntiAlias(true);
 	}
 	
-	
-	
-	
-	
-	
-	
-	
+	//********************************************* ICanvasEventListener Methods *****************************************
 
 	public void startPointerEvent() {
 		points.clear();
@@ -68,12 +61,8 @@ public class Pen implements ICanvasEventListener {
 	public boolean continuePointerEvent(Point p, long time, float pressure) {
 		float newSize = baseSize * this.scalePressure(pressure);
 		
-//		if (points.size() > 0 && newSize == sizes.get(sizes.size()-1) &&
-//			MiscGeom.distance(p, points.get(points.size()-1)) < mConverter.screenToCanvasDist(2.5f)) {
-//			return true;
-//		}
-		
-		if (points.size() > 0 && MiscGeom.distance(p, points.get(points.size()-1)) <= 0.00001f) {
+		if (points.size() > 0 && newSize == sizes.get(sizes.size()-1) &&
+			MiscGeom.distance(p, points.get(points.size()-1)) <= mConverter.screenToCanvasDist(1.0f)) {
 			return true;
 		}
 		
@@ -138,16 +127,7 @@ public class Pen implements ICanvasEventListener {
 		}
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	//**************************************** Utility Methods ************************************************
 	
 	private WrapList<Point> getFinalPoly () {
 		updateCap();
@@ -163,10 +143,6 @@ public class Pen implements ICanvasEventListener {
 		
 		return finalPoly;
 	}
-	
-
-
-	
 	
 	private void startPoly () {
 		Point[] tangentPoints = MiscGeom.calcExternalBitangentPoints(points.get(0), sizes.get(0), points.get(1), sizes.get(1));
@@ -363,6 +339,4 @@ public class Pen implements ICanvasEventListener {
 	private float scalePressure (float pressure) {
 		return 0.6f + pressure*0.4f;
 	}
-
-	
 }
