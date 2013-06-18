@@ -2,12 +2,8 @@ package com.freehand.note_editor;
 
 
 import com.freehand.ink.MiscGeom;
-import com.freehand.ink.Point;
-
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -15,6 +11,14 @@ import android.view.View;
 
 public class NoteView extends View {
 	private IScreenEventListener mListener;
+	
+	private float previousX = Float.NaN;
+	private float previousY = Float.NaN;
+	private float previousDistance = Float.NaN;
+	private RectF prevBoundingRect = null;
+	
+	private boolean currentlyPanZoom = false;
+	private boolean canDraw = true;
 	
 //************************************* Constructors ************************************************
 
@@ -30,29 +34,16 @@ public class NoteView extends View {
 		super (context, attrs, defStyle);
 	}
 
-//---------------------------------------------------------------------------------------	
-	
+//************************************* Outward facing methods **************************************	
 
 	public void setListener (IScreenEventListener newListener) {
 		mListener = newListener;
 	}
 
-
-
 //****************************** Touch Handling Methods *********************************************
-
-	private float previousX = Float.NaN;
-	private float previousY = Float.NaN;
-	private float previousDistance = Float.NaN;
-	private RectF prevBoundingRect = null;
-	
-	private boolean currentlyPanZoom = false;
-	private boolean canDraw = true;
-	
 
 	@Override
 	public boolean onTouchEvent (MotionEvent event) {
-		
 		// If the user has lifted a finger invalidate all of the pan/zoom variables
 		if (event.getAction() == MotionEvent.ACTION_POINTER_UP || event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
 			previousX = Float.NaN;
@@ -90,7 +81,6 @@ public class NoteView extends View {
 	}
 	
 	private void processDraw (MotionEvent e) {
-		
 		if (e.getAction() == MotionEvent.ACTION_DOWN) {
 			mListener.startPointerEvent();
 		}
@@ -110,8 +100,6 @@ public class NoteView extends View {
 			mListener.finishPointerEvent();
 		}
 	}
-	
-	
 	
 	private void processPanZoom (MotionEvent event) {
 		float currentDistance = MiscGeom.distance(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
@@ -141,7 +129,6 @@ public class NoteView extends View {
 		prevBoundingRect = boundingRect;
 	}
 	
-	
 	@Override
 	public boolean onHoverEvent (MotionEvent e) {
 		
@@ -163,10 +150,8 @@ public class NoteView extends View {
 		return true;
 	}
 	
-	
 	@Override
 	public void onDraw (Canvas c) {
 		mListener.drawNote(c);
 	}
-
 }
