@@ -1,5 +1,6 @@
 package com.freehand.note_editor.tool;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -182,6 +183,52 @@ public class StrokeSelector implements ICanvasEventListener {
 	}
 
 	public void finishPinchEvent() {
+		
+		if (isTransforming == false) {
+			resetTrans();
+			return;
+		}
+		
+		
+		
+		
+		// apply translations to mNote
+		
+		
+		float dZoom = currentDist / initDist;
+		
+		for (Integer i : selectedStrokes) {
+			WrapList<Point> poly = mNote.get(i).getPoly();
+			
+			WrapList<Point> transPoly = new WrapList<Point>(poly.size());
+			
+			for (Point p : poly) {
+				transPoly.add(new Point((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y));
+			}
+			
+			mNote.add(new Stroke(mNote.get(i).getColor(), transPoly));
+		}
+		
+		Iterator<Integer> iter = selectedStrokes.descendingIterator();
+		
+		while (iter.hasNext()) {
+			mNote.remove(iter.next().intValue());
+		}
+		
+		
+		int numSelections = selectedStrokes.size();
+		selectedStrokes.clear();
+		for (int index = mNote.size()-numSelections; index < mNote.size(); index++) {
+			selectedStrokes.add(index);
+		}
+		
+		RectF curRect = new RectF();
+		curRect.left = (selRect.left - initMid.x) * dZoom + currentMid.x;
+		curRect.right = (selRect.right - initMid.x) * dZoom + currentMid.x;
+		curRect.top = (selRect.top - initMid.y) * dZoom + currentMid.y;
+		curRect.bottom = (selRect.bottom - initMid.y) * dZoom + currentMid.y;
+		selRect = curRect;
+		
 		resetTrans();
 	}
 
@@ -212,6 +259,7 @@ public class StrokeSelector implements ICanvasEventListener {
 				for (Point p : poly) {
 					selPath.lineTo((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y);
 				}
+				selPath.lineTo((poly.get(0).x-initMid.x) * dZoom + currentMid.x, (poly.get(0).y-initMid.y) * dZoom + currentMid.y);
 				
 				c.drawPath(selPath, selBorderPaint);
 				selBodyPaint.setColor(Color.WHITE);
@@ -244,6 +292,7 @@ public class StrokeSelector implements ICanvasEventListener {
 				for (Point p : poly) {
 					selPath.lineTo(p.x, p.y);
 				}
+				selPath.lineTo(poly.get(0).x, poly.get(0).y);
 				
 				c.drawPath(selPath, selBorderPaint);
 				selBodyPaint.setColor(Color.WHITE);
@@ -255,8 +304,6 @@ public class StrokeSelector implements ICanvasEventListener {
 			selRectPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
 			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
 			c.drawRect(selRect, selRectPaint);
-		} else {
-			Log.d("PEN", "neither");
 		}
 		
 		
@@ -283,8 +330,10 @@ public class StrokeSelector implements ICanvasEventListener {
 	private void resetTrans() {
 		isTransforming = false;
 		setIsTransforming = false;
+		
 		initMid = null;
 		initDist = null;
+		
 		currentMid = null;
 		currentDist = null;
 	}
