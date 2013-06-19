@@ -31,8 +31,12 @@ public class StrokeSelector implements ICanvasEventListener {
 	private final Paint lassoShadePaint;
 	
 	// Selection stuff
-	private TreeSet<Integer> selectedStrokes = null;
-	private Paint selectionRectPaint;
+	private TreeSet<Integer> selectedStrokes = new TreeSet<Integer>();
+	private Paint selBorderPaint;
+	private Paint selBodyPaint;
+	private Path selPath;
+	
+	private Paint selRectPaint;
 	private RectF selRect = null;
 	
 	// Translation stuff
@@ -40,6 +44,7 @@ public class StrokeSelector implements ICanvasEventListener {
 	private Float initDist = null;
 	private Point currentMid = null;
 	private Float currentDist = null;
+	
 	
 	
 	
@@ -63,10 +68,22 @@ public class StrokeSelector implements ICanvasEventListener {
 		lassoShadePaint.setStyle(Paint.Style.FILL_AND_STROKE);
 		lassoShadePaint.setAntiAlias(true);
 		
-		selectionRectPaint = new Paint();
-		selectionRectPaint.setColor(0xAA33B5E5);
-		selectionRectPaint.setStyle(Paint.Style.STROKE);
-		selectionRectPaint.setAntiAlias(true);
+		selPath = new Path();
+		selPath.setFillType(Path.FillType.WINDING);
+		
+		selBorderPaint = new Paint();
+		selBorderPaint.setColor(Color.BLACK);
+		selBorderPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		selBorderPaint.setAntiAlias(true);
+		
+		selBodyPaint = new Paint();
+		selBodyPaint.setStyle(Paint.Style.FILL);
+		selBodyPaint.setAntiAlias(true);
+		
+		selRectPaint = new Paint();
+		selRectPaint.setColor(0xAA33B5E5);
+		selRectPaint.setStyle(Paint.Style.STROKE);
+		selRectPaint.setAntiAlias(true);
 	}
 	
 
@@ -78,7 +95,7 @@ public class StrokeSelector implements ICanvasEventListener {
 	
 	public void startPointerEvent() {
 		lassoPoints.clear();
-		selectedStrokes = null;
+		selectedStrokes.clear();
 		selRect = null;
 		selRect = null;
 	}
@@ -99,9 +116,8 @@ public class StrokeSelector implements ICanvasEventListener {
 		}
 		
 		RectF lassoRect = MiscPolyGeom.calcAABoundingBox(lassoPoints);
-		selectedStrokes = new TreeSet<Integer>();
+		selectedStrokes.clear();
 		
-		// Add all strokes that intersect the lasso poly to selectedStrokes
 		for (int i = 0; i < mNote.size(); i++) {
 			Stroke s = mNote.get(i);
 			if (RectF.intersects(lassoRect, s.getAABoundingBox())) {
@@ -184,15 +200,63 @@ public class StrokeSelector implements ICanvasEventListener {
 		}
 		
 		// Draw all of the selectedStrokes with their selection highlights as they're being transformed
-		if (selectedStrokes != null) {
-			// TODO loop thru all of the selected strokes and draw their transformations by performing the shift and dropping that straight into a Path
+		if (selectedStrokes.isEmpty() == false && isTransforming == true) {
+			selBorderPaint.setStrokeWidth(mConverter.screenToCanvasDist(8.0f));
+			float dZoom = currentDist / initDist;
 			
-			
-			for (Integer index : selectedStrokes) {
-				mNote.get(index).drawSelected(c, mConverter.screenToCanvasDist(10.0f));
+			for (Integer i : selectedStrokes) {
+				WrapList<Point> poly = mNote.get(i).getPoly();
+				
+				selPath.reset();
+				selPath.moveTo((poly.get(0).x-initMid.x) * dZoom + currentMid.x, (poly.get(0).y-initMid.y) * dZoom + currentMid.y);
+				for (Point p : poly) {
+					selPath.lineTo((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y);
+				}
+				
+				c.drawPath(selPath, selBorderPaint);
+				selBodyPaint.setColor(Color.WHITE);
+				c.drawPath(selPath, selBodyPaint);
+				selBodyPaint.setColor(mNote.get(i).getColor());
+				c.drawPath(selPath, selBodyPaint);
 			}
 			
+			// Selection rect
+			selRectPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
+			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
 			
+			if (isTransforming == true) {
+				RectF curRect = new RectF();
+				curRect.left = (selRect.left - initMid.x) * dZoom + currentMid.x;
+				curRect.right = (selRect.right - initMid.x) * dZoom + currentMid.x;
+				curRect.top = (selRect.top - initMid.y) * dZoom + currentMid.y;
+				curRect.bottom = (selRect.bottom - initMid.y) * dZoom + currentMid.y;
+				
+				c.drawRect(curRect, selRectPaint);
+			}
+		} else if (selectedStrokes.isEmpty() == false) {
+			selBorderPaint.setStrokeWidth(mConverter.screenToCanvasDist(8.0f));
+			
+			for (Integer i : selectedStrokes) {
+				WrapList<Point> poly = mNote.get(i).getPoly();
+				
+				selPath.reset();
+				selPath.moveTo(poly.get(0).x, poly.get(0).y);
+				for (Point p : poly) {
+					selPath.lineTo(p.x, p.y);
+				}
+				
+				c.drawPath(selPath, selBorderPaint);
+				selBodyPaint.setColor(Color.WHITE);
+				c.drawPath(selPath, selBodyPaint);
+				selBodyPaint.setColor(mNote.get(i).getColor());
+				c.drawPath(selPath, selBodyPaint);
+			}
+			
+			selRectPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
+			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
+			c.drawRect(selRect, selRectPaint);
+		} else {
+			Log.d("PEN", "neither");
 		}
 		
 		
@@ -211,11 +275,6 @@ public class StrokeSelector implements ICanvasEventListener {
 			c.drawPath(lassoPath, lassoBorderPaint);
 		}
 		
-		if (selRect != null) {
-			selectionRectPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
-			selectionRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
-			c.drawRect(selRect, selectionRectPaint);
-		}
 	}
 	
 	
