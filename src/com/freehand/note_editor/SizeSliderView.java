@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -93,6 +92,12 @@ class SizeSliderView extends View {
 		}
 		
 		return size;
+	}
+	
+	@Override
+	protected void onSizeChanged (int w, int h, int oldW, int oldH) {
+		lastSliderX = w/2;
+		super.onSizeChanged(w, h, oldW, oldH);
 	}
 	
 }

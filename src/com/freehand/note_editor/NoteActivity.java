@@ -2,31 +2,21 @@ package com.freehand.note_editor;
 
 import java.util.ArrayList;
 import com.calhounroberthinshaw.freehand.R;
-import com.freehand.share.NoteSharer;
-import com.freehand.share.ProgressUpdateFunction;
-import com.freehand.storage.INoteHierarchyItem;
-
 import android.app.Activity;
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.Vibrator;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
-import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
@@ -34,9 +24,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 public class NoteActivity extends Activity {
@@ -47,7 +35,7 @@ public class NoteActivity extends Activity {
 	private RadioGroup mRadioGroup;
 	private PreviousStateAwareRadioButton mEraseButton;
 	private AnchorWindow mEraseMenuWindow;
-	private float eraserSize = 6f;
+	private float eraserSize = 22.5f;
 	private boolean eraseStrokes = true;
 	private PreviousStateAwareRadioButton mSelectButton;
 	private ArrayList<PenRadioButton> penButtons = new ArrayList<PenRadioButton>(5);
