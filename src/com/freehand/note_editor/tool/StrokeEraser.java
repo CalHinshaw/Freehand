@@ -135,7 +135,12 @@ public class StrokeEraser implements ICanvasEventListener {
 		if (circlePoint != null) {
 			float scaledWidth = mConverter.screenToCanvasDist(2.0f);
 			circlePaint.setStrokeWidth(scaledWidth);
-			c.drawCircle(circlePoint.x, circlePoint.y, mConverter.screenToCanvasDist(eraserSize) - scaledWidth, circlePaint);
+			
+			float size = mConverter.screenToCanvasDist(eraserSize) - scaledWidth;
+			if (size < 1) {
+				size = 1;
+			}
+			c.drawCircle(circlePoint.x, circlePoint.y, size, circlePaint);
 		}
 	}
 	
