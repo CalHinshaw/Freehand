@@ -257,6 +257,7 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	public synchronized INoteHierarchyItem addNote(String noteName) {
 		try {
 			File newNote = new File(mFile, noteName + ".note");
+			newNote.getParentFile().mkdirs();
 			newNote.createNewFile();
 			updateChildren();
 			notifyChangeListeners();
