@@ -37,10 +37,10 @@
 	    android:id="@+id/eraser_size_slider"
 	    android:layout_width="fill_parent"
         android:layout_height="30dip"
-        android:layout_marginLeft="5dip"
-        android:layout_marginRight="5dip"
-        android:layout_marginBottom="5dip"
-        android:layout_marginTop = "5dip" />
+        android:layout_marginLeft="15dip"
+        android:layout_marginRight="15dip"
+        android:layout_marginBottom="15dip"
+        android:layout_marginTop = "15dip" />
     
     
     
