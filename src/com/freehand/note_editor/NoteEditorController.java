@@ -136,7 +136,7 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 				currentTool = new Pen(mNote, mConverter, color, size);
 				break;
 			case STROKE_ERASER:
-				//currentTool = new StrokeEraser(mStrokes, mConverter, size);
+				currentTool = new StrokeEraser(mNote, mConverter, size);
 				break;
 			case STROKE_SELECTOR:
 				//currentTool = new StrokeSelector(mStrokes, mConverter);
