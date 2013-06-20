@@ -1,5 +1,6 @@
 package com.freehand.note_editor.tool;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
@@ -17,13 +18,15 @@ import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
 import com.freehand.note_editor.ICanvasEventListener;
+import com.freehand.note_editor.Note;
+import com.freehand.note_editor.Note.Action;
 
 public class StrokeSelector implements ICanvasEventListener {
 	
-	private final List<Stroke> mNote;
+	private final Note mNote;
 	private final DistConverter mConverter;
 	
-	
+	private List<Stroke> currentStrokes;
 	
 	// Lasso stuff
 	private final WrapList<Point> lassoPoints = new WrapList<Point>(500);
@@ -52,7 +55,7 @@ public class StrokeSelector implements ICanvasEventListener {
 	
 	
 	
-	public StrokeSelector (List<Stroke> note, DistConverter converter) {
+	public StrokeSelector (Note note, DistConverter converter) {
 		mNote = note;
 		mConverter = converter;
 		
@@ -85,6 +88,8 @@ public class StrokeSelector implements ICanvasEventListener {
 		selRectPaint.setColor(0xAA33B5E5);
 		selRectPaint.setStyle(Paint.Style.STROKE);
 		selRectPaint.setAntiAlias(true);
+		
+		currentStrokes = mNote.getInkLayer();
 	}
 	
 
@@ -95,6 +100,8 @@ public class StrokeSelector implements ICanvasEventListener {
 	
 	
 	public void startPointerEvent() {
+		currentStrokes = mNote.getInkLayer();
+		
 		lassoPoints.clear();
 		selectedStrokes.clear();
 		selRect = null;
@@ -119,8 +126,8 @@ public class StrokeSelector implements ICanvasEventListener {
 		RectF lassoRect = MiscPolyGeom.calcAABoundingBox(lassoPoints);
 		selectedStrokes.clear();
 		
-		for (int i = 0; i < mNote.size(); i++) {
-			Stroke s = mNote.get(i);
+		for (int i = 0; i < currentStrokes.size(); i++) {
+			Stroke s = currentStrokes.get(i);
 			if (RectF.intersects(lassoRect, s.getAABoundingBox())) {
 				if (MiscPolyGeom.checkPolyIntersection(s.getPoly(), lassoPoints) == true) {
 					selectedStrokes.add(Integer.valueOf(i));
@@ -132,9 +139,9 @@ public class StrokeSelector implements ICanvasEventListener {
 		if (selectedStrokes.size() > 0) {
 			for (Integer i : selectedStrokes) {
 				if (selRect == null) {
-					selRect = new RectF(mNote.get(i).getAABoundingBox());
+					selRect = new RectF(currentStrokes.get(i).getAABoundingBox());
 				} else {
-					selRect.union(mNote.get(i).getAABoundingBox());
+					selRect.union(currentStrokes.get(i).getAABoundingBox());
 				}
 			}
 			
@@ -147,6 +154,7 @@ public class StrokeSelector implements ICanvasEventListener {
 		}
 		
 		lassoPoints.clear();
+		currentStrokes = mNote.getInkLayer();
 	}
 
 	private boolean isTransforming = false;
@@ -194,11 +202,13 @@ public class StrokeSelector implements ICanvasEventListener {
 		
 		// apply translations to mNote
 		
+		ArrayList<Action> actions = new ArrayList<Action>(selectedStrokes.size()*2);
 		
 		float dZoom = currentDist / initDist;
 		
+		int offsetCounter = 0;
 		for (Integer i : selectedStrokes) {
-			WrapList<Point> poly = mNote.get(i).getPoly();
+			WrapList<Point> poly = currentStrokes.get(i).getPoly();
 			
 			WrapList<Point> transPoly = new WrapList<Point>(poly.size());
 			
@@ -206,21 +216,26 @@ public class StrokeSelector implements ICanvasEventListener {
 				transPoly.add(new Point((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y));
 			}
 			
-			mNote.add(new Stroke(mNote.get(i).getColor(), transPoly));
+			Stroke transStroke = new Stroke(currentStrokes.get(i).getColor(), transPoly);
+			actions.add(new Action(transStroke, currentStrokes.size()+offsetCounter, true));
+			offsetCounter++;
 		}
 		
 		Iterator<Integer> iter = selectedStrokes.descendingIterator();
 		
 		while (iter.hasNext()) {
-			mNote.remove(iter.next().intValue());
+			int index = iter.next().intValue();
+			
+			actions.add(new Action(currentStrokes.get(index), index, false));
 		}
-		
 		
 		int numSelections = selectedStrokes.size();
 		selectedStrokes.clear();
-		for (int index = mNote.size()-numSelections; index < mNote.size(); index++) {
+		for (int index = currentStrokes.size()-numSelections; index < currentStrokes.size(); index++) {
 			selectedStrokes.add(index);
 		}
+		
+		mNote.performActions(actions);
 		
 		RectF curRect = new RectF();
 		curRect.left = (selRect.left - initMid.x) * dZoom + currentMid.x;
@@ -240,9 +255,9 @@ public class StrokeSelector implements ICanvasEventListener {
 	public void drawNote(Canvas c) {
 
 		// Draw all of the non-selected strokes in mNote
-		for (int i = 0; i < mNote.size(); i++) {
+		for (int i = 0; i < currentStrokes.size(); i++) {
 			if (selectedStrokes == null || selectedStrokes.contains(i) == false) {
-				mNote.get(i).draw(c);
+				currentStrokes.get(i).draw(c);
 			}
 		}
 		
@@ -252,7 +267,7 @@ public class StrokeSelector implements ICanvasEventListener {
 			float dZoom = currentDist / initDist;
 			
 			for (Integer i : selectedStrokes) {
-				WrapList<Point> poly = mNote.get(i).getPoly();
+				WrapList<Point> poly = currentStrokes.get(i).getPoly();
 				
 				selPath.reset();
 				selPath.moveTo((poly.get(0).x-initMid.x) * dZoom + currentMid.x, (poly.get(0).y-initMid.y) * dZoom + currentMid.y);
@@ -264,7 +279,7 @@ public class StrokeSelector implements ICanvasEventListener {
 				c.drawPath(selPath, selBorderPaint);
 				selBodyPaint.setColor(Color.WHITE);
 				c.drawPath(selPath, selBodyPaint);
-				selBodyPaint.setColor(mNote.get(i).getColor());
+				selBodyPaint.setColor(currentStrokes.get(i).getColor());
 				c.drawPath(selPath, selBodyPaint);
 			}
 			
@@ -285,7 +300,7 @@ public class StrokeSelector implements ICanvasEventListener {
 			selBorderPaint.setStrokeWidth(mConverter.screenToCanvasDist(8.0f));
 			
 			for (Integer i : selectedStrokes) {
-				WrapList<Point> poly = mNote.get(i).getPoly();
+				WrapList<Point> poly = currentStrokes.get(i).getPoly();
 				
 				selPath.reset();
 				selPath.moveTo(poly.get(0).x, poly.get(0).y);
@@ -297,7 +312,7 @@ public class StrokeSelector implements ICanvasEventListener {
 				c.drawPath(selPath, selBorderPaint);
 				selBodyPaint.setColor(Color.WHITE);
 				c.drawPath(selPath, selBodyPaint);
-				selBodyPaint.setColor(mNote.get(i).getColor());
+				selBodyPaint.setColor(currentStrokes.get(i).getColor());
 				c.drawPath(selPath, selBodyPaint);
 			}
 			
