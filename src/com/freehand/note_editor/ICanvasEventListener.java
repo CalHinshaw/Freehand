@@ -21,5 +21,8 @@ public interface ICanvasEventListener {
 	public void cancleHoverEvent();
 	public void finishHoverEvent();
 	
+	public void undoCalled();
+	public void redoCalled();
+	
 	public void drawNote(Canvas c);
 }

@@ -147,11 +147,15 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	}
 
 	public void undo () {
-		// TODO
+		currentTool.undoCalled();
+		mNote.undo();
+		mNoteView.invalidate();
 	}
 
 	public void redo () {
-		// TODO
+		currentTool.redoCalled();
+		mNote.redo();
+		mNoteView.invalidate();
 	}
 	
 	//********************************************** Helper Methods **********************************************

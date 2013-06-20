@@ -339,6 +339,21 @@ public class StrokeSelector implements ICanvasEventListener {
 		
 	}
 	
+	public void undoCalled() {
+		currentStrokes = mNote.getInkLayer();
+		lassoPoints.clear();
+		selectedStrokes.clear();
+		selRect = null;
+		selRect = null;
+	}
+	
+	public void redoCalled() {
+		currentStrokes = mNote.getInkLayer();
+		lassoPoints.clear();
+		selectedStrokes.clear();
+		selRect = null;
+		selRect = null;
+	}
 	
 	
 	

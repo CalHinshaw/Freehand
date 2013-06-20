@@ -139,6 +139,9 @@ public class StrokeEraser implements ICanvasEventListener {
 		}
 	}
 	
+	public void undoCalled() { /* blank */ }
+	public void redoCalled() { /* blank */ }
+	
 	//************************************** Utility Methods **********************************************************
 	
 	/**

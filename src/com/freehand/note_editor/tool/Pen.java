@@ -133,6 +133,9 @@ public class Pen implements ICanvasEventListener {
 		}
 	}
 	
+	public void undoCalled() { /* blank */ }
+	public void redoCalled() { /* blank */ }
+	
 	//**************************************** Utility Methods ************************************************
 	
 	private WrapList<Point> getFinalPoly () {
