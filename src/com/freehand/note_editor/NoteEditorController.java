@@ -17,10 +17,8 @@ import android.graphics.RectF;
 
 class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
+	private Note mNote = new Note();
 	private NoteView mNoteView;
-	
-	// The note data about all of the old strokes
-	private LinkedList<Stroke> mStrokes = new LinkedList<Stroke>();
 
 	private ICanvasEventListener currentTool;
 	
@@ -53,7 +51,7 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
 	public NoteEditorController (NoteView newNoteView) {
 		mNoteView = newNoteView;
-		currentTool = new Pen(mStrokes, mConverter, Color.BLACK, 6.0f);
+		currentTool = new Pen(mNote, mConverter, Color.BLACK, 6.0f);
 	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
@@ -135,13 +133,13 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		
 		switch (newTool) {
 			case PEN:
-				currentTool = new Pen(mStrokes, mConverter, color, size);
+				currentTool = new Pen(mNote, mConverter, color, size);
 				break;
 			case STROKE_ERASER:
-				currentTool = new StrokeEraser(mStrokes, mConverter, size);
+				//currentTool = new StrokeEraser(mStrokes, mConverter, size);
 				break;
 			case STROKE_SELECTOR:
-				currentTool = new StrokeSelector(mStrokes, mConverter);
+				//currentTool = new StrokeSelector(mStrokes, mConverter);
 				break;
 		}
 		

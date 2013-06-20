@@ -15,10 +15,12 @@ import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
 import com.freehand.note_editor.ICanvasEventListener;
+import com.freehand.note_editor.Note;
+import com.freehand.note_editor.Note.Action;
 
 public class Pen implements ICanvasEventListener {
 	
-	private final List<Stroke> mNote;
+	private final Note mNote;
 	private final DistConverter mConverter;
 	
 	private final float baseSize;
@@ -35,7 +37,7 @@ public class Pen implements ICanvasEventListener {
 	
 	private int containingIndex = -1;
 	
-	public Pen (List<Stroke> newNote, DistConverter newConverter, int penColor, float penSize) {
+	public Pen (Note newNote, DistConverter newConverter, int penColor, float penSize) {
 		mNote = newNote;
 		mConverter = newConverter;
 		color = penColor;
@@ -89,7 +91,11 @@ public class Pen implements ICanvasEventListener {
 	public void finishPointerEvent() {
 		WrapList<Point> finalPoly = getFinalPoly();
 		if (finalPoly.size() >= 3) {
-			mNote.add(new Stroke(color, getFinalPoly()));
+			
+			ArrayList<Action> action = new ArrayList<Action>(1);
+			
+			action.add(new Action(new Stroke(color, getFinalPoly()), mNote.getInkLayer().size(), true));
+			mNote.performActions(action);
 		}
 		
 		points.clear();
@@ -109,7 +115,7 @@ public class Pen implements ICanvasEventListener {
 	public void finishHoverEvent() { /* blank */ }
 
 	public void drawNote(Canvas c) {
-		for (Stroke s : mNote) {
+		for (Stroke s : mNote.getInkLayer()) {
 			s.draw(c);
 		}
 		
