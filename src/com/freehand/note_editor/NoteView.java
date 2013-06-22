@@ -12,6 +12,8 @@ import android.view.View;
 public class NoteView extends View {
 	private IScreenEventListener mListener;
 	
+	private boolean capDrawing = true;
+	
 	private float previousX = Float.NaN;
 	private float previousY = Float.NaN;
 	private float previousDistance = Float.NaN;
@@ -38,6 +40,10 @@ public class NoteView extends View {
 
 	public void setListener (IScreenEventListener newListener) {
 		mListener = newListener;
+	}
+	
+	public void setUsingCapDrawing (boolean usingCapDrawing) {
+		capDrawing = usingCapDrawing;
 	}
 
 //****************************** Touch Handling Methods *********************************************
@@ -82,7 +88,7 @@ public class NoteView extends View {
 	
 	private void processDraw (MotionEvent e) {
 		
-		if (e.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) {
+		if (e.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS && !(e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER && capDrawing == true)) {
 			return;
 		}
 		

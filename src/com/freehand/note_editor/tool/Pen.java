@@ -106,7 +106,7 @@ public class Pen implements ICanvasEventListener {
 		containingIndex = -1;
 	}
 
-	public void startPinchEvent() { /* blank */	}
+	public void startPinchEvent() { canclePointerEvent(); }
 	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect) { return false; }
 	public void canclePinchEvent() { /* blank */ }
 	public void finishPinchEvent() { /* blank */ }

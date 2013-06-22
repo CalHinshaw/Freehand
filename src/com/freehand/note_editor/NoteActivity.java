@@ -132,6 +132,7 @@ public class NoteActivity extends Activity {
 
 		mPresenter = new NoteEditorController(mNoteView, getPressureSensitivity());
 		mNoteView.setListener(mPresenter);
+		mNoteView.setUsingCapDrawing(getUsingCapDrawing());
 		
 		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
 		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
@@ -179,6 +180,11 @@ public class NoteActivity extends Activity {
 		
 		float psFloat = psInt/100.0f;
 		return psFloat;
+	}
+	
+	private boolean getUsingCapDrawing () {
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		return mPrefs.getBoolean("capacitive_drawing", true);
 	}
 	
 	@Override
