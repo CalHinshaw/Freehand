@@ -30,7 +30,7 @@
     	    android:layout_weight="2" />
     	
     	<Button
-	        android:id="@+id/settings"
+	        android:id="@+id/preferences"
 	        android:layout_width = "60dip"
 	        android:layout_height = "match_parent"
 	        android:layout_weight = "0"

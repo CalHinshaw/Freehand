@@ -10,5 +10,6 @@
     <string name="cancel">Cancel Selection/Drag</string>
     <string name="delete">Delete</string>
     <string name="share_button">Share</string>
+    <string name="preferences">Preferences</string>
 
 </resources>
