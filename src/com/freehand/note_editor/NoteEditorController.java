@@ -1,10 +1,7 @@
 package com.freehand.note_editor;
 
 
-import java.util.LinkedList;
-
 import com.freehand.ink.Point;
-import com.freehand.ink.Stroke;
 import com.freehand.note_editor.tool.DistConverter;
 import com.freehand.note_editor.tool.Pen;
 import com.freehand.note_editor.tool.StrokeEraser;
@@ -34,6 +31,8 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	private float canvasYOffset = -1;
 	private float canvasXOffset = -1;
 	
+	private final float pressureSensitivity;
+	
 
 	private final DistConverter mConverter = new DistConverter () {
 		@Override
@@ -49,9 +48,10 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
 	
 	
-	public NoteEditorController (NoteView newNoteView) {
+	public NoteEditorController (NoteView newNoteView, float pressureSensitivity) {
 		mNoteView = newNoteView;
-		currentTool = new Pen(mNote, mConverter, Color.BLACK, 6.0f);
+		this.pressureSensitivity = pressureSensitivity;
+		currentTool = new Pen(mNote, mConverter, pressureSensitivity, Color.BLACK, 6.0f);
 	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
@@ -133,7 +133,7 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		
 		switch (newTool) {
 			case PEN:
-				currentTool = new Pen(mNote, mConverter, color, size);
+				currentTool = new Pen(mNote, mConverter, pressureSensitivity, color, size);
 				break;
 			case STROKE_ERASER:
 				currentTool = new StrokeEraser(mNote, mConverter, size);

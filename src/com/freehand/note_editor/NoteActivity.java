@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -106,7 +107,7 @@ public class NoteActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView (R.layout.note_activity);
-		getWindow().setLayout(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+		getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		
 		overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
 		
@@ -128,7 +129,8 @@ public class NoteActivity extends Activity {
 		redoButton = (Button) findViewById(R.id.redo);
 		redoButton.setOnClickListener(redoButtonListener);
 		
-		mPresenter = new NoteEditorController(mNoteView);		
+
+		mPresenter = new NoteEditorController(mNoteView, getPressureSensitivity());
 		mNoteView.setListener(mPresenter);
 		
 		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
@@ -162,6 +164,21 @@ public class NoteActivity extends Activity {
 		} else {
 			mPresenter = ((NoteEditorController) oldData);
 		}
+	}
+	
+	private float getPressureSensitivity() {
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String psString = mPrefs.getString("pressure_sensitivity", "40");
+		int psInt = Integer.parseInt(psString);
+		
+		if (psInt < 0) {
+			psInt = 0;
+		} else if (psInt > 100) {
+			psInt = 100;
+		}
+		
+		float psFloat = psInt/100.0f;
+		return psFloat;
 	}
 	
 	@Override

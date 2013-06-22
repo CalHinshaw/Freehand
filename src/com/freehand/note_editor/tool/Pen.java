@@ -2,8 +2,6 @@ package com.freehand.note_editor.tool;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -23,6 +21,8 @@ public class Pen implements ICanvasEventListener {
 	private final Note mNote;
 	private final DistConverter mConverter;
 	
+	private final float pressureSensitivity;
+	
 	private final float baseSize;
 	private final int color;
 	
@@ -37,9 +37,10 @@ public class Pen implements ICanvasEventListener {
 	
 	private int containingIndex = -1;
 	
-	public Pen (Note newNote, DistConverter newConverter, int penColor, float penSize) {
+	public Pen (Note newNote, DistConverter newConverter, float pressureSensitivity, int penColor, float penSize) {
 		mNote = newNote;
 		mConverter = newConverter;
+		this.pressureSensitivity = pressureSensitivity;
 		color = penColor;
 		baseSize = penSize;
 		
@@ -346,6 +347,6 @@ public class Pen implements ICanvasEventListener {
 	}
 	
 	private float scalePressure (float pressure) {
-		return 0.6f + pressure*0.4f;
+		return 1.0f - pressureSensitivity + pressure*pressureSensitivity;
 	}
 }
