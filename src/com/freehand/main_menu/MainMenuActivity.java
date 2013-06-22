@@ -5,7 +5,7 @@ import java.io.File;
 import com.calhounroberthinshaw.freehand.R;
 
 import com.freehand.note_editor.NoteActivity;
-import com.freehand.preferences.Preferences;
+import com.freehand.preferences.PrefActivity;
 import com.freehand.storage.DefaultNoteSorter;
 import com.freehand.storage.INoteHierarchyItem;
 import com.freehand.storage.NoteFileHierarchyItem;
@@ -201,7 +201,7 @@ public class MainMenuActivity extends Activity {
         Button prefButton = (Button) findViewById(R.id.preferences);
         prefButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				Intent prefActivity = new Intent(getBaseContext(), Preferences.class);
+				Intent prefActivity = new Intent(getBaseContext(), PrefActivity.class);
 				startActivity(prefActivity);
 			}
         });

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+	 
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <CheckBoxPreference
+        android:title="Draw with capacitive device"
+    	android:summary="Draw with a capacative device like a finger or soft-tipped stylus instead of just an active stylus."
+    	android:key="capacitive_drawing"
+    	android:defaultValue="true"
+    	android:persistent = "true" />
+    
+    <EditTextPreference
+        android:title = "Pressure sensitivity"
+        android:dialogMessage="Set the stylus's pressure sensitivity - 0 is off and 100 is all the way on."
+        android:key = "pressure_sensitivity"
+        android:defaultValue = "40"
+        android:persistent = "true" />
+        
+</PreferenceScreen>
