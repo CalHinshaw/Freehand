@@ -100,12 +100,10 @@ public class StrokeSelector implements ICanvasEventListener {
 	
 	
 	public void startPointerEvent() {
-		currentStrokes = mNote.getInkLayer();
+		
 		
 		lassoPoints.clear();
-		selectedStrokes.clear();
-		selRect = null;
-		selRect = null;
+
 	}
 
 	public boolean continuePointerEvent(Point p, long time, float pressure) {
@@ -118,6 +116,11 @@ public class StrokeSelector implements ICanvasEventListener {
 	}
 
 	public void finishPointerEvent() {
+		currentStrokes = mNote.getInkLayer();
+		selectedStrokes.clear();
+		selRect = null;
+		selRect = null;
+		
 		if (lassoPoints.size() < 3) {
 			lassoPoints.clear();
 			return;
@@ -161,6 +164,7 @@ public class StrokeSelector implements ICanvasEventListener {
 	private boolean setIsTransforming = false;
 	
 	public void startPinchEvent() {
+		lassoPoints.clear();
 		setIsTransforming = true;
 	}
 
