@@ -6,7 +6,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -115,7 +114,6 @@ public class Note {
 	}
 	
 	public boolean save () {
-		
 		if (noteFile.getPath().endsWith(".note") == false) { return false; }
 		if (noteFile.isDirectory() == true) { return false; }
 		

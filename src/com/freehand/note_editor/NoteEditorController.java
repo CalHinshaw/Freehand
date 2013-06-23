@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.util.Log;
+import android.widget.Toast;
 
 class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
@@ -60,11 +61,10 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	}
 	
 	public void saveNote () {
-		//TODO toast messages
 		if (mNote.save() == true) {
-			Log.d("PEN", "save successful");
+			Toast.makeText(mNoteView.getContext(), "Save Successful!", Toast.LENGTH_SHORT).show();
 		} else {
-			Log.d("PEN", "save failed");
+			Toast.makeText(mNoteView.getContext(), "Save Failed", Toast.LENGTH_LONG).show();
 		}
 	}
 	
