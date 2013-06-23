@@ -11,6 +11,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.util.Log;
 
 class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
@@ -56,6 +57,15 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
 	public void setNoteView (NoteView newView) {
 		mNoteView = newView;
+	}
+	
+	public void saveNote () {
+		//TODO toast messages
+		if (mNote.save() == true) {
+			Log.d("PEN", "save successful");
+		} else {
+			Log.d("PEN", "save failed");
+		}
 	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************

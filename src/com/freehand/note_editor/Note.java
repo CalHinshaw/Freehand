@@ -19,6 +19,7 @@ import android.util.Log;
 
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
+import com.freehand.misc.WrapList;
 import com.freehand.note_editor.tool.DistConverter;
 import com.freehand.note_editor.tool.Pen;
 
@@ -46,7 +47,7 @@ public class Note {
 			if (formatVersion == 1) {
 				readV1(s);
 			} else if (formatVersion == 2) {
-				
+				readV2(s);
 			}
 			
 			s.close();
@@ -94,9 +95,52 @@ public class Note {
 				pen.finishPointerEvent();
 			}
 		}
+		
+		undoQueue.clear();
 	}
 	
+	private void readV2 (DataInputStream s) throws IOException {
+		int numStrokes = s.readInt();
+		
+		for (int i = 0; i < numStrokes; i++) {
+			int color = s.readInt();
+			int numPoints = s.readInt();
+			WrapList<Point> poly = new WrapList<Point>(numPoints);
+			for (int j = 0; j < numPoints; j++) {
+				poly.add(new Point(s.readFloat(), s.readFloat()));
+			}
+			inkLayer.add(new Stroke(color, poly));
+			
+		}
+	}
 	
+	public boolean save () {
+		
+		if (noteFile.getPath().endsWith(".note") == false) { return false; }
+		if (noteFile.isDirectory() == true) { return false; }
+		
+		try {
+			DataOutputStream s = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(noteFile)));
+			s.writeInt(2);
+			s.writeInt(inkLayer.size());
+			
+			for (Stroke stroke : inkLayer) {
+				s.writeInt(stroke.getColor());
+				
+				s.writeInt(stroke.getPoly().size());
+				for (Point p : stroke.getPoly()) {
+					s.writeFloat(p.x);
+					s.writeFloat(p.y);
+				}
+			}
+			
+			s.close();
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 	
 	
 	

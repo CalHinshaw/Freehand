@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -221,7 +220,7 @@ public class NoteActivity extends Activity {
 	@Override
 	public void onPause() {
 		super.onPause();
-		//mPresenter.saveNote();
+		mPresenter.saveNote();
 		
 		SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
 		SharedPreferences.Editor editor = mPrefs.edit();
@@ -305,7 +304,7 @@ public class NoteActivity extends Activity {
 	public boolean onOptionsItemSelected (MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.saveItem:
-			//mPresenter.saveNote();
+			mPresenter.saveNote();
 			return true;
 			
 		case R.id.renameItem:
