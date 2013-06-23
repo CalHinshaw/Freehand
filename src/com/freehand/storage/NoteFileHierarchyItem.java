@@ -42,6 +42,10 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	public synchronized String getName() {
 		return mFile.getName().replace(".note", "");
 	}
+	
+	public synchronized String getPath() {
+		return mFile.getPath();
+	}
 
 	public synchronized long getDateModified() {
 		return mFile.lastModified();

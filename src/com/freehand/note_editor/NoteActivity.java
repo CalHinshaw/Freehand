@@ -114,7 +114,9 @@ public class NoteActivity extends Activity {
 		@SuppressWarnings("deprecation")
 		final NoteEditorController savedController = (NoteEditorController) getLastNonConfigurationInstance();
 		if (savedController == null) {
-			mPresenter = new NoteEditorController(getPressureSensitivity());
+			String notePath = getIntent().getStringExtra("note_path");
+			Note note = new Note(notePath);
+			mPresenter = new NoteEditorController(note, getPressureSensitivity());
 		} else {
 			mPresenter = savedController;
 		}
@@ -147,7 +149,6 @@ public class NoteActivity extends Activity {
 		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
 		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
 		
-		//final RadioButton smoothEraseButton = (RadioButton) eraseMenu.findViewById(R.id.smooth_erase_button);
 		final SizeSliderView eraseSizeSlider = (SizeSliderView) eraseMenu.findViewById(R.id.eraser_size_slider);
 		eraseSizeSlider.setActionBarListener(mPresenter);
 		

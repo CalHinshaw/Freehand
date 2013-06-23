@@ -14,7 +14,7 @@ import android.graphics.RectF;
 
 class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
-	private Note mNote = new Note();
+	private final Note mNote;
 	private NoteView mNoteView;
 
 	private ICanvasEventListener currentTool;
@@ -48,8 +48,9 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
 	
 	
-	public NoteEditorController (float pressureSensitivity) {
+	public NoteEditorController (Note note, float pressureSensitivity) {
 		this.pressureSensitivity = pressureSensitivity;
+		mNote = note;
 		currentTool = new Pen(mNote, mConverter, pressureSensitivity, Color.BLACK, 6.0f);
 	}
 	

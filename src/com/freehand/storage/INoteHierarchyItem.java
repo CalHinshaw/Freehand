@@ -67,4 +67,6 @@ public interface INoteHierarchyItem extends Parcelable, Comparable<INoteHierarch
 	public void forceUpdate ();
 	
 	public String getIdentifier();
+	
+	public String getPath();
 }

@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -248,7 +249,7 @@ public class MainMenuActivity extends Activity {
     
 	public void openNoteActivity (INoteHierarchyItem toOpen) {
 		Intent i = new Intent(this, NoteActivity.class);
-		i.putExtra("com.calhounhinshaw.freehandalpha.note_editor.INoteHierarchyItem", toOpen);
+		i.putExtra("note_path", toOpen.getPath());
 		i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
 		this.startActivity(i);
 	}
