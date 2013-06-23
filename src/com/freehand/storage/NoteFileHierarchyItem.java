@@ -32,6 +32,11 @@ public class NoteFileHierarchyItem implements INoteHierarchyItem {
 	private NoteFileHierarchyItem mParent = null;
 	
 	public NoteFileHierarchyItem (File newFile, NoteFileHierarchyItem newParent) {
+		
+		if (newFile.isDirectory()) {
+			newFile.mkdirs();
+		}
+		
 		mFile = newFile;
 		mParent = newParent;
 	}
