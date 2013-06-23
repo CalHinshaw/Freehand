@@ -48,10 +48,13 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
 	
 	
-	public NoteEditorController (NoteView newNoteView, float pressureSensitivity) {
-		mNoteView = newNoteView;
+	public NoteEditorController (float pressureSensitivity) {
 		this.pressureSensitivity = pressureSensitivity;
 		currentTool = new Pen(mNote, mConverter, pressureSensitivity, Color.BLACK, 6.0f);
+	}
+	
+	public void setNoteView (NoteView newView) {
+		mNoteView = newView;
 	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
@@ -143,19 +146,25 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 				break;
 		}
 		
-		mNoteView.invalidate();
+		if (mNoteView != null) {
+			mNoteView.invalidate();
+		}
 	}
 
 	public void undo () {
 		currentTool.undoCalled();
 		mNote.undo();
-		mNoteView.invalidate();
+		if (mNoteView != null) {
+			mNoteView.invalidate();
+		}
 	}
 
 	public void redo () {
 		currentTool.redoCalled();
 		mNote.redo();
-		mNoteView.invalidate();
+		if (mNoteView != null) {
+			mNoteView.invalidate();
+		}
 	}
 	
 	//********************************************** Helper Methods **********************************************

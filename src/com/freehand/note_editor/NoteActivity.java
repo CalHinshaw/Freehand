@@ -108,8 +108,17 @@ public class NoteActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView (R.layout.note_activity);
 		getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-		
 		overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
+		
+		// Load the previous object on a runtime change
+		@SuppressWarnings("deprecation")
+		final NoteEditorController savedController = (NoteEditorController) getLastNonConfigurationInstance();
+		if (savedController == null) {
+			mPresenter = new NoteEditorController(getPressureSensitivity());
+		} else {
+			mPresenter = savedController;
+		}
+		
 		
 		// getting views from xml layout
 		mNoteView = (NoteView) findViewById(R.id.note);
@@ -130,9 +139,10 @@ public class NoteActivity extends Activity {
 		redoButton.setOnClickListener(redoButtonListener);
 		
 
-		mPresenter = new NoteEditorController(mNoteView, getPressureSensitivity());
+		
 		mNoteView.setListener(mPresenter);
 		mNoteView.setUsingCapDrawing(getUsingCapDrawing());
+		mPresenter.setNoteView(mNoteView);
 		
 		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
 		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
@@ -144,27 +154,9 @@ public class NoteActivity extends Activity {
 		mEraseMenuWindow.setDismissListener(new PopupWindow.OnDismissListener() {
 			public void onDismiss() {
 				eraserSize = eraseSizeSlider.getSize();
-//				if (smoothEraseButton.isChecked()) {
-//					eraseStrokes = false;
-//					mPresenter.setTool(IActionBarListener.Tool.SMOOTH_ERASER, eraserSize, 0);
-//				} else {
-					mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
-//					eraseStrokes = true;
-//				}
+				mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
 			}
 		});
-		
-		// setting up the note view
-		final Object oldData = getLastNonConfigurationInstance();
-		if (oldData == null) {
-			Parcelable noteItem = getIntent().getParcelableExtra("com.calhounhinshaw.freehandalpha.note_editor.INoteHierarchyItem");
-			
-//			if (noteItem != null) {
-//				mPresenter.openNote((INoteHierarchyItem) noteItem);
-//			}
-		} else {
-			mPresenter = ((NoteEditorController) oldData);
-		}
 	}
 	
 	private float getPressureSensitivity() {
@@ -221,6 +213,7 @@ public class NoteActivity extends Activity {
 	
 	@Override
 	public Object onRetainNonConfigurationInstance() {
+		mPresenter.setNoteView(null);
 		return mPresenter;
 	}
 	
