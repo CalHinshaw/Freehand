@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 
@@ -256,6 +257,10 @@ public class StrokeSelector implements ICanvasEventListener {
 	public void cancleHoverEvent() { /* blank */ }
 	public void finishHoverEvent() { /* blank */ }
 
+	public Rect getDirtyRect() {
+		return null;
+	}
+	
 	public void drawNote(Canvas c) {
 
 		// Draw all of the non-selected strokes in mNote

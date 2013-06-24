@@ -1,6 +1,7 @@
 package com.freehand.note_editor;
 
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.RectF;
 
 interface IScreenEventListener {
@@ -20,5 +21,6 @@ interface IScreenEventListener {
 	public void cancleHoverEvent();
 	public void finishHoverEvent();
 	
+	public Rect getDirtyRect();
 	public void drawNote(Canvas c);
 }

@@ -4,6 +4,7 @@ package com.freehand.note_editor;
 import com.freehand.ink.MiscGeom;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -82,7 +83,13 @@ public class NoteView extends View {
 			currentlyPanZoom = false;
 		}
 		
-		invalidate();
+		Rect dirty = mListener.getDirtyRect();
+		if (dirty == null) {
+			invalidate();
+		} else {
+			invalidate(dirty);
+		}
+		
 		return true;
 	}
 	

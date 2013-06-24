@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 
@@ -36,6 +37,8 @@ public class Pen implements ICanvasEventListener {
 	private LinkedList<Point> cap = new LinkedList<Point>();
 	
 	private int containingIndex = -1;
+	
+	private Rect dirtyRect = null;
 	
 	public Pen (Note newNote, DistConverter newConverter, float pressureSensitivity, int penColor, float penSize) {
 		mNote = newNote;
@@ -78,8 +81,50 @@ public class Pen implements ICanvasEventListener {
 			addToPoly();
 		}
 		
+		Rect current;
+		if (points.size() == 1) {
+			current = new Rect();
+			current.left = (int) (p.x - newSize);
+			current.right = (int) (p.x + newSize + 1);
+			current.top = (int) (p.y - newSize);
+			current.bottom = (int) (p.y + newSize +1);
+		} else {
+			current = calcSegAABB(points.get(points.size()-1), sizes.get(sizes.size()-1), points.get(points.size()-2), sizes.get(sizes.size()-2));
+		}
+		
+		if (dirtyRect == null) {
+			dirtyRect = current;
+		} else {
+			dirtyRect.union(current);
+		}
+		
 		return true;
 	}
+	
+	
+	private Rect calcSegAABB (Point capT, float radT, Point capH, float radH) {
+		Rect aabb = new Rect();
+		
+		if (capT.y-radT < capH.y-radH) {
+			aabb.top = (int) (capT.y - radT);
+			aabb.bottom = (int) (capH.y + radH);
+		} else {
+			aabb.top = (int) (capH.y - radH);
+			aabb.bottom = (int) (capT.y + radT);
+		}
+		
+		if (capT.x-radT < capH.x-radH) {
+			aabb.left = (int) (capT.x - radT);
+			aabb.right = (int) (capH.x + radH);
+		} else {
+			aabb.left = (int) (capH.x - radH);
+			aabb.right = (int) (capT.x + radT);
+		}
+		
+		return aabb;
+	}
+	
+	
 
 	public void canclePointerEvent() {
 		points.clear();
@@ -115,7 +160,13 @@ public class Pen implements ICanvasEventListener {
 	public void cancleHoverEvent() { /* blank */ }
 	public void finishHoverEvent() { /* blank */ }
 
+	public Rect getDirtyRect() {
+		return dirtyRect;
+	}
+	
 	public void drawNote(Canvas c) {
+		dirtyRect = null;
+		
 		for (Stroke s : mNote.getInkLayer()) {
 			s.draw(c);
 		}

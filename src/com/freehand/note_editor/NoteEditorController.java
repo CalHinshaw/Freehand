@@ -10,6 +10,7 @@ import com.freehand.note_editor.tool.StrokeSelector;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 import android.widget.Toast;
@@ -134,6 +135,16 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		currentTool.finishHoverEvent();
 	}
 	
+	public Rect getDirtyRect() {
+		Rect dirty = currentTool.getDirtyRect();
+		
+		if (dirty == null) {
+			return null;
+		} else {
+			return canvasRectToScreenRect(dirty);
+		}
+	}
+	
 	public void drawNote (Canvas c) {
 		updatePanZoom(c);
 		c.drawColor(0xffffffff);
@@ -211,6 +222,17 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		canvRect.bottom = -windowY + screenRect.bottom/zoomMultiplier;
 		
 		return canvRect;
+	}
+	
+	private Rect canvasRectToScreenRect (Rect canvRect) {
+		Rect screenRect = new Rect();
+		
+		screenRect.left = (int) ((canvRect.left + windowX) * zoomMultiplier);
+		screenRect.right = (int) ((canvRect.right + windowX) * zoomMultiplier) + 1;
+		screenRect.top = (int) ((canvRect.top + windowY) * zoomMultiplier);
+		screenRect.bottom = (int) ((canvRect.bottom + windowY) * zoomMultiplier) + 1;
+		
+		return screenRect;
 	}
 	
 }

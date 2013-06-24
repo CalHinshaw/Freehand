@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
 
 import com.freehand.ink.MiscGeom;
@@ -125,6 +126,10 @@ public class StrokeEraser implements ICanvasEventListener {
 		circlePoint = null;
 	}
 
+	public Rect getDirtyRect() {
+		return null;
+	}
+	
 	public void drawNote(Canvas c) {
 		for (int i = 0; i < currentStrokes.size(); i++) {
 			if (deletedStrokes.contains(i) == false) {
