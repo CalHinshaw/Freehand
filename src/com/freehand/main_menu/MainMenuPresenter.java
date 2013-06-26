@@ -312,15 +312,6 @@ public class MainMenuPresenter {
 	
 	@SuppressWarnings("unchecked")
 	public void shareSelectedItems() {
-		TreeSet<INoteHierarchyItem> toShare = new TreeSet<INoteHierarchyItem>();
-		
-		for (INoteHierarchyItem i : selectedItems) {
-			if (i.isFolder()) {
-				toShare.addAll(i.getAllRecursiveChildren());
-			} else {
-				toShare.add(i);
-			}
-		}
 		
 		final ProgressDialog dialog = new ProgressDialog(mActivity, ProgressDialog.THEME_HOLO_LIGHT);
 		dialog.setProgressNumberFormat(null);
@@ -335,12 +326,9 @@ public class MainMenuPresenter {
 			}
 		});
 		
-		
 		ProgressUpdateFunction updater = new ProgressUpdateFunction() {
 			@Override
 			public void updateProgress(int percentageComplete) {
-				Log.d("PEN", Integer.toString(percentageComplete) + "% done!");
-				
 				if (percentageComplete > 100) {
 					dialog.dismiss();
 				} else {
@@ -350,12 +338,22 @@ public class MainMenuPresenter {
 					
 					dialog.setProgress(percentageComplete);
 				}
-				
 			}
 		};
 		
-		List<INoteHierarchyItem> shareList = new ArrayList<INoteHierarchyItem>(toShare);
-		shareTask = new NoteSharer(updater, mActivity).execute(shareList);
+		TreeSet<String> toShare = new TreeSet<String>();
+		for (INoteHierarchyItem i : selectedItems) {
+			if (i.isFolder()) {
+				List<INoteHierarchyItem> children = i.getAllRecursiveChildren();
+				for (INoteHierarchyItem child : children) {
+					toShare.add(child.getPath());
+				}
+			} else {
+				toShare.add(i.getPath());
+			}
+		}
+		
+		shareTask = new NoteSharer(updater, mActivity).execute(new ArrayList<String>(toShare));
 		
 		this.clearSelections();
 	}
