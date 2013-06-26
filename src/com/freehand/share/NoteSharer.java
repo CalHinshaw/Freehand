@@ -8,9 +8,6 @@ import java.util.List;
 
 import com.freehand.ink.Stroke;
 import com.freehand.note_editor.Note;
-import com.freehand.note_editor.OldNote;
-import com.freehand.storage.INoteHierarchyItem;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -22,7 +19,6 @@ import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.util.Log;
 import android.widget.Toast;
 
 public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
@@ -35,7 +31,6 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 		mUpdater = newUpdater;
 		mContext = newContext;
 	}
-	
 	
 	@Override
 	protected void onPreExecute() {
@@ -107,6 +102,10 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 		for (int i = 1; i < strokes.size(); i++) {
 			aabb.union(strokes.get(i).getAABoundingBox());
 		}
+		aabb.left -= 150;
+		aabb.right += 150;
+		aabb.top -= 150;
+		aabb.bottom += 150;
 		
 		long maxMemory = (long) (Runtime.getRuntime().maxMemory() * 0.8f);			// Eighty percent of the maximum continuous memory the VM will try to allocate in bytes
 		long noteMemory = (long) (2 * (aabb.width()+1) * (aabb.height()+1));		// The size of the bitmap required to display the entire note in bytes

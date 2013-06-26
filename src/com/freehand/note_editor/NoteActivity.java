@@ -2,8 +2,12 @@ package com.freehand.note_editor;
 
 import java.util.ArrayList;
 import com.calhounroberthinshaw.freehand.R;
+import com.freehand.share.NoteSharer;
+import com.freehand.share.ProgressUpdateFunction;
+
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -325,39 +329,38 @@ public class NoteActivity extends Activity {
 	   		 dialog.show();
 	   		 return true;
 	   		 
-	   		 //TODO sharing
+		case R.id.shareItem:
+			mPresenter.saveNote();
+			ArrayList<String> toShare = new ArrayList<String>(1);
+			toShare.add(mPresenter.getNote().getPath());
+
+			final ProgressDialog progressDialog = new ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT);
+			progressDialog.setProgressNumberFormat(null);
+			progressDialog.setTitle("Preparing to Share");
+			progressDialog.setMessage("Large notes take longer to share, please be patient.");
+			progressDialog.setIndeterminate(false);
+			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			
+			ProgressUpdateFunction updater = new ProgressUpdateFunction() {
+				@Override
+				public void updateProgress(int percentageComplete) {
+					if (percentageComplete > 100) {
+						progressDialog.dismiss();
+					} else {
+						if (progressDialog.isShowing() == false) {
+							progressDialog.show();
+						}
+						
+						progressDialog.setProgress(percentageComplete);
+					}
+					
+				}
+			};
+			
+			new NoteSharer(updater, this).execute(toShare);
+
+			return true;
 	   		 
-//		case R.id.shareItem:
-//			ArrayList<INoteHierarchyItem> toShare = new ArrayList<INoteHierarchyItem>(1);
-//			toShare.add(mNoteView.getNote().getHierarchyItem());
-//
-//			final ProgressDialog progressDialog = new ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT);
-//			progressDialog.setProgressNumberFormat(null);
-//			progressDialog.setTitle("Preparing to Share");
-//			progressDialog.setMessage("Large notes take longer to share, please be patient.");
-//			progressDialog.setIndeterminate(false);
-//			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-//			
-//			ProgressUpdateFunction updater = new ProgressUpdateFunction() {
-//				@Override
-//				public void updateProgress(int percentageComplete) {
-//					if (percentageComplete > 100) {
-//						progressDialog.dismiss();
-//					} else {
-//						if (progressDialog.isShowing() == false) {
-//							progressDialog.show();
-//						}
-//						
-//						progressDialog.setProgress(percentageComplete);
-//					}
-//					
-//				}
-//			};
-//			
-//			new NoteSharer(updater, this).execute(toShare);
-//
-//			return true;
-//	   		 
 	   	default:
 	   		Toast.makeText(this, "Coming Soon!", Toast.LENGTH_LONG).show();
 	   		return super.onOptionsItemSelected(item);

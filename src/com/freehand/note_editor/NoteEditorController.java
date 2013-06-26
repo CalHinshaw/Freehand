@@ -12,7 +12,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
 import android.widget.Toast;
 
 class NoteEditorController implements IActionBarListener, IScreenEventListener {
@@ -67,6 +66,10 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		} else {
 			Toast.makeText(mNoteView.getContext(), "Save Failed", Toast.LENGTH_LONG).show();
 		}
+	}
+	
+	public Note getNote () {
+		return mNote;
 	}
 	
 	//*********************************** INoteCanvasListener Methods ****************************************************************

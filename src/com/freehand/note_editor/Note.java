@@ -140,6 +140,10 @@ public class Note {
 		}
 	}
 	
+	public String getPath () {
+		return noteFile.getPath();
+	}
+	
 	
 	
 	public List<Stroke> getInkLayer () {
