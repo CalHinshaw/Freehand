@@ -9,11 +9,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-
+import android.os.Environment;
 import android.util.Log;
 
 import com.freehand.ink.Point;
@@ -24,6 +25,7 @@ import com.freehand.note_editor.tool.Pen;
 
 public class Note {
 	private final File noteFile;
+	private int backingFileVersion;
 	
 	
 	private ArrayList<Stroke> inkLayer = new ArrayList<Stroke>(5000);
@@ -34,14 +36,16 @@ public class Note {
 	public Note (String notePath) {
 		noteFile = new File(notePath);
 		
-		if (notePath.endsWith(".note") == false) { return; }
-		if (noteFile.exists() == false) { return; }
-		if (noteFile.isDirectory() == true) { return; }
+		if (!notePath.endsWith(".note") || !noteFile.exists() || noteFile.isDirectory()) {
+			backingFileVersion = 2;
+			return;
+		}
 		
 		try {
 			DataInputStream s = new DataInputStream(new BufferedInputStream(new FileInputStream(noteFile)));
 			
 			int formatVersion = s.readInt();
+			backingFileVersion = formatVersion;
 			
 			if (formatVersion == 1) {
 				readV1(s);
@@ -118,7 +122,8 @@ public class Note {
 		if (noteFile.isDirectory() == true) { return false; }
 		
 		try {
-			DataOutputStream s = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(noteFile)));
+			File temp = new File(noteFile.getParentFile(), "temp_"+noteFile.getName());
+			DataOutputStream s = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(temp)));
 			s.writeInt(2);
 			s.writeInt(inkLayer.size());
 			
@@ -133,6 +138,28 @@ public class Note {
 			}
 			
 			s.close();
+			
+			if (backingFileVersion == 2) {
+				temp.renameTo(noteFile);
+			} else {
+				File rootDir = Environment.getExternalStorageDirectory();
+				File backupDir = new File(rootDir, "Freehand Backups");
+				backupDir.mkdirs();
+				File backupFile = new File(backupDir, "backup_" + noteFile.getName());
+				
+				List<File> children = Arrays.asList(backupDir.listFiles());
+				int num = 0;
+				while (children.contains(backupFile)) {
+					num++;
+					backupFile = new File(backupDir, "backup_" + noteFile.getName().replace(".note", "") + " " + Integer.toString(num) + ".note");
+				}
+				
+				String finalPath = noteFile.getPath();
+				noteFile.renameTo(backupFile);
+				temp.renameTo(new File(finalPath));
+			}
+			
+			
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
