@@ -90,6 +90,10 @@ public class Pen implements ICanvasEventListener {
 			current.bottom = (int) (p.y + newSize +1);
 		} else {
 			current = calcSegAABB(points.get(points.size()-1), sizes.get(sizes.size()-1), points.get(points.size()-2), sizes.get(sizes.size()-2));
+			current.left -= newSize;
+			current.right += newSize+1;
+			current.top -= newSize;
+			current.bottom += newSize+1;
 		}
 		
 		if (dirtyRect == null) {
