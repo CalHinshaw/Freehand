@@ -257,7 +257,7 @@ public class StrokeSelector implements ICanvasEventListener {
 	public void cancleHoverEvent() { /* blank */ }
 	public void finishHoverEvent() { /* blank */ }
 
-	public Rect getDirtyRect() {
+	public RectF getDirtyRect() {
 		return null;
 	}
 	

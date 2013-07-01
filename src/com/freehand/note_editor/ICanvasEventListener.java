@@ -25,6 +25,6 @@ public interface ICanvasEventListener {
 	public void undoCalled();
 	public void redoCalled();
 	
-	public Rect getDirtyRect();
+	public RectF getDirtyRect();
 	public void drawNote(Canvas c);
 }

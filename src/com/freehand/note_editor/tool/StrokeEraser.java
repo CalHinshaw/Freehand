@@ -37,7 +37,7 @@ public class StrokeEraser implements ICanvasEventListener {
 	private Point prevPoint = null;
 	private long prevTime = -1;
 	
-	private Rect dirtyRect = null;
+	private RectF dirtyRect = null;
 	
 	public StrokeEraser (Note newNote, DistConverter newConverter, float newEraserSize) {
 		mNote = newNote;
@@ -118,11 +118,11 @@ public class StrokeEraser implements ICanvasEventListener {
 	public boolean continueHoverEvent(Point p, long time) {
 		circlePoint = p;
 		
-		dirtyRect = new Rect();
-		dirtyRect.left = (int) (p.x-eraserSize/2);
-		dirtyRect.right = (int) (p.x+eraserSize/2);
-		dirtyRect.top = (int) (p.y-eraserSize/2);
-		dirtyRect.bottom = (int) (p.y+eraserSize/2);
+		dirtyRect = new RectF();
+		dirtyRect.left = p.x-eraserSize/2;
+		dirtyRect.right = p.x+eraserSize/2;
+		dirtyRect.top = p.y-eraserSize/2;
+		dirtyRect.bottom = p.y+eraserSize/2;
 		
 		return true;
 	}
@@ -135,7 +135,7 @@ public class StrokeEraser implements ICanvasEventListener {
 		circlePoint = null;
 	}
 
-	public Rect getDirtyRect() {
+	public RectF getDirtyRect() {
 		return dirtyRect;
 	}
 	

@@ -143,7 +143,7 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	}
 	
 	public Rect getDirtyRect() {
-		Rect dirty = currentTool.getDirtyRect();
+		RectF dirty = currentTool.getDirtyRect();
 		
 		if (dirty == null) {
 			return null;
@@ -231,7 +231,7 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		return canvRect;
 	}
 	
-	private Rect canvasRectToScreenRect (Rect canvRect) {
+	private Rect canvasRectToScreenRect (RectF canvRect) {
 		Rect screenRect = new Rect();
 		
 		screenRect.left = (int) ((canvRect.left + windowX) * zoomMultiplier);
