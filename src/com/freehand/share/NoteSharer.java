@@ -47,6 +47,7 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 		}
 		
 		File rootDirectory = new File(Environment.getExternalStorageDirectory().getAbsolutePath().concat("/temp/Freehand"));
+		rootDirectory.mkdirs();
 		
 		// Convert all of the Notes to PNG images and put the file Uris into imageUris
 		ArrayList<Uri> imageUris = new ArrayList<Uri>();
