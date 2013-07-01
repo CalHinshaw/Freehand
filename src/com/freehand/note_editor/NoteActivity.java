@@ -323,7 +323,7 @@ public class NoteActivity extends Activity {
 	   		         String text=edit.getText().toString();
 
 	   		         dialog.dismiss();
-	   		         //mPresenter.rename(text);
+	   		         mPresenter.renameNote(text);
 	   		     }
 	   		 });   
 	   		 dialog.show();

@@ -72,6 +72,10 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 		return mNote;
 	}
 	
+	public boolean renameNote (String newName) {
+		return mNote.rename(newName);
+	}
+	
 	//*********************************** INoteCanvasListener Methods ****************************************************************
 	
 

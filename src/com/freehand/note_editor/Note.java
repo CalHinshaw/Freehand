@@ -24,7 +24,7 @@ import com.freehand.note_editor.tool.DistConverter;
 import com.freehand.note_editor.tool.Pen;
 
 public class Note {
-	private final File noteFile;
+	private File noteFile;
 	private int backingFileVersion;
 	
 	
@@ -171,6 +171,16 @@ public class Note {
 		return noteFile.getPath();
 	}
 	
+	public boolean rename (String newName) {
+		File newNameFile = new File(noteFile.getParent(), newName + ".note");
+		
+		if (noteFile.renameTo(newNameFile)) {
+			noteFile = newNameFile;
+			return true;
+		} else {
+			return false;
+		}
+	}
 	
 	
 	public List<Stroke> getInkLayer () {
