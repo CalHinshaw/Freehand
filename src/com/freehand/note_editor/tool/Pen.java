@@ -2,10 +2,11 @@ package com.freehand.note_editor.tool;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.Log;
 
@@ -18,6 +19,7 @@ import com.freehand.note_editor.Note;
 import com.freehand.note_editor.Note.Action;
 
 public class Pen implements ICanvasEventListener {
+	private static final int ARC_RES = 20;
 	
 	private final Note mNote;
 	private final DistConverter mConverter;
@@ -34,7 +36,7 @@ public class Pen implements ICanvasEventListener {
 	private Paint paint = new Paint();
 	
 	private LinkedList<Point> poly = new LinkedList<Point>();
-	private LinkedList<Point> cap = new LinkedList<Point>();
+	private List<Point> cap = new ArrayList<Point>();
 	
 	private int containingIndex = -1;
 	
@@ -50,7 +52,7 @@ public class Pen implements ICanvasEventListener {
 		path.setFillType(Path.FillType.WINDING);
 		
 		paint.setColor(color);
-		paint.setStyle(Paint.Style.FILL);
+		paint.setStyle(Paint.Style.STROKE);
 		paint.setAntiAlias(true);
 	}
 	
@@ -68,7 +70,7 @@ public class Pen implements ICanvasEventListener {
 		float newSize = baseSize * this.scalePressure(pressure);
 		
 		if (points.size() > 0 && newSize == sizes.get(sizes.size()-1) &&
-			MiscGeom.distance(p, points.get(points.size()-1)) <= mConverter.screenToCanvasDist(1.0f)) {
+			MiscGeom.distance(p, points.get(points.size()-1)) <= mConverter.screenToCanvasDist(2.0f)) {
 			return true;
 		}
 		
@@ -142,6 +144,24 @@ public class Pen implements ICanvasEventListener {
 			}
 			c.drawPath(path, paint);
 		}
+		
+//		// test code
+//		Paint red = new Paint();
+//		red.setColor(0xA0FF0000);
+//		red.setStyle(Paint.Style.STROKE);
+//		red.setStrokeWidth(0);
+//		
+//		Paint black = new Paint();
+//		black.setColor(0xA0000000);
+//		black.setStyle(Paint.Style.STROKE);
+//		black.setStrokeWidth(0);
+//		
+//		boolean isRed = true;
+//		
+//		for (int i = 0; i < points.size(); i++) {
+//			c.drawCircle(points.get(i).x, points.get(i).y, sizes.get(i), isRed ? red : black);
+//			isRed = !isRed;
+//		}
 	}
 	
 	public void undoCalled() { /* blank */ }
@@ -187,6 +207,7 @@ public class Pen implements ICanvasEventListener {
 					addLast(start.get(i));
 				}
 			} else {								// second contains first. THIS IS THE PROBLEM ONE!!!!
+				poly.clear();
 				points.remove(0);
 				sizes.remove(0);
 			}
@@ -224,9 +245,24 @@ public class Pen implements ICanvasEventListener {
 			if (pts[0] != null) {
 				addLast(pts[0]);
 
-				LinkedList<Point> right = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), false, poly.getLast(), offsets[1]);
+				List<Point> right = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), false, poly.getLast(), offsets[1], ARC_RES);
 				for (Point p : right) {
 					addLast(p);
+				}
+				
+				break;
+			}
+		}
+		
+		while (poly.size() >= 2) {
+			Point[] pts = MiscGeom.circleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(0), poly.get(1));
+			poly.removeFirst();
+			if (pts[0] != null) {
+				addFirst(pts[0]);
+				
+				List<Point> left = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), true, poly.getFirst(), offsets[0], ARC_RES);
+				for (Point p : left) {
+					addFirst(p);
 				}
 				
 				break;
@@ -241,23 +277,6 @@ public class Pen implements ICanvasEventListener {
 			sizes.clear();
 			points.add(tempPoint);
 			sizes.add(tempSize);
-			
-			return;
-		}
-		
-		while (poly.size() >= 2) {
-			Point[] pts = MiscGeom.circleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(0), poly.get(1));
-			poly.removeFirst();
-			if (pts[0] != null) {
-				addFirst(pts[0]);
-				
-				LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), true, poly.getFirst(), offsets[0]);
-				for (Point p : left) {
-					addFirst(p);
-				}
-				
-				break;
-			}
 		}
 	}
 	
@@ -276,14 +295,14 @@ public class Pen implements ICanvasEventListener {
 		
 		// Left hand side
 		if (tanIntPts[0] != null) {
-			LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), tanIntPts[0]);
+			List<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), tanIntPts[0], ARC_RES);
 			for (Point p : left) {
 				addFirst(p);
 			}
 			addFirst(tanIntPts[0]);
 			addFirst(tanPts[1]);
 		} else if (circIntPts != null) {
-			LinkedList<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[0]);
+			List<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[0], ARC_RES);
 			for (Point p : left) {
 				addFirst(p);
 			}
@@ -295,14 +314,14 @@ public class Pen implements ICanvasEventListener {
 		
 		// Right hand side
 		if (tanIntPts[1] != null) {
-			LinkedList<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), tanIntPts[1]);
+			List<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), tanIntPts[1], ARC_RES);
 			for (Point p : right) {
 				addLast(p);
 			}
 			addLast(tanIntPts[1]);
 			addLast(tanPts[3]);
 		} else if (circIntPts != null) {
-			LinkedList<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[1]);
+			List<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[1], ARC_RES);
 			for (Point p : right) {
 				addLast(p);
 			}
@@ -316,12 +335,15 @@ public class Pen implements ICanvasEventListener {
 	}
 	
 	private void updateCap () {
+		
+		Log.d("PEN", Integer.toString(points.size()) + "     " + Integer.toString(containingIndex));
+		
 		if (points.size() == 1) {
 			cap = MiscGeom.getLinkedCircularPoly(points.get(0), sizes.get(0));
 		} else if (containingIndex >= 0) {
-			cap = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), poly.getFirst());
+			cap = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), poly.getFirst(), ARC_RES);
 		} else if (points.size() > 1) {
-			cap = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), false, poly.getLast(), poly.getFirst());
+			cap = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), false, poly.getLast(), poly.getFirst(), ARC_RES);
 		}
 		
 		for (Point p : cap) {
@@ -330,7 +352,7 @@ public class Pen implements ICanvasEventListener {
 	}
 	
 	private void startNewStroke (Point[] tangentPoints, Point prevPoint, float prevSize) {
-		LinkedList<Point> frontCap = MiscGeom.approximateCircularArc(prevPoint, prevSize, false, tangentPoints[0], tangentPoints[2]);
+		List<Point> frontCap = MiscGeom.approximateCircularArc(prevPoint, prevSize, false, tangentPoints[0], tangentPoints[2], ARC_RES);
 		for (Point p : frontCap) {
 			addLast(p);
 		}
@@ -342,36 +364,47 @@ public class Pen implements ICanvasEventListener {
 	}
 	
 	private void addToLhs (Point tail, Point head, Point joinCenter, float joinRad, Point newCenter, float newRad) {
-		Point intersection = MiscGeom.calcIntersection(poly.get(0), poly.get(1), head, tail);
-		
-		if (intersection != null) {
-			poly.removeFirst();
-			addFirst(intersection);
-			addFirst(head);
-		} else {
-			LinkedList<Point> join = MiscGeom.approximateCircularArc(joinCenter, joinRad, true, poly.getFirst(), tail);
+		float handedness = MiscGeom.cross(poly.get(0), poly.get(1), head, poly.get(1));
+		if (handedness <= 0) {
+			List<Point> join = MiscGeom.approximateCircularArc(joinCenter, joinRad, true, poly.getFirst(), tail, ARC_RES);
 			for (Point p : join) {
 				addFirst(p);
 			}
 			addFirst(tail);
 			addFirst(head);
+		} else {
+			Point intersection = MiscGeom.calcIntersection(poly.get(0), poly.get(1), head, tail);
+			if (intersection != null) {
+				poly.removeFirst();
+				addFirst(intersection);
+				addFirst(head);
+			} else {
+				addFirst(tail);
+				addFirst(head);
+			}
 		}
 	}
 	
 	private void addToRhs (Point tail, Point head, Point joinCenter, float joinRad, Point newCenter, float newRad) {
-		Point intersection = MiscGeom.calcIntersection(poly.get(poly.size()-1), poly.get(poly.size()-2), head, tail);
-		
-		if (intersection != null) {
-			poly.removeLast();
-			addLast(intersection);
-			addLast(head);
-		} else {
-			LinkedList<Point> join = MiscGeom.approximateCircularArc(joinCenter, joinRad, false, poly.getLast(), tail);
+		float handedness = MiscGeom.cross(poly.get(poly.size()-1), poly.get(poly.size()-2), head, poly.get(poly.size()-2));
+		if (handedness >= 0) {
+			List<Point> join = MiscGeom.approximateCircularArc(joinCenter, joinRad, false, poly.getLast(), tail, ARC_RES);
 			for (Point p : join) {
 				addLast(p);
 			}
 			addLast(tail);
 			addLast(head);
+		} else {
+			Point intersection = MiscGeom.calcIntersection(poly.get(poly.size()-1), poly.get(poly.size()-2), head, tail);
+			
+			if (intersection != null) {
+				poly.removeLast();
+				addLast(intersection);
+				addLast(head);
+			} else {
+				addLast(tail);
+				addLast(head);
+			}
 		}
 	}
 	

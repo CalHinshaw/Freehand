@@ -31,6 +31,12 @@ public class MiscGeom {
 		return distSq(p1.x, p1.y, p2.x, p2.y);
 	}
 	
+	public static double distSqDbl (Point p1, Point p2) {
+		double dx = p1.x - p2.x;
+		double dy = p1.y - p2.y;
+		return dx*dx + dy*dy;
+	}
+	
 	/**
 	 * Calculates the intersection of the two line segments. The line segments are considered closed.
 	 * 
@@ -212,61 +218,34 @@ public class MiscGeom {
 	
 
 
-	public static LinkedList<Point> approximateCircularArc (final Point center, final float radius, final boolean clockwise, final Point from, final Point to) {
-		LinkedList<Point> path = new LinkedList<Point>();
-		
-		// Find the indexes of the points on the circle the path is starting and ending at
-		final double rawFrom = findAngleFromHorizontal(from, center) / STEP_SIZE;
-		final double rawTo = findAngleFromHorizontal(to, center) / STEP_SIZE;
+	public static ArrayList<Point> approximateCircularArc (final Point center, final float radius, final boolean clockwise, final Point from, final Point to, final int resolution) {
+		// Calculate the angles we're starting and stopping the approximation at
+		final double startAng = findAngleFromHorizontal(from, center);
+		final double finishAng = findAngleFromHorizontal(to, center);
+		final double deltaAng = findDirectionalAngularDist(startAng, finishAng, clockwise);
 
-		if (Math.abs(rawFrom-rawTo) <= 1.5) {
-			return path;
-		} else if ((int) rawFrom == 0 && (int) rawTo == 19 && Math.abs(rawFrom-rawTo + 20.0) <= 1.5) {
-			return path;
-		}else if ((int) rawFrom == 19 && (int) rawTo == 0 && Math.abs(rawFrom-rawTo - 20.0) <= 1.5) {
-			return path;
+		// Calculate the number and size of steps to take during approximation
+		final int steps = (int) (deltaAng * resolution / (2*Math.PI));
+		if (steps < 1) { return new ArrayList<Point>(0); }
+		final double radPerStep = (clockwise ? -1 : 1) * deltaAng/steps;
+		
+		// Calculate the rotation matrix
+		final double cosStepAng = Math.cos(radPerStep);
+		final double sinStepAng = Math.sin(radPerStep);
+		
+		// Compute the approximation of the circular arc
+		ArrayList<Point> arc = new ArrayList<Point>(steps);
+		double lastX = from.x - center.x;
+		double lastY = from.y - center.y;
+		for (int i = 0; i < steps; i++) {
+			double currentX = lastX*cosStepAng - lastY*sinStepAng;
+			double currentY = lastX*sinStepAng + lastY*cosStepAng;
+			arc.add(new Point(currentX+center.x, currentY+center.y));
+			lastX = currentX;
+			lastY = currentY;
 		}
 		
-		int fromIndex;
-		int toIndex;
-		if (clockwise == true) {
-			fromIndex = (int) rawFrom;
-			toIndex = (rawTo+1 >= 20) ? 0 : (int) (rawTo+1);
-		} else {
-			fromIndex = (rawFrom+1 >= 20) ? 0 : (int) (rawFrom+1);
-			toIndex = (int) rawTo;
-		}
-		
-		Point[] scaledCircle = new Point[CIRCLE.length];
-		for (int i = 0; i < scaledCircle.length; i++) {
-			scaledCircle[i] = new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y);
-		}
-		
-		int step;
-		if (clockwise == true) {
-			step = -1;
-		} else {
-			step = 1;
-		}
-		
-		int counter = fromIndex;
-		while (true) {
-			path.add(scaledCircle[counter]);
-			
-			if (counter == toIndex) {
-				break;
-			}
-			
-			counter += step;
-			
-			if (counter >= scaledCircle.length) {
-				counter = 0;
-			} else if (counter < 0) {
-				counter = scaledCircle.length - 1;
-			}
-		}
-
-		return path;
+		return arc;
 	}
 	
 	public static double findAngleFromHorizontal (Point p, Point c) {
@@ -276,6 +255,23 @@ public class MiscGeom {
 		} else {
 			return angle;
 		}
+	}
+	
+	public static double findDirectionalAngularDist (double startAng, double finishAng, boolean clockwise) {
+		double angle;
+		if (clockwise == false) {
+			angle = finishAng-startAng;
+			if (finishAng < startAng) {
+				angle += 2 * Math.PI;
+			}
+		} else {
+			angle = startAng - finishAng;
+			if (finishAng > startAng) {
+				angle += 2 * Math.PI;
+			}
+		}
+		
+		return angle;
 	}
 
 	/**
@@ -289,29 +285,29 @@ public class MiscGeom {
 	 * Index 0 is the left handed point on c1, index 1 is the left handed point on c2, index 2 is the right handed point on c1, and index 3 is the
 	 * right handed point on c2.
 	 */
-	public static Point[] calcExternalBitangentPoints (Point c1, float r1, Point c2, float r2) {
+	public static Point[] calcExternalBitangentPoints (Point c1, double r1, Point c2, double r2) {
 		// This function calculates the external bitangent points in four steps:
 		// 1) Calculate the unit vector pointing from c1 to c2, c
 		// 2) Calculate the sine and cosine terms of the rotation matrix that we'll use to find the unit vectors orthogonal to the tangent lines, C for cosine and S for sine
 		// 3) Take the inner product of c and the rotation matrix to find the radial vectors orthogonal to the tangent lines, ra and rb
 		// 4) Use ra and rb to calculate the points of tangency we're going to return.
 				
-		final float distSq = MiscGeom.distSq(c1, c2);
-		final float dr = r1-r2;
+		final double distSq = MiscGeom.distSqDbl(c1, c2);
+		final double dr = r1-r2;
 		
 		// Check to make sure the circles have bitangents.
 		if (distSq <= dr*dr) return null;
 		
-		final float d = (float) Math.sqrt(distSq);	// The distance between c1 and c2
-		final float c_x = (c2.x - c1.x)/d;			// The x component of the unit vector from c1 to c2
-		final float c_y = (c2.y - c1.y)/d;			// The y component of the unit vector from c1 to c2
-		final float C = dr/d;							// The cosine of the angle between c and the vector perpendicular to it, r
-		final float S = (float) Math.sqrt(1.0 - C*C);	// The sine of the angle between c and the vector perpendicular to it, r
+		final double d = Math.sqrt(distSq);	// The distance between c1 and c2
+		final double c_x = (c2.x - c1.x)/d;			// The x component of the unit vector from c1 to c2
+		final double c_y = (c2.y - c1.y)/d;			// The y component of the unit vector from c1 to c2
+		final double C = dr/d;							// The cosine of the angle between c and the vector perpendicular to it, r
+		final double S = Math.sqrt(1.0 - C*C);	// The sine of the angle between c and the vector perpendicular to it, r
 		
-		final float ra_x = c_x*C - c_y*S;				// The unit vector orthogonal to the left-handed tangent line
-		final float ra_y = c_x*S + c_y*C;
-		final float rb_x = c_x*C + c_y*S;				// The unit vector orthogonal to the right-handed tangent line
-		final float rb_y = -c_x*S + c_y*C;
+		final double ra_x = c_x*C - c_y*S;				// The unit vector orthogonal to the left-handed tangent line
+		final double ra_y = c_x*S + c_y*C;
+		final double rb_x = c_x*C + c_y*S;				// The unit vector orthogonal to the right-handed tangent line
+		final double rb_y = -c_x*S + c_y*C;
 		
 		Point[] tangentPoints = new Point[4];
 		tangentPoints[0] = new Point(c1.x + r1*ra_x, c1.y + r1*ra_y);

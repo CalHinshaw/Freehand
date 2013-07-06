@@ -26,7 +26,7 @@ public class Stroke {
 		mPoly = poly;
 		
 		mPaint.setColor(color);
-		mPaint.setStyle(Paint.Style.FILL);
+		mPaint.setStyle(Paint.Style.STROKE);
 		mPaint.setAntiAlias(true);
 		
 		mPath.setFillType(Path.FillType.WINDING);
@@ -39,6 +39,13 @@ public class Stroke {
 	
 	public void draw (Canvas c) {
 		c.drawPath(mPath, mPaint);
+		
+//		Paint paint = new Paint();
+//		paint.setColor(0xA0FF0000);
+//		
+//		for (Point p : mPoly) {
+//			c.drawCircle(p.x, p.y, 0.2f, paint);
+//		}
 	}
 	
 	/**

@@ -34,10 +34,10 @@ public class MiscPolyGeom {
 		
 		poly.add(tanPts[0]);
 		poly.add(tanPts[1]);
-		poly.addAll(MiscGeom.approximateCircularArc(c2, r2, true, tanPts[1], tanPts[3]));
+		poly.addAll(MiscGeom.approximateCircularArc(c2, r2, true, tanPts[1], tanPts[3], 20));
 		poly.add(tanPts[3]);
 		poly.add(tanPts[2]);
-		poly.addAll(MiscGeom.approximateCircularArc(c1, r1, true, tanPts[2], tanPts[0]));
+		poly.addAll(MiscGeom.approximateCircularArc(c1, r1, true, tanPts[2], tanPts[0], 20));
 
 		return poly;
 	}
