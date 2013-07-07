@@ -143,15 +143,13 @@ class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	}
 	
 	public Rect getDirtyRect() {
-//		RectF dirty = currentTool.getDirtyRect();
-//		
-//		if (dirty == null) {
-//			return null;
-//		} else {
-//			return canvasRectToScreenRect(dirty);
-//		}
+		RectF dirty = currentTool.getDirtyRect();
 		
-		return null;
+		if (dirty == null) {
+			return null;
+		} else {
+			return canvasRectToScreenRect(dirty);
+		}
 	}
 	
 	public void drawNote (Canvas c) {
