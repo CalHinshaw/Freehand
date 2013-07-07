@@ -14,7 +14,6 @@ import android.graphics.Shader;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.graphics.Shader.TileMode;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -348,12 +347,12 @@ class PenCreatorView extends View {
 	}
 	
 	private Point sizeToPoint(float size) {
-		final RectF rect = mAlphaRect;
+		final RectF rect = mSizeRect;
 		final float width = rect.width();
 		
 		Point p = new Point();
 		
-		p.x = (int) ((width*(rect.height()-size))/rect.height());
+		p.x = (int) ((width*(rect.height()-size))/rect.height() + rect.left);
 		p.y = (int) rect.top;
 		
 		return p;
@@ -418,15 +417,17 @@ class PenCreatorView extends View {
 	}
 	
 	private float pointToSize (float x) {
-		if (x < mAlphaRect.left) {
+		x -= mSizeRect.left;
+		
+		if (x < 0) {
 			x = 0;
-		} else if (x > mAlphaRect.right) {
-			x = mAlphaRect.width();
-		} else {
-			x = x - (int)mAlphaRect.left;
+		} else if (x > mSizeRect.width()) {
+			x = mSizeRect.width();
 		}
 		
-		return mSizeRect.height() - (x*mSizeRect.height() / width);
+		float s = mSizeRect.height() - (x*mSizeRect.height() / mSizeRect.width());
+		if (s < 0.1f) { s = 0.1f; }
+		return s;
 	}
 	
 	@Override
