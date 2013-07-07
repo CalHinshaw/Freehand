@@ -26,7 +26,7 @@ public class Stroke {
 		mPoly = poly;
 		
 		mPaint.setColor(color);
-		mPaint.setStyle(Paint.Style.STROKE);
+		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setAntiAlias(true);
 		
 		mPath.setFillType(Path.FillType.WINDING);

@@ -52,7 +52,7 @@ public class Pen implements ICanvasEventListener {
 		path.setFillType(Path.FillType.WINDING);
 		
 		paint.setColor(color);
-		paint.setStyle(Paint.Style.STROKE);
+		paint.setStyle(Paint.Style.FILL);
 		paint.setAntiAlias(true);
 	}
 	
@@ -144,24 +144,6 @@ public class Pen implements ICanvasEventListener {
 			}
 			c.drawPath(path, paint);
 		}
-		
-//		// test code
-//		Paint red = new Paint();
-//		red.setColor(0xA0FF0000);
-//		red.setStyle(Paint.Style.STROKE);
-//		red.setStrokeWidth(0);
-//		
-//		Paint black = new Paint();
-//		black.setColor(0xA0000000);
-//		black.setStyle(Paint.Style.STROKE);
-//		black.setStrokeWidth(0);
-//		
-//		boolean isRed = true;
-//		
-//		for (int i = 0; i < points.size(); i++) {
-//			c.drawCircle(points.get(i).x, points.get(i).y, sizes.get(i), isRed ? red : black);
-//			isRed = !isRed;
-//		}
 	}
 	
 	public void undoCalled() { /* blank */ }
@@ -200,13 +182,15 @@ public class Pen implements ICanvasEventListener {
 		if (tangentPoints != null) {
 			startNewStroke(tangentPoints, points.get(0), sizes.get(0));
 		} else {
-			if (sizes.get(0) >= sizes.get(1)) {		// first contains second
+			if (sizes.get(0) >= sizes.get(1)) {
+				// first contains second
 				containingIndex = 0;
 				LinkedList<Point> start = MiscGeom.getLinkedCircularPoly(points.get(0), sizes.get(0));
 				for (int i = 0; i < start.size()/2; i++) {
-					addLast(start.get(i));
+					addFirst(start.get(i));
 				}
-			} else {								// second contains first. THIS IS THE PROBLEM ONE!!!!
+			} else {
+				// second contains first
 				poly.clear();
 				points.remove(0);
 				sizes.remove(0);
@@ -308,7 +292,7 @@ public class Pen implements ICanvasEventListener {
 			}
 			addFirst(circIntPts[0]);
 		} else {
-			Log.d("PEN", "containment broken but no intersections");
+			Log.d("PEN", "containment broken but no left handed intersections");
 			return;
 		}
 		
@@ -327,7 +311,7 @@ public class Pen implements ICanvasEventListener {
 			}
 			addLast(circIntPts[1]);
 		} else {
-			Log.d("PEN", "containment broken but no intersections");
+			Log.d("PEN", "containment broken but no right handed intersections");
 			return;
 		}
 		
@@ -336,12 +320,13 @@ public class Pen implements ICanvasEventListener {
 	
 	private void updateCap () {
 		
-		Log.d("PEN", Integer.toString(points.size()) + "     " + Integer.toString(containingIndex));
+		//Log.d("PEN", Integer.toString(points.size()) + "     " + Integer.toString(containingIndex));
 		
 		if (points.size() == 1) {
 			cap = MiscGeom.getLinkedCircularPoly(points.get(0), sizes.get(0));
 		} else if (containingIndex >= 0) {
 			cap = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), poly.getFirst(), ARC_RES);
+			//cap = new ArrayList<Point>(0);
 		} else if (points.size() > 1) {
 			cap = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), false, poly.getLast(), poly.getFirst(), ARC_RES);
 		}
