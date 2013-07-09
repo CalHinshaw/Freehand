@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -75,6 +76,10 @@ public class NoteView extends View {
 			currentlyPanZoom = false;
 			processDraw(event);
 		} else if (event.getPointerCount() == 2) {
+			if (canDraw == true) {
+				mListener.canclePointerEvent();
+			}
+			
 			if (currentlyPanZoom == false) {
 				mListener.startPinchEvent();
 			}
@@ -148,11 +153,6 @@ public class NoteView extends View {
 			float dZoom = currentDistance / previousDistance;
 			float dx = currentX/dZoom - previousX;
 			float dy = currentY/dZoom - previousY;
-			
-			if (event.getPointerCount() == 2 && event.getAction() == MotionEvent.ACTION_POINTER_DOWN) {
-				mListener.startPinchEvent();
-			}
-			
 			mListener.continuePinchEvent(currentX, currentY, dx, dy, dZoom, currentDistance, prevBoundingRect);
 		}
 		
