@@ -1,6 +1,5 @@
 package com.freehand.note_editor;
 
-
 import com.freehand.ink.MiscGeom;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -23,18 +22,31 @@ public class NoteView extends View {
 	private boolean currentlyPanZoom = false;
 	private boolean canDraw = true;
 	
+	private float stylusPressureCutoff = 2.0f;
+	
 //************************************* Constructors ************************************************
 
 	public NoteView(Context context) {
 		super(context);
+		setDeviceSpecificPressureCutoffs();
 	}
 	
 	public NoteView (Context context, AttributeSet attrs) {
 		super (context, attrs);
+		setDeviceSpecificPressureCutoffs();
 	}
 	
 	public NoteView (Context context, AttributeSet attrs, int defStyle) {
 		super (context, attrs, defStyle);
+		setDeviceSpecificPressureCutoffs();
+	}
+	
+	public void setDeviceSpecificPressureCutoffs() {
+		if (android.os.Build.PRODUCT.equals("SGH-I717")) {
+			stylusPressureCutoff = 1.0f / 253.0f;
+		} else if (android.os.Build.BRAND.equals("samsung")) {
+			stylusPressureCutoff = 1.0f / 1020.0f;
+		}
 	}
 
 //************************************* Outward facing methods **************************************	
@@ -94,8 +106,9 @@ public class NoteView extends View {
 	}
 	
 	private void processDraw (MotionEvent e) {
+		boolean usingStylus = e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS;
 		
-		if (e.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS && !(e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER && capDrawing == true)) {
+		if (!usingStylus && !(e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER && capDrawing == true)) {
 			return;
 		}
 		
@@ -104,10 +117,17 @@ public class NoteView extends View {
 		}
 		
 		for(int i = 0; i < e.getHistorySize(); i++) {
+			if (usingStylus && e.getHistoricalPressure(i) < stylusPressureCutoff) {
+				continue;
+			}
+			
 			mListener.continuePointerEvent(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), e.getHistoricalPressure(i));
 		}
 
-		mListener.continuePointerEvent(e.getEventTime(), e.getX(), e.getY(), e.getPressure());
+		
+		if (!usingStylus || e.getPressure() > stylusPressureCutoff) {
+			mListener.continuePointerEvent(e.getEventTime(), e.getX(), e.getY(), e.getPressure());
+		}
 		
 		if (e.getAction() == MotionEvent.ACTION_UP) {
 			mListener.finishPointerEvent();
