@@ -10,10 +10,7 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
-
 import com.freehand.ink.MiscPolyGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
@@ -21,6 +18,7 @@ import com.freehand.misc.WrapList;
 import com.freehand.note_editor.ICanvasEventListener;
 import com.freehand.note_editor.Note;
 import com.freehand.note_editor.Note.Action;
+
 
 public class StrokeSelector implements ICanvasEventListener {
 	
@@ -44,15 +42,15 @@ public class StrokeSelector implements ICanvasEventListener {
 	private Paint selRectPaint;
 	private RectF selRect = null;
 	
-	// Translation stuff
+	// Translation flags
+	private boolean isTransforming = false;
+	private boolean setIsTransforming = false;
+	
+	// Translation variables
 	private Point initMid = null;
 	private Float initDist = null;
 	private Point currentMid = null;
 	private Float currentDist = null;
-	
-	
-	
-	
 	
 	
 	
@@ -95,28 +93,47 @@ public class StrokeSelector implements ICanvasEventListener {
 	
 
 	
-	
-	
-	
-	
-	
 	public void startPointerEvent() {
-		
-		
 		lassoPoints.clear();
-
+		if (selRect != null) {
+			setIsTransforming = true;
+		}
 	}
 
 	public boolean continuePointerEvent(Point p, long time, float pressure) {
-		lassoPoints.add(p);
+		if (setIsTransforming == true && selRect.contains(p.x, p.y)) {
+			initMid = p;
+			initDist = Float.valueOf(1);
+			isTransforming = true;
+		}
+		setIsTransforming = false;
+		
+		if (isTransforming == true) {
+			currentMid = p;
+			currentDist = Float.valueOf(1);
+		} else {
+			lassoPoints.add(p);
+		}
 		return true;
 	}
 
 	public void canclePointerEvent() {
 		lassoPoints.clear();
+		// Removed so that transitioning from one finger to two during a translation isn't a problem.
+		// This could cause problems in the future and is worth keeping an eye on.
+		//resetTrans();
 	}
 
 	public void finishPointerEvent() {
+		
+		if (isTransforming == true) {
+			applyTransToNote();
+			resetTrans();
+			lassoPoints.clear();
+			currentStrokes = mNote.getInkLayer();
+			return;
+		}
+		
 		currentStrokes = mNote.getInkLayer();
 		selectedStrokes.clear();
 		selRect = null;
@@ -161,26 +178,25 @@ public class StrokeSelector implements ICanvasEventListener {
 		currentStrokes = mNote.getInkLayer();
 	}
 
-	private boolean isTransforming = false;
-	private boolean setIsTransforming = false;
 	
 	public void startPinchEvent() {
 		lassoPoints.clear();
-		setIsTransforming = true;
+		if (selRect != null) {
+			setIsTransforming = true;
+		}
 	}
 
 	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect) {
-		if (setIsTransforming == true) {
-			if (selRect != null && selRect.contains(startBoundingRect)) {
-				initMid = mid;
-				initDist = dist;
-				isTransforming = true;
-			} else {
-				isTransforming = false;
-			}
-			setIsTransforming = false;
-		}
 		
+		if (setIsTransforming == true && isTransforming == true) {
+			initDist = dist;
+			initMid = new Point(initMid.x + (mid.x - currentMid.x), initMid.y + (mid.y - currentMid.y));
+		} else if (setIsTransforming == true && selRect.contains(startBoundingRect)) {
+			initMid = mid;
+			initDist = dist;
+			isTransforming = true;
+		}
+		setIsTransforming = false;
 		
 		if (isTransforming == true) {
 			currentMid = mid;
@@ -196,58 +212,9 @@ public class StrokeSelector implements ICanvasEventListener {
 	}
 
 	public void finishPinchEvent() {
-		
-		if (isTransforming == false) {
-			resetTrans();
-			return;
+		if (isTransforming == true) {
+			applyTransToNote();
 		}
-		
-		
-		
-		
-		// apply translations to mNote
-		
-		ArrayList<Action> actions = new ArrayList<Action>(selectedStrokes.size()*2);
-		
-		float dZoom = currentDist / initDist;
-		
-		int offsetCounter = 0;
-		for (Integer i : selectedStrokes) {
-			WrapList<Point> poly = currentStrokes.get(i).getPoly();
-			
-			WrapList<Point> transPoly = new WrapList<Point>(poly.size());
-			
-			for (Point p : poly) {
-				transPoly.add(new Point((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y));
-			}
-			
-			Stroke transStroke = new Stroke(currentStrokes.get(i).getColor(), transPoly);
-			actions.add(new Action(transStroke, currentStrokes.size()+offsetCounter, true));
-			offsetCounter++;
-		}
-		
-		Iterator<Integer> iter = selectedStrokes.descendingIterator();
-		
-		while (iter.hasNext()) {
-			int index = iter.next().intValue();
-			
-			actions.add(new Action(currentStrokes.get(index), index, false));
-		}
-		
-		int numSelections = selectedStrokes.size();
-		selectedStrokes.clear();
-		for (int index = currentStrokes.size()-numSelections; index < currentStrokes.size(); index++) {
-			selectedStrokes.add(index);
-		}
-		
-		mNote.performActions(actions);
-		
-		RectF curRect = new RectF();
-		curRect.left = (selRect.left - initMid.x) * dZoom + currentMid.x;
-		curRect.right = (selRect.right - initMid.x) * dZoom + currentMid.x;
-		curRect.top = (selRect.top - initMid.y) * dZoom + currentMid.y;
-		curRect.bottom = (selRect.bottom - initMid.y) * dZoom + currentMid.y;
-		selRect = curRect;
 		
 		resetTrans();
 	}
@@ -364,7 +331,49 @@ public class StrokeSelector implements ICanvasEventListener {
 		selRect = null;
 	}
 	
-	
+	private void applyTransToNote () {
+		ArrayList<Action> actions = new ArrayList<Action>(selectedStrokes.size()*2);
+		
+		float dZoom = currentDist / initDist;
+		
+		int offsetCounter = 0;
+		for (Integer i : selectedStrokes) {
+			WrapList<Point> poly = currentStrokes.get(i).getPoly();
+			
+			WrapList<Point> transPoly = new WrapList<Point>(poly.size());
+			
+			for (Point p : poly) {
+				transPoly.add(new Point((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y));
+			}
+			
+			Stroke transStroke = new Stroke(currentStrokes.get(i).getColor(), transPoly);
+			actions.add(new Action(transStroke, currentStrokes.size()+offsetCounter, true));
+			offsetCounter++;
+		}
+		
+		Iterator<Integer> iter = selectedStrokes.descendingIterator();
+		
+		while (iter.hasNext()) {
+			int index = iter.next().intValue();
+			
+			actions.add(new Action(currentStrokes.get(index), index, false));
+		}
+		
+		int numSelections = selectedStrokes.size();
+		selectedStrokes.clear();
+		for (int index = currentStrokes.size()-numSelections; index < currentStrokes.size(); index++) {
+			selectedStrokes.add(index);
+		}
+		
+		mNote.performActions(actions);
+		
+		RectF curRect = new RectF();
+		curRect.left = (selRect.left - initMid.x) * dZoom + currentMid.x;
+		curRect.right = (selRect.right - initMid.x) * dZoom + currentMid.x;
+		curRect.top = (selRect.top - initMid.y) * dZoom + currentMid.y;
+		curRect.bottom = (selRect.bottom - initMid.y) * dZoom + currentMid.y;
+		selRect = curRect;
+	}
 	
 	private void resetTrans() {
 		isTransforming = false;
