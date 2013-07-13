@@ -191,13 +191,9 @@ public class MainMenuActivity extends Activity {
         rootItem.setDefaultDrawables(defaultNoteDrawable, defaultFileDrawable);
         rootItem.setSorter(new DefaultNoteSorter());
         
-        FolderBrowserScrollView scrollView = ((FolderBrowserScrollView) findViewById(R.id.scrollView));
-        FolderBrowser browser = new FolderBrowser(this, scrollView);
-        scrollView.addView(browser);
-        
-        mPresenter = new MainMenuPresenter(this, browser, rootItem);
-        
-        browser.setPresenter(mPresenter);
+        FolderBrowser folderBrowser = ((FolderBrowser) findViewById(R.id.folderBrowser));
+        mPresenter = new MainMenuPresenter(this, folderBrowser, rootItem);
+        folderBrowser.setPresenter(mPresenter);
         
         Button prefButton = (Button) findViewById(R.id.preferences);
         prefButton.setOnClickListener(new OnClickListener() {

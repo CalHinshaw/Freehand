@@ -257,7 +257,7 @@ public class MainMenuPresenter {
 		}
 		
 		// Produce ArrayList of Views
-		List<View> toUpdateWith = new ArrayList<View>(openFolderViews.size());
+		List<FolderView> toUpdateWith = new ArrayList<FolderView>(openFolderViews.size());
 		for (int j = 0; j < openFolderViews.size(); j++) {
 			toUpdateWith.add(openFolderViews.get(j).folderView);
 		}
