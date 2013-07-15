@@ -191,7 +191,7 @@ public class MainMenuActivity extends Activity {
         rootItem.setDefaultDrawables(defaultNoteDrawable, defaultFileDrawable);
         rootItem.setSorter(new DefaultNoteSorter());
         
-        FolderBrowser folderBrowser = ((FolderBrowser) findViewById(R.id.folderBrowser));
+        FolderBrowser folderBrowser = ((FolderBrowser) findViewById(R.id.scrollView));
         mPresenter = new MainMenuPresenter(this, folderBrowser, rootItem);
         folderBrowser.setPresenter(mPresenter);
         

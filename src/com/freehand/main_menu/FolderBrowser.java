@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,17 +27,10 @@ public class FolderBrowser extends HorizontalScrollView {
 	FolderBrowserLayout mLayout = new FolderBrowserLayout(this.getContext());
 	private MainMenuPresenter mPresenter = null;
 	
-	
 	private int pxPerFolder = 0;
 	private int foldersPerScreen = 0;
 	
-	private boolean triggerScrollRight = false;
-	private boolean triggerFixScroll = false;
-	
-	private int scrollCounter = 0;
-	private int oldScrollCounter = 0;
-	
-	private boolean scrollInProgress = false;
+	private int indexToShow = -1;
 	
 	private int mDragRegionWidth = 0;
 	private long timeEnteredDragRegion = -1;
@@ -75,142 +69,75 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	
-	// OVERSCROLL TEST AREA
 	
-//	boolean hasOverscrolled = false;
-//	
 //	@Override
-//	public boolean onTouchEvent (MotionEvent event) {
+//	public void computeScroll() {
+//		int temp = this.getScrollX();
 //		
-//		if (hasOverscrolled == false) {
-//			//this.overScrollBy(1000, 0, 0, 0, 10000, 0, 10000, 0, false);
+//		super.computeScroll();
+//		
+//		// Check to see if a scroll is in progress
+//		if (temp == this.getScrollX()) {
+//			scrollInProgress = false;
+//		} else {
+//			scrollInProgress = true;
 //		}
-//		hasOverscrolled = true;
 //		
+//		if (triggerFixScroll == true) {
+//			this.setScrollX((oldScrollCounter-foldersPerScreen) * pxPerFolder);
+//			triggerFixScroll = false;
+//		}
 //		
-//		super.onTouchEvent(event);
-//		
-//		
-//		
-//		return true;
+//		if (triggerScrollRight == true) {
+//			if (oldScrollCounter != scrollCounter) {
+//				this.smoothScrollTo(((scrollCounter-foldersPerScreen) * pxPerFolder), 0);
+//			}
+//			triggerScrollRight = false;
+//		}
 //	}
-//	
-//	
-//	@Override
-//	protected void onOverScrolled (int scrollX, int scrollY, boolean clampedX, boolean clampedY) {
-//		Log.d("PEN", "onOverScrolled called, clampedX == " + Boolean.toString(clampedX));
+	
+	
+//	public boolean dragScrollListener (DragEvent event) {
+//		if (event.getX()-this.getScrollX() <= mDragRegionWidth && this.getScrollX() >= pxPerFolder - 3) {
+//			drawLeftHighlight = true;
+//			drawRightHighlight = false;
+//			this.invalidate();
+//				
+//			if (timeEnteredDragRegion == -1) {
+//				timeEnteredDragRegion = System.currentTimeMillis();
+//			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
+//				timeEnteredDragRegion = -1;
+//				oldScrollCounter = scrollCounter;
+//				scrollCounter -= 1;
+//				this.smoothScrollTo((scrollCounter - foldersPerScreen) * pxPerFolder, 0);
+//			}
+//			
+//			return true;
+//		} else if (event.getX()-this.getScrollX() >= (this.getWidth() - mDragRegionWidth) && this.getScrollX() <= getMaxScrollX() - pxPerFolder + 3) {
+//			drawLeftHighlight = false;
+//			drawRightHighlight = true;
+//			this.invalidate();
+//			
+//			if (timeEnteredDragRegion == -1) {
+//				timeEnteredDragRegion = System.currentTimeMillis();
+//				
+//			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
+//				timeEnteredDragRegion = -1;
+//				oldScrollCounter = scrollCounter;
+//				scrollCounter += 1;
+//				this.smoothScrollTo((scrollCounter - foldersPerScreen) * pxPerFolder, 0);
+//			}
+//			
+//			return true;
+//		} else {
+//			drawLeftHighlight = false;
+//			drawRightHighlight = false;
+//			this.invalidate();
+//			
+//			timeEnteredDragRegion = -1;
+//			return false;
+//		}
 //	}
-//	
-//	@Override
-//	protected boolean overScrollBy(int deltaX, int deltaY, int scrollX, int scrollY, int scrollRangeX, int scrollRangeY, int maxOverScrollX, int maxOverScrollY, boolean isTouchEvent) {
-//		
-//		
-//		return super.overScrollBy(deltaX, deltaY, scrollX, scrollY, scrollRangeX, scrollRangeY, 10000, maxOverScrollY, isTouchEvent);
-//		
-//	}
-//	
-//	
-	
-	
-	
-	
-	
-	// TEST AREA END
-	
-	
-	
-	
-	private void setScrollCounter(int newValue) {
-		//Scrolling left
-		if (scrollCounter > newValue) {			
-			oldScrollCounter = newValue;
-			scrollCounter = newValue;
-			this.smoothScrollTo(((scrollCounter-foldersPerScreen) * pxPerFolder), 0);
-			triggerFixScroll = false;
-			scrollInProgress = true;
-		} else if (scrollCounter < newValue){
-			oldScrollCounter = scrollCounter;
-			scrollCounter = newValue;
-			triggerFixScroll = true;
-			triggerScrollRight = true;
-		} else {
-			oldScrollCounter = newValue;
-			scrollCounter = newValue;
-			triggerFixScroll = true;
-		}
-	}
-	
-	@Override
-	public void computeScroll() {
-		int temp = this.getScrollX();
-		
-		super.computeScroll();
-		
-		// Check to see if a scroll is in progress
-		if (temp == this.getScrollX()) {
-			scrollInProgress = false;
-		} else {
-			scrollInProgress = true;
-		}
-		
-		if (triggerFixScroll == true) {
-			this.setScrollX((oldScrollCounter-foldersPerScreen) * pxPerFolder);
-			triggerFixScroll = false;
-		}
-		
-		if (triggerScrollRight == true) {
-			if (oldScrollCounter != scrollCounter) {
-				this.smoothScrollTo(((scrollCounter-foldersPerScreen) * pxPerFolder), 0);
-			}
-			triggerScrollRight = false;
-		}
-	}
-	
-	public int getScrollCounter() {
-		return scrollCounter;
-	}
-	
-	public boolean dragScrollListener (DragEvent event) {
-		if (event.getX()-this.getScrollX() <= mDragRegionWidth && this.getScrollX() >= pxPerFolder - 3) {
-			drawLeftHighlight = true;
-			drawRightHighlight = false;
-			this.invalidate();
-				
-			if (timeEnteredDragRegion == -1) {
-				timeEnteredDragRegion = System.currentTimeMillis();
-			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
-				timeEnteredDragRegion = -1;
-				oldScrollCounter = scrollCounter;
-				scrollCounter -= 1;
-				this.smoothScrollTo((scrollCounter - foldersPerScreen) * pxPerFolder, 0);
-			}
-			
-			return true;
-		} else if (event.getX()-this.getScrollX() >= (this.getWidth() - mDragRegionWidth) && this.getScrollX() <= getMaxScrollX() - pxPerFolder + 3) {
-			drawLeftHighlight = false;
-			drawRightHighlight = true;
-			this.invalidate();
-			
-			if (timeEnteredDragRegion == -1) {
-				timeEnteredDragRegion = System.currentTimeMillis();
-				
-			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
-				timeEnteredDragRegion = -1;
-				oldScrollCounter = scrollCounter;
-				scrollCounter += 1;
-				this.smoothScrollTo((scrollCounter - foldersPerScreen) * pxPerFolder, 0);
-			}
-			
-			return true;
-		} else {
-			drawLeftHighlight = false;
-			drawRightHighlight = false;
-			this.invalidate();
-			
-			timeEnteredDragRegion = -1;
-			return false;
-		}
-	}
 	
 	private int getMaxScrollX () {
 		return this.getChildAt(0).getMeasuredWidth()- this.getWidth();
@@ -267,16 +194,23 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void requestUpdateViews (final List<FolderView> newViews) {
-		mLayout.requestUpdateViews(newViews);
+		mLayout.updateViews(newViews);
 	}
 	
-	
-	
-	
-	
-	
-	
-	
+	@Override
+	public void computeScroll () {
+		super.computeScroll();
+		
+		if (indexToShow >= 0) {
+			final float leftFolderPos = ((float) getScrollX()) / ((float) pxPerFolder);
+			if (indexToShow < leftFolderPos) {
+				this.smoothScrollTo(indexToShow*pxPerFolder, 0);
+			} else if (indexToShow > leftFolderPos + foldersPerScreen-1) {
+				this.smoothScrollTo((indexToShow-foldersPerScreen+1) * pxPerFolder, 0);
+			}
+			indexToShow = -1;
+		}
+	}
 	
 	
 	
@@ -286,26 +220,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			super(context);
 		}
 		
-		
-		public void requestUpdateViews (final List<FolderView> newViews) {
-			setScrollCounter(newViews.size());
-			if (scrollCounter > newViews.size()) {
-				Runnable newRunnable = new Runnable () {
-					public void run() {
-						if (scrollInProgress == true) {
-							FolderBrowser.this.postDelayed(this, 10);
-						} else {
-							updateViews(newViews);
-						}
-					}
-				};
-				this.postDelayed(newRunnable, 10);
-			} else {
-				updateViews(newViews);
-			}
-		}
-		
-		private void updateViews (List<FolderView> newViews) {
+		public void updateViews (List<FolderView> newViews) {
 			int i = 0;
 			for ( ; i<newViews.size(); i++) {
 				newViews.get(i).setId(i+1);
@@ -323,6 +238,8 @@ public class FolderBrowser extends HorizontalScrollView {
 			for (; i < this.getChildCount();) {
 				this.removeViewAt(i);
 			}
+			
+			indexToShow = this.getChildCount();
 		}
 		
 		/**
@@ -332,9 +249,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		public void requestShow (FolderView toShow) {
 			for (int i = 0; i < this.getChildCount(); i++) {
 				if (this.getChildAt(i) == toShow) {
-					if (i < (scrollCounter-foldersPerScreen) || i >= scrollCounter) {
-						setScrollCounter(i+1);
-					}
+					indexToShow = i;
 					return;
 				}
 			}
@@ -357,10 +272,6 @@ public class FolderBrowser extends HorizontalScrollView {
 		@Override
 		public boolean onDragEvent (DragEvent event) {
 			
-			// Don't do anything while scrolling
-			if (scrollInProgress == true) {
-				return true;
-			}
 			
 			// If the drag event is a drop, call the move method in the presenter with the
 			//  child view the drop is over as a parameter
@@ -384,16 +295,16 @@ public class FolderBrowser extends HorizontalScrollView {
 				}
 			}
 			
-			// Check to see if the FolderBrowserScrollView is waiting for a valid scroll action
-			if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
-				if (dragScrollListener(event) == true) {
-					for (int i = 0; i < this.getChildCount(); i++) {
-						((FolderView) this.getChildAt(i)).dragExitedListener();
-					}
-					
-					return true;
-				}
-			}
+//			// Check to see if the FolderBrowserScrollView is waiting for a valid scroll action
+//			if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+//				if (dragScrollListener(event) == true) {
+//					for (int i = 0; i < this.getChildCount(); i++) {
+//						((FolderView) this.getChildAt(i)).dragExitedListener();
+//					}
+//					
+//					return true;
+//				}
+//			}
 			
 			// Figure out which child view the DragEvent is over and send them the coordinates
 			//  of the event. Send all of the other children the info that they aren't selected.
