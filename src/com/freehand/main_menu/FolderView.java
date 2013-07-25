@@ -139,7 +139,6 @@ public class FolderView extends ListView {
 			int itemAtTouchPosition = this.pointToPosition((int) event.getX(), (int) event.getY());
 			if (itemAtTouchPosition != -1 && mAdapter.getItem(itemAtTouchPosition).isSelected) {
 				watchForDrag = true;
-				Log.d("PEN", "watching for drag");
 			}
 		}
 	}
@@ -151,11 +150,10 @@ public class FolderView extends ListView {
 			if (setPoint == null) {
 				setPoint = new PointF(event.getX(), event.getY());
 			} else {
-				float draggedDistanceSquared = (setPoint.x - event.getX())
-					* (setPoint.x - event.getX())
-					+ (setPoint.y - event.getY())
-					* (setPoint.y - event.getY());
+				float draggedDistanceSquared = (setPoint.x - event.getX()) * (setPoint.x - event.getX())
+					+ (setPoint.y - event.getY()) * (setPoint.y - event.getY());
 				if (draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
+					
 					mPresenter.dragStarted(this);
 
 					setPoint = null;
@@ -173,7 +171,6 @@ public class FolderView extends ListView {
 
 
 	public void startDrag(int numberOfItems) {
-		// Cancel drag event because no items selected
 		if (numberOfItems <= 0) {
 			return;
 		}

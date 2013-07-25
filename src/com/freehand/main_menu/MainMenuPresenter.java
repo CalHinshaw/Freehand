@@ -10,9 +10,6 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
-import android.util.Log;
-import android.view.View;
-
 import com.freehand.share.NoteSharer;
 import com.freehand.share.ProgressUpdateFunction;
 import com.freehand.storage.IChangeListener;
@@ -204,6 +201,10 @@ public class MainMenuPresenter {
 		this.clearSelections();
 	}
 	
+	public void dragStarted(FolderView calledFrom) {
+		calledFrom.startDrag(selectedItems.size());
+	}
+	
 	//*************************************** HierarchyItem management methods *******************************************************************
 	
 	public void openNote (HierarchyWrapper toOpen) {
@@ -304,11 +305,6 @@ public class MainMenuPresenter {
 			selectedContainer = null;
 		}
 	}
-	
-	public void dragStarted(FolderView calledFrom) {
-		calledFrom.startDrag(selectedItems.size());
-	}
-	
 	
 	@SuppressWarnings("unchecked")
 	public void shareSelectedItems() {

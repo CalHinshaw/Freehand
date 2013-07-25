@@ -18,7 +18,6 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 
 public class FolderBrowser extends HorizontalScrollView {
-	private static final long DRAG_SCROLL_TIMER = 400;
 	private static final float DRAG_SCROLL_REGION_WIDTH_DIP = 100;
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final int NO_COLOR = 0x00FFFFFF;
@@ -33,7 +32,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	private int indexToShow = -1;
 	
 	private int mDragRegionWidth = 0;
-	private long timeEnteredDragRegion = -1;
+	private long timeSinceDragUpdate = -1;
 	private boolean drawLeftHighlight = false;
 	private boolean drawRightHighlight = false;
 
@@ -70,77 +69,107 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	
 	
-//	@Override
-//	public void computeScroll() {
-//		int temp = this.getScrollX();
-//		
-//		super.computeScroll();
-//		
-//		// Check to see if a scroll is in progress
-//		if (temp == this.getScrollX()) {
-//			scrollInProgress = false;
-//		} else {
-//			scrollInProgress = true;
-//		}
-//		
-//		if (triggerFixScroll == true) {
-//			this.setScrollX((oldScrollCounter-foldersPerScreen) * pxPerFolder);
-//			triggerFixScroll = false;
-//		}
-//		
-//		if (triggerScrollRight == true) {
-//			if (oldScrollCounter != scrollCounter) {
-//				this.smoothScrollTo(((scrollCounter-foldersPerScreen) * pxPerFolder), 0);
-//			}
-//			triggerScrollRight = false;
-//		}
-//	}
+	
+	private boolean horizontalScrollDragListener (DragEvent event) {
+		// Watch for left scroll
+		if (this.getScrollX() > 0 && event.getX() <= mDragRegionWidth) {
+			drawLeftHighlight = true;
+			drawRightHighlight = false;
+				
+			if (timeSinceDragUpdate > 0) {
+				final long currentTime = System.currentTimeMillis();
+				this.smoothScrollBy((int)((timeSinceDragUpdate-currentTime)/1.5f), 0);
+			}
+			
+			timeSinceDragUpdate = System.currentTimeMillis();
+			this.invalidate();
+			return true;
+		} else if (this.getScrollX() < mLayout.getWidth()-this.getWidth() && event.getX() >= (this.getWidth() - mDragRegionWidth)) {
+			drawLeftHighlight = false;
+			drawRightHighlight = true;
+			
+			if (timeSinceDragUpdate > 0) {
+				final long currentTime = System.currentTimeMillis();
+				this.smoothScrollBy((int) ((currentTime-timeSinceDragUpdate)/1.5f), 0);
+			}
+			
+			timeSinceDragUpdate = System.currentTimeMillis();
+			this.invalidate();
+			return true;
+		} else {
+			drawLeftHighlight = false;
+			drawRightHighlight = false;
+			this.invalidate();
+			
+			timeSinceDragUpdate = -1;
+			return false;
+		}
+	}
 	
 	
-//	public boolean dragScrollListener (DragEvent event) {
-//		if (event.getX()-this.getScrollX() <= mDragRegionWidth && this.getScrollX() >= pxPerFolder - 3) {
-//			drawLeftHighlight = true;
-//			drawRightHighlight = false;
-//			this.invalidate();
-//				
-//			if (timeEnteredDragRegion == -1) {
-//				timeEnteredDragRegion = System.currentTimeMillis();
-//			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
-//				timeEnteredDragRegion = -1;
-//				oldScrollCounter = scrollCounter;
-//				scrollCounter -= 1;
-//				this.smoothScrollTo((scrollCounter - foldersPerScreen) * pxPerFolder, 0);
-//			}
-//			
-//			return true;
-//		} else if (event.getX()-this.getScrollX() >= (this.getWidth() - mDragRegionWidth) && this.getScrollX() <= getMaxScrollX() - pxPerFolder + 3) {
-//			drawLeftHighlight = false;
-//			drawRightHighlight = true;
-//			this.invalidate();
-//			
-//			if (timeEnteredDragRegion == -1) {
-//				timeEnteredDragRegion = System.currentTimeMillis();
-//				
-//			} else if (System.currentTimeMillis() - timeEnteredDragRegion >= DRAG_SCROLL_TIMER) {
-//				timeEnteredDragRegion = -1;
-//				oldScrollCounter = scrollCounter;
-//				scrollCounter += 1;
-//				this.smoothScrollTo((scrollCounter - foldersPerScreen) * pxPerFolder, 0);
-//			}
-//			
-//			return true;
-//		} else {
-//			drawLeftHighlight = false;
-//			drawRightHighlight = false;
-//			this.invalidate();
-//			
-//			timeEnteredDragRegion = -1;
-//			return false;
-//		}
-//	}
+	@Override
+	public boolean onDragEvent (DragEvent event) {
+		
+		
+		
+		// If the drag event is a drop, call the move method in the presenter with the
+		//  child view the drop is over as a parameter
+		if (event.getAction() == DragEvent.ACTION_DROP) {
+			for (int i = 0; i < mLayout.getChildCount(); i++) {
+				FolderView toTest = (FolderView) mLayout.getChildAt(i);
+				if (pointInView(toTest, getScrollX() + event.getX(), getScrollY() + event.getY())) {
+					mPresenter.moveTo(toTest);
+					mPresenter.setSelectedFolderView(toTest);
+				}
+				toTest.dragExitedListener();
+			}
+			
+			return true;
+		}
+		
+		// If the drag event leaves the FolderBrowser or ends without a drop make sure all of the highlights are cleared
+		if (event.getAction() == DragEvent.ACTION_DRAG_EXITED || event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+			for (int i = 0; i < mLayout.getChildCount(); i++) {
+				((FolderView) mLayout.getChildAt(i)).dragExitedListener();
+			}
+		}
+		
+		// Check to see HorizontalScrollView wants to scroll horizontally
+		if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+			if (horizontalScrollDragListener(event) == true) {
+				for (int i = 0; i < mLayout.getChildCount(); i++) {
+					((FolderView) mLayout.getChildAt(i)).dragExitedListener();
+				}
+				
+				return true;
+			}
+		}
+		
+		// Figure out which child view the DragEvent is over and send them the coordinates
+		//  of the event. Send all of the other children the info that they aren't selected.
+		if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+			mPresenter.setSelectedFolderView(null);
+			for (int i = 0; i < mLayout.getChildCount(); i++) {
+				FolderView toUpdate = (FolderView) mLayout.getChildAt(i);
+				if (pointInView(toUpdate, getScrollX() + event.getX(), getScrollY() + event.getY())) {
+					toUpdate.dragListener(event.getX() - toUpdate.getLeft(), event.getY() - toUpdate.getTop());
+				} else {
+					toUpdate.dragExitedListener();
+				}
+			}
+			
+			return true;
+		}
+		
+		return true;
+	}
 	
-	private int getMaxScrollX () {
-		return this.getChildAt(0).getMeasuredWidth()- this.getWidth();
+	private boolean pointInView (View v, float x, float y) {
+		if (x >= v.getLeft() && x <= v.getRight() && y >= v.getTop() && y <= v.getBottom()) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	@Override
@@ -269,69 +298,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		
 		//*************************************** Drag and Drop stuff ***************************************
 		
-		@Override
-		public boolean onDragEvent (DragEvent event) {
-			
-			
-			// If the drag event is a drop, call the move method in the presenter with the
-			//  child view the drop is over as a parameter
-			if (event.getAction() == DragEvent.ACTION_DROP) {
-				for (int i = 0; i < this.getChildCount(); i++) {
-					FolderView toTest = (FolderView) this.getChildAt(i);
-					if (pointInView(event.getX(), event.getY(), toTest)) {
-						mPresenter.moveTo(toTest);
-						mPresenter.setSelectedFolderView(toTest);
-					}
-					toTest.dragExitedListener();
-				}
-				
-				return true;
-			}
-			
-			// If the drag event leaves the FolderBrowser or ends without a drop make sure all of the highlights are cleared
-			if (event.getAction() == DragEvent.ACTION_DRAG_EXITED || event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
-				for (int i = 0; i < this.getChildCount(); i++) {
-					((FolderView) this.getChildAt(i)).dragExitedListener();
-				}
-			}
-			
-//			// Check to see if the FolderBrowserScrollView is waiting for a valid scroll action
-//			if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
-//				if (dragScrollListener(event) == true) {
-//					for (int i = 0; i < this.getChildCount(); i++) {
-//						((FolderView) this.getChildAt(i)).dragExitedListener();
-//					}
-//					
-//					return true;
-//				}
-//			}
-			
-			// Figure out which child view the DragEvent is over and send them the coordinates
-			//  of the event. Send all of the other children the info that they aren't selected.
-			if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
-				mPresenter.setSelectedFolderView(null);
-				for (int i = 0; i < this.getChildCount(); i++) {
-					FolderView toUpdate = (FolderView) this.getChildAt(i);
-					if (pointInView(event.getX(), event.getY(), toUpdate)) {
-						toUpdate.dragListener(event.getX() - toUpdate.getLeft(), event.getY() - toUpdate.getTop());
-					} else {
-						toUpdate.dragExitedListener();
-					}
-				}
-				
-				return true;
-			}
-			
-			return true;
-		}
 		
-		private boolean pointInView (float x, float y, View v) {
-			if (x >= v.getLeft() && x <= v.getRight() && y >= v.getTop() && y <= v.getBottom()) {
-				return true;
-			} else {
-				return false;
-			}
-		}
 		
 		
 		@Override
