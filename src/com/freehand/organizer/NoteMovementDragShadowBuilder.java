@@ -1,4 +1,4 @@
-package com.freehand.main_menu;
+package com.freehand.organizer;
 
 import android.graphics.Canvas;
 import android.graphics.Color;

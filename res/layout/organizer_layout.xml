@@ -70,7 +70,7 @@
 	</LinearLayout>
         	   
 	    
-	<com.freehand.main_menu.FolderBrowser
+	<com.freehand.organizer.FolderBrowser
 	    android:id="@+id/scrollView"
 	    
 	    android:layout_alignParentLeft="true"

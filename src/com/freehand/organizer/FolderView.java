@@ -1,10 +1,15 @@
-package com.freehand.main_menu;
+package com.freehand.organizer;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.calhounroberthinshaw.freehand.R;
-import com.freehand.main_menu.MainMenuPresenter.HierarchyWrapper;
-
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -14,10 +19,15 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 public class FolderView extends ListView {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
@@ -32,9 +42,10 @@ public class FolderView extends ListView {
 	private static final int SCROLL_DISTANCE = 40;
 	private static final int SCROLL_DURATION = 60;
 	
+	public final File folder;
 	
-	private FolderAdapter mAdapter;
-	private MainMenuPresenter mPresenter;
+	private final FolderBrowser mBrowser;
+	private final FolderAdapter mAdapter;
 
 	// These store the persistent information for dragWatcher
 	private boolean watchForDrag = false;
@@ -58,52 +69,35 @@ public class FolderView extends ListView {
 	// Click listeners
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
-			
-			// know clickedView's tag is a file because of how it's created in DirectoryViewAdapter.getView
-			HierarchyWrapper clickedItem = ((FolderAdapter.RowDataHolder) clickedView.getTag()).viewItem;
-
-			// Clicking on directory opens it
-			if (clickedItem.isFolder) {
-				FolderView newView = mPresenter.openFolder(clickedItem, FolderView.this);
-				mPresenter.setSelectedFolderView(newView);
-			} else {
-				mPresenter.openNote(clickedItem);
-			}
-			
-			mPresenter.clearSelections();
+			File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
+			Log.d("PEN", "clicked");
+			mBrowser.openFile(clickedFile);
 		}
 	};
 	
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
-		public boolean onItemLongClick(AdapterView<?> parent, View pressedView, int position, long id) {
-			if (mAdapter.getItem(position).isSelected) {
-				mPresenter.removeSelection(mAdapter.getItem(position));
-			} else {
-				mPresenter.addSelection(mAdapter.getItem(position));
-				
-				pressedView.setBackgroundColor(BLUE_HIGHLIGHT);
-
-				watchForDrag = true;
-			}
+		public boolean onItemLongClick(AdapterView<?> parent, View clickedView, int position, long id) {
+			final File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
 			
-
+			Log.d("PEN", clickedFile.getPath());
+			
+			watchForDrag = mAdapter.toggleSelection(clickedFile);
 			return true;
 		}
 	};
 
 	
-	public FolderView(Context context, MainMenuPresenter newPresenter) {
+	public FolderView(Context context, FolderBrowser browser, File root) {
 		super(context);
-		mPresenter = newPresenter;
+		mBrowser = browser;
+		folder = root;
 
 		// Create and set the adapter for this ListView
-		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row);
+		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row, root);
 		this.setAdapter(mAdapter);
 		
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
-		
-
 		
 		mDividerPaint = new Paint();
 		mDividerPaint.setAntiAlias(true);
@@ -120,42 +114,42 @@ public class FolderView extends ListView {
 	// This method watches for the drag and drop gesture without interfering with any of the class' other behaviors.
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		mPresenter.setSelectedFolderView(this);
-		
 		super.onTouchEvent(event);
-		selectedItemDragWatcher(event);
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			touchEventStartingOverSelectedItemWatcher(event.getX(), event.getY());
+		}
 		dragWatcher(event);
 		// Consume this touch event if a drag is started
 		return true;
 	}
 	
-	public boolean checkConsumeTouchEvent (MotionEvent event) {
-		selectedItemDragWatcher(event);
+	public boolean checkConsumeTouchEvent (float x, float y) {
+		touchEventStartingOverSelectedItemWatcher(x, y);
 		return watchForDrag;
 	}
 	
-	private void selectedItemDragWatcher(MotionEvent event) {
-		if (event.getAction() == MotionEvent.ACTION_DOWN) {
-			int itemAtTouchPosition = this.pointToPosition((int) event.getX(), (int) event.getY());
-			if (itemAtTouchPosition != -1 && mAdapter.getItem(itemAtTouchPosition).isSelected) {
-				watchForDrag = true;
+	private void touchEventStartingOverSelectedItemWatcher (float x, float y) {
+			final int touchedIndex = this.pointToPosition((int) x, (int) y);
+			
+			if (touchedIndex == -1) {
+				watchForDrag = false;
+				return;
 			}
-		}
+			
+			final View touchedView = this.getViewAtPosition(touchedIndex);
+			File fileUnderPointer = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+			watchForDrag = mAdapter.getFileSelectionStatus(fileUnderPointer);
 	}
 
 
-	// If drag gesture call initDrag
 	private void dragWatcher(MotionEvent event) {
 		if (watchForDrag == true && (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN)) {
 			if (setPoint == null) {
 				setPoint = new PointF(event.getX(), event.getY());
 			} else {
-				float draggedDistanceSquared = (setPoint.x - event.getX()) * (setPoint.x - event.getX())
-					+ (setPoint.y - event.getY()) * (setPoint.y - event.getY());
+				float draggedDistanceSquared = (setPoint.x - event.getX()) * (setPoint.x - event.getX()) + (setPoint.y - event.getY()) * (setPoint.y - event.getY());
 				if (draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
-					
-					mPresenter.dragStarted(this);
-
+					mBrowser.startDrag();
 					setPoint = null;
 					watchForDrag = false;
 				}
@@ -168,82 +162,43 @@ public class FolderView extends ListView {
 			watchForDrag = false;
 		}
 	}
+	
+	public void dragListener (float x, float y) {
+		clearDragHighlightMarkers();
+		
+		// Wait for animations to finish before doing stuff
+		if (this.getAnimation() != null && !this.getAnimation().hasEnded()) {
+			actionTimeMarker = 0;
+			return;
+		}
 
-
-	public void startDrag(int numberOfItems) {
-		if (numberOfItems <= 0) {
+		// Watch to see if the user wants to scroll up, reset the timer and return if we do
+		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(-1)) {
+			this.smoothScrollBy(-SCROLL_DISTANCE, SCROLL_DURATION);
+			actionTimeMarker = 0;
+			setPoint = null;
+			drawScrollUpHighlight = true;
 			return;
 		}
 		
-		mAdapter.greySelections();
-
-		// Build the drag shadow needed for startDrag
-		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(numberOfItems, this.getWidth() / 3);
-		
-		// Start drag without ClipData and with myLocalState equaling selectedItems (has to be cast when DragEvent is received).
-		this.startDrag(null, shadowBuilder, null, 0);
-	}
-	
-	public void dragListener (float x, float y) {
-		setDragAccents(x, y);
-		navigateDrag(x, y);
-	}
-	
-	public void dragExitedListener () {
-		clearDragHighlightMarkers();
-		
-		watchForDrag = false;
-		setPoint = null;
-		actionTimeMarker = 0;
-		
-		mAdapter.ungreySelections();
-	}
-
-	private void clearDragHighlightMarkers() {
-		drawScrollUpHighlight = false;
-		drawScrollDownHighlight = false;
-		folderOpenHighlight = -1;
-		dropHighlight = false;
-		
-		this.invalidate();
-	}
-	
-	// Handle navigation through NoteExplorer during DragEvent.
-	private void navigateDrag(float x, float y) {
-		
-		// Don't start timing until after the in animation has ended
-		if (this.getAnimation() != null && !this.getAnimation().hasEnded()) {
+		// Watch to see if user wants to scroll down, reset the timer and return if we do
+		if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(1)) {
+			this.smoothScrollBy(SCROLL_DISTANCE, SCROLL_DURATION);
 			actionTimeMarker = 0;
+			setPoint = null;
+			drawScrollDownHighlight = true;
 			return;
 		}
 		
 		// Find the file represented by the view the user's finger is over
 		int positionUnderPointer = this.pointToPosition((int) x, (int) y);
-		HierarchyWrapper itemUnderPointer = null;
+		File fileUnderPointer = null;
 		if (positionUnderPointer >= 0) {
-			itemUnderPointer = mAdapter.getItem(positionUnderPointer);
+			fileUnderPointer = mAdapter.getItem(positionUnderPointer);
 		}
-
-		// Watch to see if the user wants to scroll up
-		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER) {
-			if (this.canScrollVertically(-1)) {
-				this.smoothScrollBy(-SCROLL_DISTANCE, SCROLL_DURATION);
-			}
-			
-			actionTimeMarker = 0;
-			setPoint = null;
-			
-		// Watch to see if user wants to scroll down
-		} else if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER) {
-			if (this.canScrollVertically(1)) {
-				this.smoothScrollBy(SCROLL_DISTANCE, SCROLL_DURATION);
-			}
-			
-			actionTimeMarker = 0;
-			setPoint = null;
-			
-		// Watch to see if the user wants to open a valid folder
-		} else if (itemUnderPointer != null && itemUnderPointer.isFolder && !itemUnderPointer.isSelected) {
+		
+		// Don't want to be able to open selected folders
+		if (fileUnderPointer != null && fileUnderPointer.isDirectory() && mAdapter.getFileSelectionStatus(fileUnderPointer) == false) {
 
 			// Compute distance of user's finger from setPoint for later
 			float draggedDistanceSquared = STATIONARY_RADIUS_SQUARED + 5;
@@ -255,56 +210,37 @@ public class FolderView extends ListView {
 			if (actionTimeMarker == 0 || draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
 				actionTimeMarker = System.currentTimeMillis();
 				setPoint = new PointF(x, y);
-
-			// If user has been hovering over folder for long enough open it
+				folderOpenHighlight = positionUnderPointer;
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mPresenter.openFolder(itemUnderPointer, this);
+				mBrowser.openFile(fileUnderPointer);
 			}
 
 		// No actions are possible, reset timer
 		} else {
 			actionTimeMarker = 0;
 			setPoint = null;
-		}
-	}
-
-	
-	private void setDragAccents (float x, float y) {
-		
-		// Find the file represented by the view the user's finger is over
-		int positionUnderPointer = this.pointToPosition((int) x, (int) y);
-		HierarchyWrapper itemUnderPointer = null;
-		if (positionUnderPointer >= 0) {
-			itemUnderPointer = mAdapter.getItem(positionUnderPointer);
-		}
-		
-		dropHighlight = true;
-		
-		// Trigger scroll highlight on top of screen
-		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER) {
-			drawScrollUpHighlight = true;
-		} else {
-			drawScrollUpHighlight = false;
-		}
-		
-		// Trigger scroll highlight on bottom of screen
-		if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER) {
-			drawScrollDownHighlight = true;
-		} else {
-			drawScrollDownHighlight = false;
-		}
-		
-		// Trigger directory open highlight on right of the directory's row
-		if (itemUnderPointer != null && itemUnderPointer.isFolder && !itemUnderPointer.isSelected) {
-			folderOpenHighlight = positionUnderPointer;
-		} else {
-			folderOpenHighlight = -1;
+			dropHighlight = true;
 		}
 		
 		this.invalidate();
 	}
 	
+	public void dragExitedListener () {
+		clearDragHighlightMarkers();
+		
+		watchForDrag = false;
+		setPoint = null;
+		actionTimeMarker = 0;
+		
+		this.invalidate();
+	}
 
+	private void clearDragHighlightMarkers() {
+		drawScrollUpHighlight = false;
+		drawScrollDownHighlight = false;
+		folderOpenHighlight = -1;
+		dropHighlight = false;
+	}
 	
 	// Returns null if view at wantedPosition isn't on screen or wanted position doesn't exist
 	private View getViewAtPosition (int wantedPosition) {
@@ -366,14 +302,104 @@ public class FolderView extends ListView {
 			canvas.drawLine(0, this.getHeight()-3, this.getWidth(), this.getHeight()-3, highlightPaint);
 		}
 	}
+
 	
 	
-	public void updateContent (List<HierarchyWrapper> newContent) {
-		mAdapter.updateContent(newContent);
+	
+	public List<File> getSelections () {
+		return new ArrayList<File>(mAdapter.selections);
 	}
 	
-	public void setSelectedState (boolean newSelectedState) {
-		selectedState = newSelectedState;
-		this.invalidate();
+	
+	private class FolderAdapter extends ArrayAdapter<File> {
+		private final Activity inflaterActivity;
+		private final int mRowViewResourceId;
+		
+		private final Set<File> selections = new TreeSet<File>();
+		
+		public FolderAdapter (Context newContext, int newRowViewResourceId, File root) {
+			super(newContext, newRowViewResourceId, new ArrayList<File>());
+			this.clear();
+			
+			File[] files = root.listFiles(new FileFilter() {
+				public boolean accept(File f) {
+					return f.isDirectory() || f.getName().endsWith(".note");
+				}
+			});
+			
+			this.addAll(files);
+			
+			inflaterActivity = (Activity) newContext;
+			mRowViewResourceId = newRowViewResourceId;
+		}
+
+		public View getView(int position, View convertView, ViewGroup parent) {
+			RowDataHolder holder;
+
+			// If convertView is new initialize it
+			if (convertView == null) {
+				LayoutInflater inflater = inflaterActivity.getLayoutInflater();
+				convertView = inflater.inflate(mRowViewResourceId, parent, false);
+				
+				// Set holder to convertView's sub-views for easier modification and faster retrieval
+				holder = new RowDataHolder();
+				holder.thumbnail = (ImageView) convertView.findViewById(R.id.DirectoryViewRowThumbnail);
+				holder.name = (TextView) convertView.findViewById(R.id.DirectoryViewRowName);
+				holder.dateModified = (TextView) convertView.findViewById(R.id.DirectoryViewRowDate);
+				convertView.setTag(holder);
+			} else {
+				holder = (RowDataHolder) convertView.getTag();
+			}
+			
+			// Set the content of convertView's sub-views
+			holder.file = this.getItem(position);
+			holder.name.setText(holder.file.getName().replace(".note", ""));
+			holder.dateModified.setText(new Date(holder.file.lastModified()).toString());
+			
+			if (holder.file.isDirectory()) {
+				holder.thumbnail.setImageDrawable(inflaterActivity.getResources().getDrawable(R.drawable.folder));
+			} else {
+				holder.thumbnail.setImageDrawable(inflaterActivity.getResources().getDrawable(R.drawable.pencil));
+			}
+			
+			// Change background color as appropriate
+			if (selections.contains(holder.file) && mBrowser.dragInProgress()) {
+				convertView.setBackgroundColor(Color.LTGRAY);
+			} else if (selections.contains(holder.file)) {
+				convertView.setBackgroundColor(BLUE_HIGHLIGHT);
+			} else if (mBrowser.getDisplayStatus(holder.file)) {
+				convertView.setBackgroundColor(ORANGE_HIGHLIGHT);
+			} else {
+				convertView.setBackgroundColor(0x0000000000);
+			}
+
+			return convertView;
+		}
+
+		// simple class to make getView a bit clearer (and much faster)
+		private class RowDataHolder {
+			File file;
+			ImageView thumbnail;
+			TextView name;
+			TextView dateModified;
+		}
+		
+		/**
+		 * @return true if the file is now selected, false if it is no longer selected
+		 */
+		public boolean toggleSelection(File toToggle) {
+			Log.d("PEN", "toggleSelection called");
+			if (selections.remove(toToggle) == false) {
+				Log.d("PEN", "added");
+				selections.add(toToggle);
+			}
+			
+			this.notifyDataSetChanged();
+			return selections.contains(toToggle);
+		}
+		
+		public boolean getFileSelectionStatus (File toGet) {
+			return selections.contains(toGet);
+		}
 	}
 }

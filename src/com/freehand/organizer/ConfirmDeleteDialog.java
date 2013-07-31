@@ -1,4 +1,4 @@
-package com.freehand.main_menu;
+package com.freehand.organizer;
 
 import java.util.List;
 
@@ -16,15 +16,15 @@ public class ConfirmDeleteDialog extends DialogFragment {
 	private String mPositiveButtonText;
 	private String mNegativeButtonText;
 	
-	private MainMenuPresenter mPresenter;
+	//private MainMenuPresenter mPresenter;
 	private List<INoteHierarchyItem> toDelete;
 	
-	public ConfirmDeleteDialog (String newTitleText, String newPositiveButtonText, String newNegativeButtonText, List<INoteHierarchyItem> newToDelete, MainMenuPresenter newPresenter) {
+	public ConfirmDeleteDialog (String newTitleText, String newPositiveButtonText, String newNegativeButtonText, List<INoteHierarchyItem> newToDelete) {
 		mTitleText = newTitleText;
 		mPositiveButtonText = newPositiveButtonText;
 		mNegativeButtonText = newNegativeButtonText;
 		toDelete = newToDelete;
-		mPresenter = newPresenter;
+		//mPresenter = newPresenter;
 	}
 	
 	@Override
@@ -33,7 +33,7 @@ public class ConfirmDeleteDialog extends DialogFragment {
 		// Create onClickListener for the positive button
 		OnClickListener positiveListener = new OnClickListener () {
 			public void onClick(DialogInterface dialog, int which) {
-				mPresenter.deleteWithoutConfirmation(toDelete);
+				//mPresenter.deleteWithoutConfirmation(toDelete);
 			}
 		};
 		

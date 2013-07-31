@@ -1,4 +1,4 @@
-package com.freehand.main_menu;
+package com.freehand.organizer;
 
 import java.io.File;
 
@@ -36,7 +36,7 @@ public class MainMenuActivity extends Activity {
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final long VIBRATE_DURATION = 50;
 	
-	private MainMenuPresenter mPresenter;
+	private FolderBrowser mBrowser;
 	
 	// itemsSelectedActionBar view references
 	private LinearLayout itemsSelectedActionBar;
@@ -46,19 +46,19 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mPresenter.clearSelections();
+			mBrowser.cancleSelections();
 		}
 	};
 	
 	private OnClickListener deleteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mPresenter.deleteWithConfirmation();
+			mBrowser.deleteSelections();
 		}
 	};
 	
 	private OnClickListener shareButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mPresenter.shareSelectedItems();
+			mBrowser.shareSelections();
 		}
 	};
 	
@@ -66,7 +66,7 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
-					mPresenter.clearSelections();
+					mBrowser.cancleSelections();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -87,7 +87,7 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
-					mPresenter.deleteWithConfirmation();
+					mBrowser.deleteSelections();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -110,7 +110,7 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
-					mPresenter.shareSelectedItems();
+					mBrowser.shareSelections();
 					v.getBackground().setColorFilter(null);
 					break;
 					
@@ -137,13 +137,15 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mPresenter.createNewNote();
+			//TODO add dialog
+			mBrowser.createNewFile("testNote", false);
 		}
 	};
 	
 	private OnClickListener newFolderButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mPresenter.createNewFolder();
+			//TODO add dialog
+			mBrowser.createNewFile("testFolder", true);
 		}
 	};
 	
@@ -153,8 +155,7 @@ public class MainMenuActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_main_menu);
-        
+        setContentView(R.layout.organizer_layout);
         
         // Set up the defaultActionBar
         defaultActionBar = (LinearLayout) findViewById(R.id.defaultActionBar);
@@ -182,18 +183,7 @@ public class MainMenuActivity extends Activity {
         
         itemsSelectedActionBar.setVisibility(View.INVISIBLE);
         
-        // Gather resources needed to create the NoteFileHierarchyItem that's getting passed to mExplorer
-        File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
-        Drawable defaultNoteDrawable = this.getResources().getDrawable(R.drawable.pencil);
-        Drawable defaultFileDrawable = this.getResources().getDrawable(R.drawable.folder);
         
-        INoteHierarchyItem rootItem = new NoteFileHierarchyItem(rootDirectory, null);
-        rootItem.setDefaultDrawables(defaultNoteDrawable, defaultFileDrawable);
-        rootItem.setSorter(new DefaultNoteSorter());
-        
-        FolderBrowser folderBrowser = ((FolderBrowser) findViewById(R.id.scrollView));
-        mPresenter = new MainMenuPresenter(this, folderBrowser, rootItem);
-        folderBrowser.setPresenter(mPresenter);
         
         Button prefButton = (Button) findViewById(R.id.preferences);
         prefButton.setOnClickListener(new OnClickListener() {
@@ -202,6 +192,10 @@ public class MainMenuActivity extends Activity {
 				startActivity(prefActivity);
 			}
         });
+        
+        mBrowser = ((FolderBrowser) findViewById(R.id.scrollView));
+        final File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
+        mBrowser.setRootDirectory(rootDirectory);
     }
     
     @Override
@@ -217,9 +211,8 @@ public class MainMenuActivity extends Activity {
     
     @Override
     public void onBackPressed() {
-    	if (mPresenter.backButtonHandler() == false) {
-    		super.onBackPressed();
-    	}
+    	super.onBackPressed();
+    	//TODO
     }
     
     public void setItemsSelectedActionBarOn () {
@@ -242,11 +235,4 @@ public class MainMenuActivity extends Activity {
     public void displayToast (String toastText) {
     	Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
     }
-    
-	public void openNoteActivity (INoteHierarchyItem toOpen) {
-		Intent i = new Intent(this, NoteActivity.class);
-		i.putExtra("note_path", toOpen.getPath());
-		i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-		this.startActivity(i);
-	}
 }

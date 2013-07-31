@@ -17,7 +17,7 @@
         android:hardwareAccelerated="false" >
                 
         <activity
-            android:name="com.freehand.main_menu.MainMenuActivity"
+            android:name="com.freehand.organizer.MainMenuActivity"
             android:label="@string/title_activity_main_menu"
             android:hardwareAccelerated="true" >
             <intent-filter>

@@ -1,4 +1,4 @@
-package com.freehand.main_menu;
+package com.freehand.organizer;
 
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.storage.INoteHierarchyItem;
