@@ -28,6 +28,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	private static final int NO_COLOR = 0x00FFFFFF;
 	private static final float MIN_FOLDER_WIDTH_DIP = 300;
 	
+	private MainMenuActivity mActivity;
 	private final LinearLayout mLayout = new LinearLayout(this.getContext());
 	
 	private int pxPerFolder = 0;
@@ -41,6 +42,11 @@ public class FolderBrowser extends HorizontalScrollView {
 	private boolean drawLeftHighlight = false;
 	private boolean drawRightHighlight = false;
 
+	private int dragStartWatcherView = -1;
+	
+	
+	//****************************************** setup methods ****************************************************
+	
 	public FolderBrowser(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		this.setOverScrollMode(HorizontalScrollView.OVER_SCROLL_ALWAYS);
@@ -56,42 +62,84 @@ public class FolderBrowser extends HorizontalScrollView {
 		openFolder(root);
 	}
 	
+	public void setMainMenuActivity (MainMenuActivity activity) {
+		mActivity = activity;
+	}
+	
+	//*************************************** drag starting and touch event routing methods ******************************************
+	
+	/*		A NOTE ABOUT CUSTOM TOUCH EVENT HANDELING FOR STARTING DRAG EVENTS IN THE FolderBrowser/FolderView PAIR
+	 * 											08/16/2013
+	 * 
+	 * Because touch event handling in Android is so fucked up, making the organizer UI work well requires rewriting a
+	 * lot of the functionality normally provided by the Android UI framework when we might start a drag event. When a
+	 * touch event starts the FolderBrowser intercepts it and checks with each FolderView to see if it's over a selected
+	 * file. If it is, a variable inside of FolderBrowser is set telling it to dispatch all touch events directly to the
+	 * FolderView in question's onWatchingForDragTouchEvent method. Inside of that method, item clicks and long clicks
+	 * are detected, as is a drag event starting.
+	 * 
+	 * Starting a drag directly after a long press (without the finger being lifted) is handled internally by FolderView.
+	 * 
+	 * In all other cases touch events are handled the normal way. It's worth noting, however, that HorizontalScrollView,
+	 * which FolderBrowser inherits from, seems to override onInterceptTouchEvent and take over if it detects a horizontal
+	 * drag. That's expected, but can sometimes get in the way of more complicated touch event handling like what's going
+	 * on here.
+	 */
 	
 	@Override
-	public boolean onInterceptTouchEvent(MotionEvent event) {
-		// I need to check to see if the user is starting a drag on an already selected file
-		// inside of one of the FolderViews - if they aren't I pass the MotionEvent to super
-		// so It can scroll. This check belongs here because I only want to check to see if
-		// the pointer is over the already selected files at the beginning of the event.
-		
-		boolean eventConsumed = false;
-		for(int i = 0; i < mLayout.getChildCount(); i++) {
-			FolderView current = (FolderView) mLayout.getChildAt(i);
-			if (current.checkConsumeTouchEvent(event.getX()-current.getLeft(), event.getY()-current.getTop()) == true) {
-				eventConsumed = true;
+	public boolean onInterceptTouchEvent(MotionEvent event) {	
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			dragStartWatcherView = -1;
+			for(int i = 0; i < mLayout.getChildCount(); i++) {
+				FolderView current = (FolderView) mLayout.getChildAt(i);
+				if (current.checkStartWatchingForDrag(event.getX()-current.getLeft()+getScrollX(), event.getY()-current.getTop()) == true) {
+					dragStartWatcherView = i;
+					return true;
+				}
 			}
 		}
-		
-		if (eventConsumed == false) {
-			return super.onInterceptTouchEvent(event);
-		} else {
-			return false;
-		}
-	}	
+
+		return super.onInterceptTouchEvent(event);
+	}
 	
-	//********************************************* Drag Methods **************************************************
+	@Override
+	public boolean onTouchEvent (MotionEvent event) {
+		if (dragStartWatcherView >= 0) {
+			FolderView dispatchTarget = (FolderView) mLayout.getChildAt(dragStartWatcherView);
+			event.setLocation(event.getX()-dispatchTarget.getLeft()+getScrollX(), event.getY()-dispatchTarget.getTop());
+			dispatchTarget.onWatchingForDragTouchEvent(event);
+			return true;
+		}
+		
+		if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
+			dragStartWatcherView = -1;
+		}
+		
+		boolean returnValue = false;
+		try {
+			returnValue = super.onTouchEvent(event);
+		} catch (IllegalArgumentException e) {
+			Log.d("PEN", "Error");
+		}
+		
+		return returnValue;
+	}
+	
+	
+	
+	//********************************************* drag in progress methods **************************************************
+	
 	public void startDrag() {
-		
-		Log.d("PEN", "startDrag called");
-		
 		int itemCount = getSelections().size();
 		if (itemCount <= 0) { return; }
 		
-		Log.d("PEN", "startDrag past guard clause");
-		
-		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(itemCount, 350);
+		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(itemCount, (int) (175.0f*getResources().getDisplayMetrics().density));
 		this.startDrag(null, shadowBuilder, null, 0);
-		dragInProgress = true;
+		
+		if (dragStartWatcherView >= 0) {
+			dragStartWatcherView = -1;
+		}
+		
 	}
 	
 	public boolean dragInProgress () {
@@ -100,6 +148,14 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	@Override
 	public boolean onDragEvent (DragEvent event) {
+		
+		if (event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
+			dragInProgress = true;
+		} else if (event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+			dragInProgress = false;
+			invalidate();
+		}
+		
 		// If the drag event is a drop, call the move method in the presenter with the
 		//  child view the drop is over as a parameter
 		if (event.getAction() == DragEvent.ACTION_DROP) {
@@ -110,8 +166,6 @@ public class FolderBrowser extends HorizontalScrollView {
 				}
 				toTest.dragExitedListener();
 			}
-			
-			dragInProgress = false;
 			return true;
 		}
 		
@@ -128,8 +182,6 @@ public class FolderBrowser extends HorizontalScrollView {
 				for (int i = 0; i < mLayout.getChildCount(); i++) {
 					((FolderView) mLayout.getChildAt(i)).dragExitedListener();
 				}
-				
-				dragInProgress = false;
 				return true;
 			}
 		}
@@ -137,7 +189,6 @@ public class FolderBrowser extends HorizontalScrollView {
 		// Figure out which child view the DragEvent is over and send them the coordinates
 		//  of the event. Send all of the other children the info that they aren't selected.
 		if (event.getAction() == DragEvent.ACTION_DRAG_LOCATION || event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
-			// TODO setting the selected folder during a drag goes somewhere around here.
 			for (int i = 0; i < mLayout.getChildCount(); i++) {
 				FolderView toUpdate = (FolderView) mLayout.getChildAt(i);
 				if (pointInView(toUpdate, getScrollX() + event.getX(), getScrollY() + event.getY())) {
@@ -149,7 +200,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			
 			return true;
 		}
-		
+				
 		return true;
 	}
 	
@@ -203,14 +254,14 @@ public class FolderBrowser extends HorizontalScrollView {
 	protected void onDraw (Canvas canvas) {
 		super.onDraw(canvas);
 		
-		if (drawLeftHighlight == true) {
+		if (dragInProgress && drawLeftHighlight) {
 			Rect highlightRect = new Rect(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, this.getHeight());
 			Shader highlightShader = new LinearGradient(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			Paint highlightPaint = new Paint();
 			highlightPaint.setShader(highlightShader);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (drawRightHighlight == true) {
+		} else if (dragInProgress && drawRightHighlight) {
 			Rect highlightRect = new Rect(this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, this.getScrollX() + this.getWidth(), this.getHeight());
 			Shader highlightShader = new LinearGradient(this.getScrollX() + this.getWidth(), 0, this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			Paint highlightPaint = new Paint();
@@ -281,9 +332,19 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void cancleSelections () {
-		
+		for (int i = 0; i < mLayout.getChildCount(); i++) {
+			((FolderView) mLayout.getChildAt(i)).removeAllSelections();
+		}
 	}
 	
+	public void selectionsChanged () {
+		List<File> selections = getSelections();
+		if (selections.size() == 0) {
+			mActivity.setDefaultActionBarOn();
+		} else {
+			mActivity.setItemsSelectedActionBarOn();
+		}
+	}
 	
 	public void deleteSelections () {
 		

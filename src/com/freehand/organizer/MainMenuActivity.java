@@ -4,13 +4,7 @@ import java.io.File;
 
 import com.calhounroberthinshaw.freehand.R;
 
-import com.freehand.note_editor.NoteActivity;
 import com.freehand.preferences.PrefActivity;
-import com.freehand.storage.DefaultNoteSorter;
-import com.freehand.storage.INoteHierarchyItem;
-import com.freehand.storage.NoteFileHierarchyItem;
-
-
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -20,8 +14,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -196,6 +188,7 @@ public class MainMenuActivity extends Activity {
         mBrowser = ((FolderBrowser) findViewById(R.id.scrollView));
         final File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
         mBrowser.setRootDirectory(rootDirectory);
+        mBrowser.setMainMenuActivity(this);
     }
     
     @Override

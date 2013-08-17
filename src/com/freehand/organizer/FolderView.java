@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -35,7 +36,7 @@ public class FolderView extends ListView {
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final int NO_COLOR = 0x00FFFFFF;
 	
-	private static final float STATIONARY_RADIUS_SQUARED = 300;
+	private static final float STATIONARY_RADIUS_SQUARED = 1500;
 	private static final long DRAG_ACTION_TIMER = 400;
 	private static final float DIRECTORY_UP_REGION_MULTIPLIER = 0.250f;
 	private static final float SCROLL_REGION_MULTIPLIER = 0.10f;
@@ -48,7 +49,10 @@ public class FolderView extends ListView {
 	private final FolderAdapter mAdapter;
 
 	// These store the persistent information for dragWatcher
-	private boolean watchForDrag = false;
+	private final float startDragDistSq = STATIONARY_RADIUS_SQUARED*getResources().getDisplayMetrics().density*getResources().getDisplayMetrics().density;
+	private boolean watchingForDrag = false;
+	private PointF dragWatcherStartPos = null;
+	private boolean dragWatcherEventResolved = false;
 
 	// These store the persistent information for all of the drag gestures
 	private PointF setPoint = null;
@@ -72,16 +76,20 @@ public class FolderView extends ListView {
 			File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
 			Log.d("PEN", "clicked");
 			mBrowser.openFile(clickedFile);
+			mAdapter.notifyDataSetChanged();
 		}
 	};
 	
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View clickedView, int position, long id) {
+//			if (mBrowser.dragInProgress() == true) {
+//				return true;
+//			}
+			
 			final File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
-			
-			Log.d("PEN", clickedFile.getPath());
-			
-			watchForDrag = mAdapter.toggleSelection(clickedFile);
+			watchingForDrag = mAdapter.toggleSelection(clickedFile);
+			dragWatcherEventResolved = false;
+			dragWatcherStartPos = null;	// I need to set set point inside of the drag watcher method because I don't get coords in here
 			return true;
 		}
 	};
@@ -110,58 +118,92 @@ public class FolderView extends ListView {
 		mSelectedPaint.setStrokeWidth(6);
 	}
 
-
-	// This method watches for the drag and drop gesture without interfering with any of the class' other behaviors.
+	//***************************************** Drag Start Detection Methods *************************************************
+	
+	/**
+	 * @return true if the point is over a selected item and this FolderView needs to watch for a drag.
+	 */
+	public boolean checkStartWatchingForDrag (float x, float y) {
+		dragWatcherStartPos = null;
+		dragWatcherEventResolved = false;
+		watchingForDrag = getPointOverSelectedItem(x, y);
+		return watchingForDrag;
+	}
+	
 	@Override
-	public boolean onTouchEvent(MotionEvent event) {
-		super.onTouchEvent(event);
-		if (event.getAction() == MotionEvent.ACTION_DOWN) {
-			touchEventStartingOverSelectedItemWatcher(event.getX(), event.getY());
-		}
-		dragWatcher(event);
-		// Consume this touch event if a drag is started
-		return true;
-	}
-	
-	public boolean checkConsumeTouchEvent (float x, float y) {
-		touchEventStartingOverSelectedItemWatcher(x, y);
-		return watchForDrag;
-	}
-	
-	private void touchEventStartingOverSelectedItemWatcher (float x, float y) {
-			final int touchedIndex = this.pointToPosition((int) x, (int) y);
+	public boolean onTouchEvent (MotionEvent event) {
+		if (watchingForDrag == true) {
 			
-			if (touchedIndex == -1) {
-				watchForDrag = false;
-				return;
+			if (dragWatcherStartPos == null) {
+				dragWatcherStartPos = new PointF(event.getX(), event.getY());
 			}
 			
+			if (dragWatcherEventResolved == false && pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, startDragDistSq)) {
+				dragWatcherEventResolved = true;
+				mBrowser.startDrag();
+			}
+			return true;
+		} else {
+			return super.onTouchEvent(event);
+		}
+	}
+
+	public void onWatchingForDragTouchEvent (MotionEvent event) {
+		if (dragWatcherEventResolved == true) { return; }
+		
+		if (dragWatcherStartPos == null) {
+			dragWatcherStartPos = new PointF(event.getX(), event.getY());
+		}
+		
+		// Drag start watcher
+		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, startDragDistSq)) {
+			dragWatcherEventResolved = true;
+			mBrowser.startDrag();
+		}
+		
+		// Click watcher
+		if (event.getAction() == MotionEvent.ACTION_UP) {
+			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
 			final View touchedView = this.getViewAtPosition(touchedIndex);
-			File fileUnderPointer = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
-			watchForDrag = mAdapter.getFileSelectionStatus(fileUnderPointer);
-	}
-
-
-	private void dragWatcher(MotionEvent event) {
-		if (watchForDrag == true && (event.getAction() == MotionEvent.ACTION_MOVE || event.getAction() == MotionEvent.ACTION_DOWN)) {
-			if (setPoint == null) {
-				setPoint = new PointF(event.getX(), event.getY());
-			} else {
-				float draggedDistanceSquared = (setPoint.x - event.getX()) * (setPoint.x - event.getX()) + (setPoint.y - event.getY()) * (setPoint.y - event.getY());
-				if (draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
-					mBrowser.startDrag();
-					setPoint = null;
-					watchForDrag = false;
-				}
-			}
-		} else if (watchForDrag == true
-			&& (event.getAction() == MotionEvent.ACTION_UP
-				|| event.getAction() == MotionEvent.ACTION_CANCEL || event
-				.getAction() == MotionEvent.ACTION_DOWN)) {
-			setPoint = null;
-			watchForDrag = false;
+			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+			mBrowser.openFile(touchedFile);
+			
+			dragWatcherEventResolved = true;
+		}
+		
+		// Long click watcher
+		if (event.getEventTime()-event.getDownTime() > ViewConfiguration.getLongPressTimeout()) {
+			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
+			final View touchedView = this.getViewAtPosition(touchedIndex);
+			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+			watchingForDrag = mAdapter.toggleSelection(touchedFile);
+			mAdapter.notifyDataSetChanged();
+			
+			dragWatcherEventResolved = true;
 		}
 	}
+	
+	/**
+	 * @return true if the point defined by (x, y) is outside of the circle define by center and radSq.
+	 */
+	private static boolean pointOutOfCircleTest (float x, float y, PointF center, float radSq) {
+		final float draggedDistanceSquared = (center.x-x)*(center.x-x) + (center.y-y)*(center.y-y);
+		return draggedDistanceSquared > radSq;
+	}
+	
+	/**
+	 * @return true if the point specified by x and y is over a selected file's view in the list
+	 */
+	private boolean getPointOverSelectedItem (float x, float y) {
+		final int touchedIndex = this.pointToPosition((int) x, (int) y);
+		if (touchedIndex == -1) { return false; }
+		final View touchedView = this.getViewAtPosition(touchedIndex);
+		final File fileUnderPointer = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+		return mAdapter.getFileSelectionStatus(fileUnderPointer);
+	}
+	
+	
+	//*********************************************************** Handle drag events that are in progress **********************************************
 	
 	public void dragListener (float x, float y) {
 		clearDragHighlightMarkers();
@@ -213,6 +255,7 @@ public class FolderView extends ListView {
 				folderOpenHighlight = positionUnderPointer;
 			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
 				mBrowser.openFile(fileUnderPointer);
+				mAdapter.notifyDataSetChanged();
 			}
 
 		// No actions are possible, reset timer
@@ -228,7 +271,6 @@ public class FolderView extends ListView {
 	public void dragExitedListener () {
 		clearDragHighlightMarkers();
 		
-		watchForDrag = false;
 		setPoint = null;
 		actionTimeMarker = 0;
 		
@@ -310,6 +352,10 @@ public class FolderView extends ListView {
 		return new ArrayList<File>(mAdapter.selections);
 	}
 	
+	public void removeAllSelections () {
+		mAdapter.removeAllSelections();
+	}
+	
 	
 	private class FolderAdapter extends ArrayAdapter<File> {
 		private final Activity inflaterActivity;
@@ -388,14 +434,18 @@ public class FolderView extends ListView {
 		 * @return true if the file is now selected, false if it is no longer selected
 		 */
 		public boolean toggleSelection(File toToggle) {
-			Log.d("PEN", "toggleSelection called");
 			if (selections.remove(toToggle) == false) {
-				Log.d("PEN", "added");
 				selections.add(toToggle);
 			}
-			
 			this.notifyDataSetChanged();
+			mBrowser.selectionsChanged();
 			return selections.contains(toToggle);
+		}
+		
+		public void removeAllSelections () {
+			selections.clear();
+			this.notifyDataSetChanged();
+			mBrowser.selectionsChanged();
 		}
 		
 		public boolean getFileSelectionStatus (File toGet) {
