@@ -130,16 +130,19 @@ public class FolderBrowser extends HorizontalScrollView {
 	//********************************************* drag in progress methods **************************************************
 	
 	public void startDrag() {
+		dragInProgress = true;
+		
 		int itemCount = getSelections().size();
 		if (itemCount <= 0) { return; }
 		
 		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(itemCount, (int) (175.0f*getResources().getDisplayMetrics().density));
 		this.startDrag(null, shadowBuilder, null, 0);
+		dragStartWatcherView = -1;
 		
-		if (dragStartWatcherView >= 0) {
-			dragStartWatcherView = -1;
+		for (int i = 0; i < mLayout.getChildCount(); i++) {
+			FolderView toUpdate = (FolderView) mLayout.getChildAt(i);
+			toUpdate.notifyDataSetChanged();
 		}
-		
 	}
 	
 	public boolean dragInProgress () {
@@ -148,10 +151,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	@Override
 	public boolean onDragEvent (DragEvent event) {
-		
-		if (event.getAction() == DragEvent.ACTION_DRAG_STARTED) {
-			dragInProgress = true;
-		} else if (event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+		if (event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
 			dragInProgress = false;
 			invalidate();
 		}
@@ -205,8 +205,6 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	private boolean horizontalScrollDragListener (DragEvent event) {
-		
-		// Watch for left scroll
 		if (this.canScrollHorizontally(-1) && event.getX() <= mDragRegionWidth) {
 			drawLeftHighlight = true;
 			drawRightHighlight = false;

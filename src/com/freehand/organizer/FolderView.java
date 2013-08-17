@@ -275,6 +275,7 @@ public class FolderView extends ListView {
 		actionTimeMarker = 0;
 		
 		this.invalidate();
+		mAdapter.notifyDataSetChanged();
 	}
 
 	private void clearDragHighlightMarkers() {
@@ -354,6 +355,11 @@ public class FolderView extends ListView {
 	
 	public void removeAllSelections () {
 		mAdapter.removeAllSelections();
+	}
+	
+	public void notifyDataSetChanged () {
+		Log.d("PEN", "notify");
+		mAdapter.notifyDataSetChanged();
 	}
 	
 	
