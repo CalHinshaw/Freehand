@@ -3,6 +3,8 @@ package com.freehand.organizer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.freehand.note_editor.NoteActivity;
 
@@ -10,10 +12,12 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Shader;
+import android.graphics.drawable.PaintDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.DragEvent;
@@ -30,6 +34,8 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	private MainMenuActivity mActivity;
 	private final LinearLayout mLayout = new LinearLayout(this.getContext());
+	
+	private final Set<File> selections = new TreeSet<File>();
 	
 	private int pxPerFolder = 0;
 	private int foldersPerScreen = 0;
@@ -54,7 +60,30 @@ public class FolderBrowser extends HorizontalScrollView {
 		
 		mDragRegionWidth = (int) (DRAG_SCROLL_REGION_WIDTH_DIP * getResources().getDisplayMetrics().density);
 		
+		final PaintDrawable divider = new PaintDrawable(Color.DKGRAY);
+		divider.setIntrinsicWidth((int) (2*getResources().getDisplayMetrics().density + 1));
+		mLayout.setDividerDrawable(divider);
+		mLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE + LinearLayout.SHOW_DIVIDER_END);
+		
 		this.addView(mLayout);
+	}
+	
+	@Override
+	protected void onLayout (boolean changed, int left, int top, int right, int bottom) {
+		final int screenWidth = right-left;
+		final float scale = getResources().getDisplayMetrics().density;
+		final float minFolderWidthPx = MIN_FOLDER_WIDTH_DIP * scale;
+		final int numFoldersToShow = (int) (screenWidth/minFolderWidthPx);
+		final int folderWidth = (int) (screenWidth/numFoldersToShow);
+		
+		pxPerFolder = folderWidth;
+		foldersPerScreen = numFoldersToShow;
+		
+		super.onLayout(changed, left, top, right, bottom);
+		
+		for (int i = 0; i < mLayout.getChildCount(); i++) {
+			mLayout.getChildAt(i).getLayoutParams().width = pxPerFolder;
+		}
 	}
 	
 	public void setRootDirectory (File root) {
@@ -132,7 +161,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	public void startDrag() {
 		dragInProgress = true;
 		
-		int itemCount = getSelections().size();
+		int itemCount = selections.size();
 		if (itemCount <= 0) { return; }
 		
 		NoteMovementDragShadowBuilder shadowBuilder = new NoteMovementDragShadowBuilder(itemCount, (int) (175.0f*getResources().getDisplayMetrics().density));
@@ -143,10 +172,6 @@ public class FolderBrowser extends HorizontalScrollView {
 			FolderView toUpdate = (FolderView) mLayout.getChildAt(i);
 			toUpdate.notifyDataSetChanged();
 		}
-	}
-	
-	public boolean dragInProgress () {
-		return dragInProgress;
 	}
 	
 	@Override
@@ -192,7 +217,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			for (int i = 0; i < mLayout.getChildCount(); i++) {
 				FolderView toUpdate = (FolderView) mLayout.getChildAt(i);
 				if (pointInView(toUpdate, getScrollX() + event.getX(), getScrollY() + event.getY())) {
-					toUpdate.dragListener(event.getX() - toUpdate.getLeft(), event.getY() - toUpdate.getTop());
+					toUpdate.dragListener(event.getX() - toUpdate.getLeft()+getScrollX(), event.getY() - toUpdate.getTop());
 				} else {
 					toUpdate.dragExitedListener();
 				}
@@ -269,59 +294,40 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 	}
 	
-	@Override
-	protected void onLayout (boolean changed, int left, int top, int right, int bottom) {
-		final int screenWidth = right-left;
-		final float scale = getResources().getDisplayMetrics().density;
-		final float minFolderWidthPx = MIN_FOLDER_WIDTH_DIP * scale;
-		final int numFoldersToShow = (int) (screenWidth/minFolderWidthPx);
-		final int folderWidth = (int) (screenWidth/numFoldersToShow);
-		
-		pxPerFolder = folderWidth;
-		foldersPerScreen = numFoldersToShow;
-		
-		super.onLayout(changed, left, top, right, bottom);
-		
-		for (int i = 0; i < mLayout.getChildCount(); i++) {
-			mLayout.getChildAt(i).getLayoutParams().width = pxPerFolder;
-		}
-	}
-	
-	@Override
-	public void computeScroll () {
-		super.computeScroll();
-		
-		if (indexToShow >= 0) {
-			final float leftFolderPos = ((float) getScrollX()) / ((float) pxPerFolder);
-			if (indexToShow < leftFolderPos) {
-				this.smoothScrollTo(indexToShow*pxPerFolder, 0);
-			} else if (indexToShow > leftFolderPos + foldersPerScreen-1) {
-				this.smoothScrollTo((indexToShow-foldersPerScreen+1) * pxPerFolder, 0);
-			}
-			indexToShow = -1;
-		}
+	public boolean dragInProgress () {
+		return dragInProgress;
 	}
 	
 	
 	
+	//*************************************** organization mutation methods****************************************
 	
-
-	
-
-	
-
-	
-	
-	
-	private List<File> getSelections () {
-		
-		Log.d("PEN", "getSelectionsCalled");
-		
-		ArrayList<File> selections = new ArrayList<File>();
-		for (int i = 0; i < mLayout.getChildCount(); i++) {
-			selections.addAll(((FolderView) mLayout.getChildAt(i)).getSelections());
+	/**
+	 * @return true if the file is now selected, false if it is no longer selected
+	 */
+	public boolean toggleSelection(File toToggle) {
+		if (selections.remove(toToggle) == false) {
+			selections.add(toToggle);
 		}
-		return selections;
+		selectionsChanged();
+		return selections.contains(toToggle);
+	}
+	
+	public void removeAllSelections () {
+		selections.clear();
+		selectionsChanged();
+	}
+	
+	public boolean getFileSelectionStatus (File toGet) {
+		return selections.contains(toGet);
+	}
+	
+	private void selectionsChanged () {
+		if (selections.size() == 0) {
+			mActivity.setDefaultActionBarOn();
+		} else {
+			mActivity.setItemsSelectedActionBarOn();
+		}
 	}
 	
 	private void moveSelectionsToDirectory (File destination) {
@@ -330,19 +336,10 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void cancleSelections () {
-		for (int i = 0; i < mLayout.getChildCount(); i++) {
-			((FolderView) mLayout.getChildAt(i)).removeAllSelections();
-		}
+		selections.clear();
 	}
 	
-	public void selectionsChanged () {
-		List<File> selections = getSelections();
-		if (selections.size() == 0) {
-			mActivity.setDefaultActionBarOn();
-		} else {
-			mActivity.setItemsSelectedActionBarOn();
-		}
-	}
+
 	
 	public void deleteSelections () {
 		
@@ -395,6 +392,24 @@ public class FolderBrowser extends HorizontalScrollView {
 		newView.setLayoutParams(new LinearLayout.LayoutParams(pxPerFolder, LayoutParams.MATCH_PARENT));
 		mLayout.addView(newView);
 		requestShow(folder);
+	}
+	
+	
+	// ****************************************** non-drag scrolling methods ****************************************
+	
+	@Override
+	public void computeScroll () {
+		super.computeScroll();
+		
+		if (indexToShow >= 0) {
+			final float leftFolderPos = ((float) getScrollX()) / ((float) pxPerFolder);
+			if (indexToShow < leftFolderPos) {
+				this.smoothScrollTo(indexToShow*pxPerFolder, 0);
+			} else if (indexToShow > leftFolderPos + foldersPerScreen-1) {
+				this.smoothScrollTo((indexToShow-foldersPerScreen+1) * pxPerFolder, 0);
+			}
+			indexToShow = -1;
+		}
 	}
 	
 	/**

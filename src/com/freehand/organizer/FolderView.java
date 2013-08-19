@@ -4,10 +4,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-
 import com.calhounroberthinshaw.freehand.R;
 import android.app.Activity;
 import android.content.Context;
@@ -33,11 +29,11 @@ import android.widget.TextView;
 public class FolderView extends ListView {
 	private static final int BLUE_HIGHLIGHT = 0x600099CC;
 	private static final int SOLID_BLUE_HIGHLIGHT = 0xFF0099CC;
-	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
+	private static final int ORANGE_HIGHLIGHT = 0xAAFFBB33;
 	private static final int NO_COLOR = 0x00FFFFFF;
 	
 	private static final float STATIONARY_RADIUS_SQUARED = 1500;
-	private static final long DRAG_ACTION_TIMER = 400;
+	private static final long DRAG_ACTION_TIMER = 800;
 	private static final float DIRECTORY_UP_REGION_MULTIPLIER = 0.250f;
 	private static final float SCROLL_REGION_MULTIPLIER = 0.10f;
 	private static final int SCROLL_DISTANCE = 40;
@@ -48,20 +44,18 @@ public class FolderView extends ListView {
 	private final FolderBrowser mBrowser;
 	private final FolderAdapter mAdapter;
 
+	private final float stationaryDistSq = STATIONARY_RADIUS_SQUARED*getResources().getDisplayMetrics().density*getResources().getDisplayMetrics().density;
+	
 	// These store the persistent information for dragWatcher
-	private final float startDragDistSq = STATIONARY_RADIUS_SQUARED*getResources().getDisplayMetrics().density*getResources().getDisplayMetrics().density;
 	private boolean watchingForDrag = false;
 	private PointF dragWatcherStartPos = null;
 	private boolean dragWatcherEventResolved = false;
 
 	// These store the persistent information for all of the drag gestures
-	private PointF setPoint = null;
 	private long actionTimeMarker = 0;
-	
-	// These hold the highlight information for drag events
+	private int indexOfFileUnderDrag = -1;
 	private boolean drawScrollUpHighlight = false;
 	private boolean drawScrollDownHighlight = false;
-	private int folderOpenHighlight = -1;
 	private boolean dropHighlight = false;
 	
 	// Variables responsible for highlighting this view when it's selected
@@ -82,12 +76,9 @@ public class FolderView extends ListView {
 	
 	private OnItemLongClickListener DirectoryViewSelectListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View clickedView, int position, long id) {
-//			if (mBrowser.dragInProgress() == true) {
-//				return true;
-//			}
-			
 			final File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
-			watchingForDrag = mAdapter.toggleSelection(clickedFile);
+			watchingForDrag = mBrowser.toggleSelection(clickedFile);
+			mAdapter.notifyDataSetChanged();
 			dragWatcherEventResolved = false;
 			dragWatcherStartPos = null;	// I need to set set point inside of the drag watcher method because I don't get coords in here
 			return true;
@@ -138,7 +129,7 @@ public class FolderView extends ListView {
 				dragWatcherStartPos = new PointF(event.getX(), event.getY());
 			}
 			
-			if (dragWatcherEventResolved == false && pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, startDragDistSq)) {
+			if (dragWatcherEventResolved == false && pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
 				dragWatcherEventResolved = true;
 				mBrowser.startDrag();
 			}
@@ -156,7 +147,7 @@ public class FolderView extends ListView {
 		}
 		
 		// Drag start watcher
-		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, startDragDistSq)) {
+		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
 			dragWatcherEventResolved = true;
 			mBrowser.startDrag();
 		}
@@ -176,7 +167,7 @@ public class FolderView extends ListView {
 			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
 			final View touchedView = this.getViewAtPosition(touchedIndex);
 			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
-			watchingForDrag = mAdapter.toggleSelection(touchedFile);
+			watchingForDrag = mBrowser.toggleSelection(touchedFile);
 			mAdapter.notifyDataSetChanged();
 			
 			dragWatcherEventResolved = true;
@@ -199,90 +190,74 @@ public class FolderView extends ListView {
 		if (touchedIndex == -1) { return false; }
 		final View touchedView = this.getViewAtPosition(touchedIndex);
 		final File fileUnderPointer = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
-		return mAdapter.getFileSelectionStatus(fileUnderPointer);
+		return mBrowser.getFileSelectionStatus(fileUnderPointer);
 	}
 	
 	
 	//*********************************************************** Handle drag events that are in progress **********************************************
 	
 	public void dragListener (float x, float y) {
-		clearDragHighlightMarkers();
-		
 		// Wait for animations to finish before doing stuff
 		if (this.getAnimation() != null && !this.getAnimation().hasEnded()) {
-			actionTimeMarker = 0;
+			resetDragState();
 			return;
 		}
 
 		// Watch to see if the user wants to scroll up, reset the timer and return if we do
 		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(-1)) {
 			this.smoothScrollBy(-SCROLL_DISTANCE, SCROLL_DURATION);
-			actionTimeMarker = 0;
-			setPoint = null;
+			resetDragState();
 			drawScrollUpHighlight = true;
+			invalidate();
 			return;
 		}
 		
 		// Watch to see if user wants to scroll down, reset the timer and return if we do
 		if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(1)) {
 			this.smoothScrollBy(SCROLL_DISTANCE, SCROLL_DURATION);
-			actionTimeMarker = 0;
-			setPoint = null;
+			resetDragState();
 			drawScrollDownHighlight = true;
+			invalidate();
+			return;
+		}		
+		
+		// Watch to see if the user wants to open a folder
+		final int indexUnderPointer = this.pointToPosition((int) x, (int) y);
+		if (indexUnderPointer == -1 || mAdapter.getItem(indexUnderPointer).isFile()) {
+			resetDragState();
+			dropHighlight = true;
 			return;
 		}
 		
-		// Find the file represented by the view the user's finger is over
-		int positionUnderPointer = this.pointToPosition((int) x, (int) y);
-		File fileUnderPointer = null;
-		if (positionUnderPointer >= 0) {
-			fileUnderPointer = mAdapter.getItem(positionUnderPointer);
+		// Reset actionTimeMarker if the folder we're hovering over changes
+		if (indexOfFileUnderDrag != indexUnderPointer) {
+			resetDragState();
+			indexOfFileUnderDrag = indexUnderPointer;
+			actionTimeMarker = System.currentTimeMillis();
 		}
 		
-		// Don't want to be able to open selected folders
-		if (fileUnderPointer != null && fileUnderPointer.isDirectory() && mAdapter.getFileSelectionStatus(fileUnderPointer) == false) {
-
-			// Compute distance of user's finger from setPoint for later
-			float draggedDistanceSquared = STATIONARY_RADIUS_SQUARED + 5;
-			if (setPoint != null) {
-				draggedDistanceSquared = (setPoint.x - x) * (setPoint.x - x) + (setPoint.y - y) * (setPoint.y - y);
-			}
-
-			// Start watching to see if user's finger has been hovering over a folder for long enough to open it
-			if (actionTimeMarker == 0 || draggedDistanceSquared > STATIONARY_RADIUS_SQUARED) {
-				actionTimeMarker = System.currentTimeMillis();
-				setPoint = new PointF(x, y);
-				folderOpenHighlight = positionUnderPointer;
-			} else if (((System.currentTimeMillis() - actionTimeMarker) >= DRAG_ACTION_TIMER) && (draggedDistanceSquared <= STATIONARY_RADIUS_SQUARED)) {
-				mBrowser.openFile(fileUnderPointer);
-				mAdapter.notifyDataSetChanged();
-			}
-
-		// No actions are possible, reset timer
-		} else {
-			actionTimeMarker = 0;
-			setPoint = null;
-			dropHighlight = true;
+		final File fileUnderDrag = mAdapter.getItem(indexOfFileUnderDrag);
+		if (System.currentTimeMillis()-actionTimeMarker >= DRAG_ACTION_TIMER && mBrowser.getDisplayStatus(fileUnderDrag) == false) {
+			mBrowser.openFile(fileUnderDrag);
+			mAdapter.notifyDataSetChanged();
 		}
 		
 		this.invalidate();
 	}
 	
-	public void dragExitedListener () {
-		clearDragHighlightMarkers();
-		
-		setPoint = null;
+	private void resetDragState () {
 		actionTimeMarker = 0;
+		indexOfFileUnderDrag = -1;
 		
-		this.invalidate();
-		mAdapter.notifyDataSetChanged();
-	}
-
-	private void clearDragHighlightMarkers() {
 		drawScrollUpHighlight = false;
 		drawScrollDownHighlight = false;
-		folderOpenHighlight = -1;
 		dropHighlight = false;
+	}
+	
+	public void dragExitedListener () {
+		resetDragState();
+		this.invalidate();
+		mAdapter.notifyDataSetChanged();
 	}
 	
 	// Returns null if view at wantedPosition isn't on screen or wanted position doesn't exist
@@ -300,10 +275,10 @@ public class FolderView extends ListView {
 	@Override
 	protected void dispatchDraw (Canvas canvas) {
 		super.dispatchDraw(canvas);
-		canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mDividerPaint);
+		//canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mDividerPaint);
 		drawHighlights(canvas);
 		
-		if (selectedState == true) {
+		if (selectedState == true && mBrowser.dragInProgress() == false) {
 			canvas.drawLine(this.getWidth()-3, 0, this.getWidth()-3, this.getHeight(), mSelectedPaint);
 			canvas.drawLine(3, 0, 3, this.getHeight(), mSelectedPaint);
 			canvas.drawLine(0, 3, this.getWidth(), 3, mSelectedPaint);
@@ -315,50 +290,49 @@ public class FolderView extends ListView {
 		Rect highlightRect;
 		Shader highlightShader;
 		Paint highlightPaint = new Paint();
+		highlightPaint.setAntiAlias(true);
 		
 		if (drawScrollUpHighlight) {
 			highlightRect = new Rect(0, 0, this.getWidth(), (int)(this.getHeight()*SCROLL_REGION_MULTIPLIER));
 			highlightShader = new LinearGradient(0, 0, 0, this.getHeight()*SCROLL_REGION_MULTIPLIER, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			highlightPaint.setShader(highlightShader);
+			highlightPaint.setStyle(Paint.Style.FILL);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
 		} else if (drawScrollDownHighlight) {
 			highlightRect = new Rect(0, this.getHeight()-(int)(this.getHeight()*SCROLL_REGION_MULTIPLIER), this.getWidth(), this.getHeight());
 			highlightShader = new LinearGradient(0, this.getHeight(), 0, this.getHeight() - this.getHeight()*SCROLL_REGION_MULTIPLIER, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			highlightPaint.setShader(highlightShader);
+			highlightPaint.setStyle(Paint.Style.FILL);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (folderOpenHighlight >= 0) {
-			View v = getViewAtPosition(folderOpenHighlight);	// The highlighted view
-			highlightRect = new Rect((int)(v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), v.getRight(), v.getBottom());
-			highlightShader = new LinearGradient(v.getRight(), v.getTop(), (v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
-			highlightPaint.setShader(highlightShader);
+		} else if (indexOfFileUnderDrag >= 0) {
+			final File fileUnderDrag = mAdapter.getItem(indexOfFileUnderDrag);
+			final View v = getViewAtPosition(indexOfFileUnderDrag);
+			if (mBrowser.getDisplayStatus(fileUnderDrag) == false) {
+				highlightRect = new Rect((int)(v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), v.getRight(), v.getBottom());
+				highlightShader = new LinearGradient(v.getRight(), v.getTop(), (v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+				highlightPaint.setShader(highlightShader);
+				highlightPaint.setStyle(Paint.Style.FILL);
+				canvas.drawRect(highlightRect, highlightPaint);
+			}
 			
+			highlightPaint.setShader(null);
+			highlightPaint.setColor(ORANGE_HIGHLIGHT);
+			highlightPaint.setStrokeWidth(4);
+			highlightPaint.setStyle(Paint.Style.STROKE);
+			highlightRect = new Rect(v.getLeft()+2, v.getTop()+2, v.getRight()-2, v.getBottom()-2);
 			canvas.drawRect(highlightRect, highlightPaint);
 		} else if (dropHighlight == true) {
 			highlightPaint.setColor(ORANGE_HIGHLIGHT);
 			highlightPaint.setStrokeWidth(6);
-			
-			canvas.drawLine(this.getWidth()-3, 0, this.getWidth()-3, this.getHeight(), highlightPaint);
-			canvas.drawLine(3, 0, 3, this.getHeight(), highlightPaint);
-			canvas.drawLine(0, 3, this.getWidth(), 3, highlightPaint);
-			canvas.drawLine(0, this.getHeight()-3, this.getWidth(), this.getHeight()-3, highlightPaint);
+			highlightPaint.setStyle(Paint.Style.STROKE);
+			highlightRect = new Rect(3, 3, getWidth()-3, getHeight()-3);
+			canvas.drawRect(highlightRect, highlightPaint);
 		}
-	}
-
-	
-	
-	
-	public List<File> getSelections () {
-		return new ArrayList<File>(mAdapter.selections);
-	}
-	
-	public void removeAllSelections () {
-		mAdapter.removeAllSelections();
 	}
 	
 	public void notifyDataSetChanged () {
-		Log.d("PEN", "notify");
 		mAdapter.notifyDataSetChanged();
 	}
 	
@@ -366,8 +340,6 @@ public class FolderView extends ListView {
 	private class FolderAdapter extends ArrayAdapter<File> {
 		private final Activity inflaterActivity;
 		private final int mRowViewResourceId;
-		
-		private final Set<File> selections = new TreeSet<File>();
 		
 		public FolderAdapter (Context newContext, int newRowViewResourceId, File root) {
 			super(newContext, newRowViewResourceId, new ArrayList<File>());
@@ -415,9 +387,9 @@ public class FolderView extends ListView {
 			}
 			
 			// Change background color as appropriate
-			if (selections.contains(holder.file) && mBrowser.dragInProgress()) {
+			if (mBrowser.getFileSelectionStatus(holder.file) && mBrowser.dragInProgress()) {
 				convertView.setBackgroundColor(Color.LTGRAY);
-			} else if (selections.contains(holder.file)) {
+			} else if (mBrowser.getFileSelectionStatus(holder.file)) {
 				convertView.setBackgroundColor(BLUE_HIGHLIGHT);
 			} else if (mBrowser.getDisplayStatus(holder.file)) {
 				convertView.setBackgroundColor(ORANGE_HIGHLIGHT);
@@ -434,28 +406,6 @@ public class FolderView extends ListView {
 			ImageView thumbnail;
 			TextView name;
 			TextView dateModified;
-		}
-		
-		/**
-		 * @return true if the file is now selected, false if it is no longer selected
-		 */
-		public boolean toggleSelection(File toToggle) {
-			if (selections.remove(toToggle) == false) {
-				selections.add(toToggle);
-			}
-			this.notifyDataSetChanged();
-			mBrowser.selectionsChanged();
-			return selections.contains(toToggle);
-		}
-		
-		public void removeAllSelections () {
-			selections.clear();
-			this.notifyDataSetChanged();
-			mBrowser.selectionsChanged();
-		}
-		
-		public boolean getFileSelectionStatus (File toGet) {
-			return selections.contains(toGet);
 		}
 	}
 }
