@@ -359,7 +359,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void createNewFile (String name, boolean isFolder) {
-		
+		Log.d("PEN", name);
 	}
 	
 	

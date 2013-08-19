@@ -59,11 +59,7 @@ public class FolderView extends ListView {
 	private boolean drawScrollDownHighlight = false;
 	private boolean dropHighlight = false;
 	
-	// Variables responsible for highlighting this view when it's selected
-	private boolean selectedState = false;
 	private Paint mSelectedPaint;
-	
-	private Paint mDividerPaint;
 	
 	// Click listeners
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {

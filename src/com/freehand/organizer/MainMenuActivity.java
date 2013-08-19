@@ -129,8 +129,34 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			//TODO add dialog
-			mBrowser.createNewFile("testNote", false);
+			final File targetDir = mBrowser.getSelectedFolder();
+			
+			// Find the default input string - unnamed note + the smallest unused natural number
+			int i = 1;
+			while (directoryContainsName(targetDir, "unnamed note " + Integer.toString(i) + ".note")) {
+				i++;
+			}
+			final String defaultInput = "unnamed note " + Integer.toString(i);
+			
+			final NewItemFn onFinish = new NewItemFn() {
+				@Override
+				public void function(String s) {
+					String newNoteName;
+					if (directoryContainsName(targetDir, s+".note")) {
+						int j = 1;
+						while (directoryContainsName(targetDir, s + Integer.toString(j) + ".note")) {
+							j++;
+						}
+						newNoteName = s + Integer.toString(j)+".note";
+					} else {
+						newNoteName = s + ".note";
+					}
+					mBrowser.createNewFile(newNoteName, false);
+				}
+			};
+			
+			DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", onFinish);
+			d.show(MainMenuActivity.this.getFragmentManager(), "New Note");
 		}
 	};
 	
@@ -141,7 +167,15 @@ public class MainMenuActivity extends Activity {
 		}
 	};
 	
-	
+	private boolean directoryContainsName (File dir, String name) {
+		final String[] names = dir.list();
+		for (String s : names) {
+			if (s.equals(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -216,16 +250,5 @@ public class MainMenuActivity extends Activity {
     public void setDefaultActionBarOn () {
     	itemsSelectedActionBar.setVisibility(View.INVISIBLE);
     	defaultActionBar.setVisibility(View.VISIBLE);
-    }
-    
-    
-    //**************************** PRESENTER METHODS (part of the rewrite) **************************
-    
-    public void displayDialogFragment (DialogFragment toDisplay, String tag) {
-    	toDisplay.show(this.getFragmentManager(), tag);
-    }
-    
-    public void displayToast (String toastText) {
-    	Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
     }
 }

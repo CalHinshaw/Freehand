@@ -1,7 +1,6 @@
 package com.freehand.organizer;
 
 import com.calhounroberthinshaw.freehand.R;
-import com.freehand.storage.INoteHierarchyItem;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -17,22 +16,20 @@ import android.widget.TextView;
 
 public class NewItemDialog extends DialogFragment {
 
-	private String mTitleText;
-	private String mMessageText;
-	private String mDefaultInput;
-	private String mPositiveButtonText;
-	private String mNegativeButtonText;
+	private final String mTitleText;
+	private final String mMessageText;
+	private final String mDefaultInput;
+	private final String mPositiveButtonText;
+	private final String mNegativeButtonText;
 	
-	private NewItemFunctor mOnConfirmFunction;
-	private INoteHierarchyItem mNoteHierarchyItem;
+	private final NewItemFn mOnConfirmFunction;
 	
-	public NewItemDialog (String newTitleText, String newMessageText, String newDefaultInput, String newPositiveButtonText, String newNegativeButtonText, INoteHierarchyItem newItem, NewItemFunctor newOnConfirmFunction) {
+	public NewItemDialog (String newTitleText, String newMessageText, String newDefaultInput, String newPositiveButtonText, String newNegativeButtonText, NewItemFn newOnConfirmFunction) {
 		mTitleText = newTitleText;
 		mMessageText = newMessageText;
 		mDefaultInput = newDefaultInput;
 		mPositiveButtonText = newPositiveButtonText;
 		mNegativeButtonText = newNegativeButtonText;
-		mNoteHierarchyItem = newItem;
 		mOnConfirmFunction = newOnConfirmFunction;
 	}
 	
@@ -40,32 +37,28 @@ public class NewItemDialog extends DialogFragment {
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
 		// Set up view for dialog
-		LayoutInflater inflater = getActivity().getLayoutInflater();
-		View contentView = inflater.inflate(R.layout.input_dialog_layout, null);
-		((TextView) contentView.findViewById(R.id.input_dialog_message)).setText(mMessageText);
+		final LayoutInflater inflater = getActivity().getLayoutInflater();
+		final View contentView = inflater.inflate(R.layout.input_dialog_layout, null);
 		final EditText input = (EditText) contentView.findViewById(R.id.input_dialog_EditText);
 		input.setText(mDefaultInput);
+		((TextView) contentView.findViewById(R.id.input_dialog_message)).setText(mMessageText);
 		
 		// Create onClickListener for the positive button
 		OnClickListener positiveListener = new OnClickListener () {
 			public void onClick(DialogInterface dialog, int which) {
-				mOnConfirmFunction.function(mNoteHierarchyItem, input.getText().toString());
+				mOnConfirmFunction.function(input.getText().toString());
 			}
 		};
 		
 		// Create the dialog
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), AlertDialog.THEME_HOLO_LIGHT);
-		
-		builder.setTitle(mTitleText)
-			.setView(contentView)
-			.setNegativeButton(mNegativeButtonText, null)
-			.setPositiveButton(mPositiveButtonText, positiveListener);
+		final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+		builder	.setTitle(mTitleText)
+				.setView(contentView)
+				.setNegativeButton(mNegativeButtonText, null)
+				.setPositiveButton(mPositiveButtonText, positiveListener);
 			
-		AlertDialog d = builder.create();
-		
-		// Show soft keyboard automatically
-		d.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-		
+		final AlertDialog d = builder.create();
+		d.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);	// Show soft keyboard automatically
 		return d;
 	}
 }
