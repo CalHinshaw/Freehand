@@ -1,26 +1,26 @@
-package com.freehand.organizer;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeSet;
-
-import android.app.DialogFragment;
-import android.app.ProgressDialog;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnCancelListener;
-import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
-import com.freehand.share.NoteSharer;
-import com.freehand.share.ProgressUpdateFunction;
-import com.freehand.storage.IChangeListener;
-import com.freehand.storage.INoteHierarchyItem;
-
-/**
- * The presenter responsible for the MainMenu Activity.
- * 
- * @author Cal Hinshaw
- */
-public class OldMainMenuPresenter {
+//package com.freehand.organizer;
+//
+//import java.util.ArrayList;
+//import java.util.List;
+//import java.util.TreeSet;
+//
+//import android.app.DialogFragment;
+//import android.app.ProgressDialog;
+//import android.content.DialogInterface;
+//import android.content.DialogInterface.OnCancelListener;
+//import android.graphics.drawable.Drawable;
+//import android.os.AsyncTask;
+//import com.freehand.share.NoteSharer;
+//import com.freehand.share.ProgressUpdateFunction;
+//import com.freehand.storage.IChangeListener;
+//import com.freehand.storage.INoteHierarchyItem;
+//
+///**
+// * The presenter responsible for the MainMenu Activity.
+// * 
+// * @author Cal Hinshaw
+// */
+//public class OldMainMenuPresenter {
 //	
 //	// The activity this presenter is responsible for. It is used to display Dialogs and Toasts.
 //	private final MainMenuActivity mActivity;
@@ -472,4 +472,4 @@ public class OldMainMenuPresenter {
 //			isOpen = openStatus;
 //		}
 //	}
-}
+//}

@@ -1,8 +1,6 @@
 package com.freehand.organizer;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -36,6 +34,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	private final LinearLayout mLayout = new LinearLayout(this.getContext());
 	
 	private final Set<File> selections = new TreeSet<File>();
+	private File selectedFolder;
 	
 	private int pxPerFolder = 0;
 	private int foldersPerScreen = 0;
@@ -125,6 +124,15 @@ public class FolderBrowser extends HorizontalScrollView {
 					dragStartWatcherView = i;
 					return true;
 				}
+			}
+		}
+		
+		// Update selectedFolder
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			FolderView under = getViewUnderPoint(event.getX()+getScrollX(), event.getY());
+			if (under != null) {
+				selectedFolder = under.folder;
+				invalidateChildren();
 			}
 		}
 
@@ -298,9 +306,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		return dragInProgress;
 	}
 	
-	
-	
-	//*************************************** organization mutation methods****************************************
+	//**************************************** selection management methods *************************************
 	
 	/**
 	 * @return true if the file is now selected, false if it is no longer selected
@@ -330,16 +336,19 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 	}
 	
-	private void moveSelectionsToDirectory (File destination) {
-		//List<File> selections = this.getSelections();
-		
-	}
-	
 	public void cancleSelections () {
 		selections.clear();
 	}
 	
-
+	
+	
+	//*************************************** organization mutation methods****************************************
+	
+	private void moveSelectionsToDirectory (File destination) {
+		for (File f : selections) {
+			
+		}
+	}
 	
 	public void deleteSelections () {
 		
@@ -348,7 +357,6 @@ public class FolderBrowser extends HorizontalScrollView {
 	public void shareSelections () {
 		
 	}
-	
 	
 	public void createNewFile (String name, boolean isFolder) {
 		
@@ -392,6 +400,8 @@ public class FolderBrowser extends HorizontalScrollView {
 		newView.setLayoutParams(new LinearLayout.LayoutParams(pxPerFolder, LayoutParams.MATCH_PARENT));
 		mLayout.addView(newView);
 		requestShow(folder);
+		selectedFolder = folder;
+		invalidateChildren();
 	}
 	
 	
@@ -432,5 +442,28 @@ public class FolderBrowser extends HorizontalScrollView {
 			}
 		}
 		return false;
+	}
+	
+	
+	
+	
+	public File getSelectedFolder () {
+		return this.selectedFolder;
+	}
+	
+	private FolderView getViewUnderPoint (final float x, final float y) {
+		for(int i = 0; i < mLayout.getChildCount(); i++) {
+			FolderView current = (FolderView) mLayout.getChildAt(i);
+			if (x >= current.getLeft() && x <= current.getRight() && y >= current.getTop() && y <= current.getBottom()) {
+				return current;
+			}
+		}
+		return null;
+	}
+	
+	private void invalidateChildren () {
+		for(int i = 0; i < mLayout.getChildCount(); i++) {
+			((FolderView) mLayout.getChildAt(i)).invalidate();
+		}
 	}
 }

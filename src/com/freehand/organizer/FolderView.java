@@ -13,6 +13,7 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Shader;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -98,15 +99,11 @@ public class FolderView extends ListView {
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
 		
-		mDividerPaint = new Paint();
-		mDividerPaint.setAntiAlias(true);
-		mDividerPaint.setColor(Color.DKGRAY);
-		mDividerPaint.setStrokeWidth(4);
-		
 		mSelectedPaint = new Paint();
 		mSelectedPaint.setAntiAlias(true);
+		mSelectedPaint.setStyle(Paint.Style.STROKE);
 		mSelectedPaint.setColor(SOLID_BLUE_HIGHLIGHT);
-		mSelectedPaint.setStrokeWidth(6);
+		mSelectedPaint.setStrokeWidth(5*getResources().getDisplayMetrics().density);
 	}
 
 	//***************************************** Drag Start Detection Methods *************************************************
@@ -278,11 +275,9 @@ public class FolderView extends ListView {
 		//canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mDividerPaint);
 		drawHighlights(canvas);
 		
-		if (selectedState == true && mBrowser.dragInProgress() == false) {
-			canvas.drawLine(this.getWidth()-3, 0, this.getWidth()-3, this.getHeight(), mSelectedPaint);
-			canvas.drawLine(3, 0, 3, this.getHeight(), mSelectedPaint);
-			canvas.drawLine(0, 3, this.getWidth(), 3, mSelectedPaint);
-			canvas.drawLine(0, this.getHeight()-3, this.getWidth(), this.getHeight()-3, mSelectedPaint);
+		if (mBrowser.getSelectedFolder().equals(folder) && mBrowser.dragInProgress() == false) {
+			final float buffer = mSelectedPaint.getStrokeWidth()/2.0f;
+			canvas.drawRect(new RectF(buffer, buffer, getWidth()-buffer, getHeight()-buffer), mSelectedPaint);
 		}
 	}
 	
