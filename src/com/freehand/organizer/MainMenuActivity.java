@@ -155,15 +155,41 @@ public class MainMenuActivity extends Activity {
 				}
 			};
 			
-			DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note.", defaultInput, "Create Note", "Cancel", onFinish);
+			DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note you want to create.", defaultInput, "Create Note", "Cancel", onFinish);
 			d.show(MainMenuActivity.this.getFragmentManager(), "New Note");
 		}
 	};
 	
 	private OnClickListener newFolderButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			//TODO add dialog
-			mBrowser.createNewFile("testFolder", true);
+final File targetDir = mBrowser.getSelectedFolder();
+			
+			// Find the default input string - unnamed note + the smallest unused natural number
+			int i = 1;
+			while (directoryContainsName(targetDir, "unnamed note " + Integer.toString(i) + ".note")) {
+				i++;
+			}
+			final String defaultInput = "unnamed note " + Integer.toString(i);
+			
+			final NewItemFn onFinish = new NewItemFn() {
+				@Override
+				public void function(String s) {
+					String newNoteName;
+					if (directoryContainsName(targetDir, s)) {
+						int j = 1;
+						while (directoryContainsName(targetDir, s + Integer.toString(j))) {
+							j++;
+						}
+						newNoteName = s + Integer.toString(j);
+					} else {
+						newNoteName = s + ".note";
+					}
+					mBrowser.createNewFile(newNoteName, true);
+				}
+			};
+			
+			DialogFragment d = new NewItemDialog("Create New Folder", "Enter the name of the folder you want to create.", defaultInput, "Create Folder", "Cancel", onFinish);
+			d.show(MainMenuActivity.this.getFragmentManager(), "New Note");
 		}
 	};
 	
