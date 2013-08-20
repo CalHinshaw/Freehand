@@ -13,29 +13,37 @@
 	    android:layout_width="fill_parent"
         android:layout_height="60dip"
   		android:background="@color/dkgray"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:paddingTop="5dip"
+        android:paddingBottom="5dip" >
         
     	<Button 
 	   		android:id = "@+id/newNoteButton"
-	    	android:text = "@string/new_note" 
+	    	android:text = "@string/new_note"
+	    	android:textSize="15sp"
+	    	android:background="@color/ltgray"
     		android:layout_width="wrap_content"
     		android:layout_height="fill_parent"
-    		android:layout_weight="2" />
+    		android:layout_weight="2"
+    		android:layout_marginRight="5dip"
+    		android:layout_marginLeft="5dip" />
     	
     	<Button 
     	    android:id="@+id/newFolderButton"
     	    android:text="@string/new_folder"
+    	    android:textSize="15sp"
+    	    android:background="@color/ltgray"
     	    android:layout_width="wrap_content" 
     	    android:layout_height="fill_parent"
-    	    android:layout_weight="2" />
+    	    android:layout_weight="2"
+    	    android:layout_marginRight="5dip" />
     	
     	<Button
 	        android:id="@+id/preferences"
-	        android:layout_width = "60dip"
-	        android:layout_height = "match_parent"
-	        android:layout_weight = "0"
-	        android:layout_marginBottom="5dip"
-	        android:background = "@drawable/settings_button_selector" />
+	        android:layout_width = "50dip"
+	        android:layout_height = "50dip"
+	        android:background = "@drawable/settings_button_selector"
+	        android:layout_marginRight="5dip"/>
  	</LinearLayout>
  	
     <LinearLayout
@@ -46,27 +54,41 @@
 	    android:layout_width="fill_parent"
         android:layout_height="60dip"
   		android:background="@color/dkgray"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+        android:paddingTop="5dip"
+        android:paddingBottom="5dip" >
     	
         <Button 
 	   		android:id = "@+id/cancelButton"
-	    	android:text = "@string/cancel" 
+	    	android:text = "@string/cancel"
+	    	android:textSize="15sp"
+	    	android:background="@color/ltgray"
     		android:layout_width="0dip"
     		android:layout_weight="2"
-    		android:layout_height="fill_parent" />
+    		android:layout_height="fill_parent"
+    		android:layout_marginRight="5dip"
+    		android:layout_marginLeft="5dip" />
         
         <Button
             android:id = "@+id/shareButton"
-	    	android:text = "@string/share_button" 
+	    	android:text = "@string/share_button"
+	    	android:textSize="15sp"
+	    	android:background="@color/ltgray"
     		android:layout_width="0dip"
     		android:layout_weight="1"
-    		android:layout_height="fill_parent" />
+    		android:layout_height="fill_parent"
+    		android:layout_marginRight="5dip" />
         
         <Button 
 	   		android:id = "@+id/deleteButton"
-	    	android:text = "@string/delete" 
+	    	android:text = "@string/delete"
+	    	android:textSize="15sp"
+	    	android:background="@color/ltgray"
     		android:layout_width="wrap_content"
-    		android:layout_height="fill_parent" />
+    		android:paddingLeft="10dip"
+    		android:paddingRight="10dip"
+    		android:layout_height="fill_parent"
+    		android:layout_marginRight="5dip" />
 	</LinearLayout>
         	   
 	    
