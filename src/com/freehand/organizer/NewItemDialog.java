@@ -15,7 +15,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 public class NewItemDialog extends DialogFragment {
-
 	private final String mTitleText;
 	private final String mMessageText;
 	private final String mDefaultInput;
@@ -32,7 +31,6 @@ public class NewItemDialog extends DialogFragment {
 		mNegativeButtonText = newNegativeButtonText;
 		mOnConfirmFunction = newOnConfirmFunction;
 	}
-	
 	
 	@Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {

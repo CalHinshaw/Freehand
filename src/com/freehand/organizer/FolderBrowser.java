@@ -1,6 +1,7 @@
 package com.freehand.organizer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -23,6 +24,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class FolderBrowser extends HorizontalScrollView {
 	private static final float DRAG_SCROLL_REGION_WIDTH_DIP = 100;
@@ -319,8 +321,10 @@ public class FolderBrowser extends HorizontalScrollView {
 		return selections.contains(toToggle);
 	}
 	
-	public void removeAllSelections () {
+	public void cancleSelections () {
 		selections.clear();
+		notifyChildrenOfDatasetChange();
+		invalidateChildren();
 		selectionsChanged();
 	}
 	
@@ -336,9 +340,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 	}
 	
-	public void cancleSelections () {
-		selections.clear();
-	}
+
 	
 	
 	
@@ -360,6 +362,26 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	public void createNewFile (String name, boolean isFolder) {
 		Log.d("PEN", name + "  " + Boolean.toString(isFolder));
+		
+		if (isFolder == true) {
+			File newFolder = new File(selectedFolder, name);
+			if (newFolder.mkdirs()) {
+				this.getViewDisplayingFile(selectedFolder).notifyFolderMutated();
+				openFile(newFolder);
+			} else {
+				Toast.makeText(getContext(), "Failed to create new folder, please try again.", Toast.LENGTH_SHORT).show();
+			}
+		} else {
+			File newNote = new File(selectedFolder, name);
+			try {
+				newNote.createNewFile();
+				this.getViewDisplayingFile(selectedFolder).notifyFolderMutated();
+				openFile(newNote);
+			} catch (IOException e) {
+				Toast.makeText(getContext(), "Failed to create new note, please try again.", Toast.LENGTH_SHORT).show();
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	
@@ -461,9 +483,27 @@ public class FolderBrowser extends HorizontalScrollView {
 		return null;
 	}
 	
+	private FolderView getViewDisplayingFile (File toGet) {
+		for(int i = 0; i < mLayout.getChildCount(); i++) {
+			FolderView current = (FolderView) mLayout.getChildAt(i);
+			if (current.folder.equals(toGet)) {
+				return current;
+			}
+		}
+		return null;
+	}
+	
 	private void invalidateChildren () {
 		for(int i = 0; i < mLayout.getChildCount(); i++) {
-			((FolderView) mLayout.getChildAt(i)).invalidate();
+			final FolderView current = ((FolderView) mLayout.getChildAt(i));
+			current.invalidate();
+		}
+	}
+	
+	private void notifyChildrenOfDatasetChange () {
+		for(int i = 0; i < mLayout.getChildCount(); i++) {
+			final FolderView current = ((FolderView) mLayout.getChildAt(i));
+			current.notifyDataSetChanged();
 		}
 	}
 }

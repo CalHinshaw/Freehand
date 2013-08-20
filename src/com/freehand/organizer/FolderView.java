@@ -15,6 +15,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.os.FileObserver;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -89,7 +90,7 @@ public class FolderView extends ListView {
 		folder = root;
 
 		// Create and set the adapter for this ListView
-		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row, root);
+		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row);
 		this.setAdapter(mAdapter);
 		
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
@@ -318,7 +319,7 @@ public class FolderView extends ListView {
 			highlightPaint.setColor(ORANGE_HIGHLIGHT);
 			highlightPaint.setStrokeWidth(6);
 			highlightPaint.setStyle(Paint.Style.STROKE);
-			highlightRect = new Rect(3, 3, getWidth()-3, getHeight()-3);
+			highlightRect = new Rect(3, this.getScrollY()+3, getWidth()-3, this.getHeight()-3);
 			canvas.drawRect(highlightRect, highlightPaint);
 		}
 	}
@@ -327,21 +328,24 @@ public class FolderView extends ListView {
 		mAdapter.notifyDataSetChanged();
 	}
 	
+	public void notifyFolderMutated () {
+		mAdapter.notifyFolderMutated();
+	}
+	
 	
 	private class FolderAdapter extends ArrayAdapter<File> {
 		private final Activity inflaterActivity;
 		private final int mRowViewResourceId;
 		
-		public FolderAdapter (Context newContext, int newRowViewResourceId, File root) {
+		public FolderAdapter (Context newContext, int newRowViewResourceId) {
 			super(newContext, newRowViewResourceId, new ArrayList<File>());
-			this.clear();
 			
-			File[] files = root.listFiles(new FileFilter() {
+			this.clear();
+			File[] files = folder.listFiles(new FileFilter() {
 				public boolean accept(File f) {
 					return f.isDirectory() || f.getName().endsWith(".note");
 				}
 			});
-			
 			this.addAll(files);
 			
 			inflaterActivity = (Activity) newContext;
@@ -397,6 +401,16 @@ public class FolderView extends ListView {
 			ImageView thumbnail;
 			TextView name;
 			TextView dateModified;
+		}
+		
+		public void notifyFolderMutated () {
+			this.clear();
+			File[] files = folder.listFiles(new FileFilter() {
+				public boolean accept(File f) {
+					return f.isDirectory() || f.getName().endsWith(".note");
+				}
+			});
+			this.addAll(files);
 		}
 	}
 }

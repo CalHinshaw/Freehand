@@ -162,14 +162,12 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener newFolderButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-final File targetDir = mBrowser.getSelectedFolder();
-			
-			// Find the default input string - unnamed note + the smallest unused natural number
+			final File targetDir = mBrowser.getSelectedFolder();
 			int i = 1;
-			while (directoryContainsName(targetDir, "unnamed note " + Integer.toString(i) + ".note")) {
+			while (directoryContainsName(targetDir, "unnamed folder " + Integer.toString(i))) {
 				i++;
 			}
-			final String defaultInput = "unnamed note " + Integer.toString(i);
+			final String defaultInput = "unnamed folder " + Integer.toString(i);
 			
 			final NewItemFn onFinish = new NewItemFn() {
 				@Override
@@ -182,7 +180,7 @@ final File targetDir = mBrowser.getSelectedFolder();
 						}
 						newNoteName = s + Integer.toString(j);
 					} else {
-						newNoteName = s + ".note";
+						newNoteName = s;
 					}
 					mBrowser.createNewFile(newNoteName, true);
 				}
