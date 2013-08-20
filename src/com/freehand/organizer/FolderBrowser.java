@@ -8,7 +8,9 @@ import java.util.TreeSet;
 import com.freehand.note_editor.NoteActivity;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -348,12 +350,38 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	private void moveSelectionsToDirectory (File destination) {
 		for (File f : selections) {
-			
+			f.renameTo(new File(destination, f.getName()));
 		}
+		notifyChildrenOfFolderMutation();
+		cancleSelections();
 	}
 	
 	public void deleteSelections () {
+		final DialogInterface.OnClickListener onConfirmDelete = new DialogInterface.OnClickListener () {
+			public void onClick(DialogInterface dialog, int which) {
+				closeSelectedFolders();
+				
+				int numFailures = 0;
+				for (File f : selections) {
+					if (recursivelyDelete(f) == false) {
+						numFailures++;
+					}
+				}
+				
+				if (numFailures > 0) {
+					Toast.makeText(getContext(), "Failed to delete " + Integer.toString(numFailures)+ " files, please try again.", Toast.LENGTH_SHORT).show();
+				}
+				cancleSelections();
+				notifyChildrenOfFolderMutation();
+			}
+		};
 		
+		AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), AlertDialog.THEME_HOLO_LIGHT);
+		builder.setTitle("Are you sure you want to delete the selected files?")
+			.setNegativeButton("Cancel", null)
+			.setPositiveButton("Delete", onConfirmDelete)
+			.create()
+			.show();
 	}
 	
 	public void shareSelections () {
@@ -467,7 +495,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	
-	
+	//*********************************************** misc methods ******************************************************
 	
 	public File getSelectedFolder () {
 		return this.selectedFolder;
@@ -504,6 +532,39 @@ public class FolderBrowser extends HorizontalScrollView {
 		for(int i = 0; i < mLayout.getChildCount(); i++) {
 			final FolderView current = ((FolderView) mLayout.getChildAt(i));
 			current.notifyDataSetChanged();
+		}
+	}
+	
+	private void notifyChildrenOfFolderMutation () {
+		for(int i = 0; i < mLayout.getChildCount(); i++) {
+			final FolderView current = ((FolderView) mLayout.getChildAt(i));
+			current.notifyFolderMutated();
+		}
+	}
+	
+	private boolean recursivelyDelete (File toDelete) {
+		if (toDelete.isDirectory()) {
+			for (File f : toDelete.listFiles()) {
+				if (recursivelyDelete(f) == false) {
+					return false;
+				}
+			}
+		}
+		return toDelete.delete();
+	}
+	
+	private void closeSelectedFolders() {
+		for (File f : selections) {
+			int i = 0;
+			for(; i < mLayout.getChildCount(); i++) {
+				final FolderView current = ((FolderView) mLayout.getChildAt(i));
+				if (f.equals(current.folder)) {
+					while (i < mLayout.getChildCount()) {
+						mLayout.removeViewAt(i);
+					}
+				}
+			}
+			
 		}
 	}
 }

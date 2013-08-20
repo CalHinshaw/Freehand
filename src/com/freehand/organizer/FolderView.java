@@ -339,15 +339,7 @@ public class FolderView extends ListView {
 		
 		public FolderAdapter (Context newContext, int newRowViewResourceId) {
 			super(newContext, newRowViewResourceId, new ArrayList<File>());
-			
-			this.clear();
-			File[] files = folder.listFiles(new FileFilter() {
-				public boolean accept(File f) {
-					return f.isDirectory() || f.getName().endsWith(".note");
-				}
-			});
-			this.addAll(files);
-			
+			notifyFolderMutated();
 			inflaterActivity = (Activity) newContext;
 			mRowViewResourceId = newRowViewResourceId;
 		}
@@ -411,6 +403,7 @@ public class FolderView extends ListView {
 				}
 			});
 			this.addAll(files);
+			this.notifyDataSetChanged();
 		}
 	}
 }
