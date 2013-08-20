@@ -2,13 +2,18 @@ package com.freehand.organizer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
 import com.freehand.note_editor.NoteActivity;
+import com.freehand.share.NoteSharer;
+import com.freehand.share.ProgressUpdateFunction;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -384,8 +389,37 @@ public class FolderBrowser extends HorizontalScrollView {
 			.show();
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void shareSelections () {
+		final ProgressDialog progressDialog = new ProgressDialog(getContext(), ProgressDialog.THEME_HOLO_LIGHT);
+		progressDialog.setProgressNumberFormat(null);
+		progressDialog.setTitle("Preparing to Share");
+		progressDialog.setMessage("Large notes take longer to share, please be patient.");
+		progressDialog.setIndeterminate(false);
+		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 		
+		ProgressUpdateFunction updater = new ProgressUpdateFunction() {
+			@Override
+			public void updateProgress(int percentageComplete) {
+				if (percentageComplete > 100) {
+					progressDialog.dismiss();
+				} else {
+					if (progressDialog.isShowing() == false) {
+						progressDialog.show();
+					}
+					
+					progressDialog.setProgress(percentageComplete);
+				}
+				
+			}
+		};
+		
+		ArrayList<String> toShare = new ArrayList<String>();
+		for (File f : selections) {
+			this.getNonDirectoryFilePaths(f, toShare);
+		}
+		
+		new NoteSharer(updater, getContext()).execute(toShare);
 	}
 	
 	public void createNewFile (String name, boolean isFolder) {
@@ -564,7 +598,16 @@ public class FolderBrowser extends HorizontalScrollView {
 					}
 				}
 			}
-			
+		}
+	}
+	
+	private void getNonDirectoryFilePaths (File toGetFrom, List<String> toAddTo) {
+		if (toGetFrom.isFile()) {
+			toAddTo.add(toGetFrom.getAbsolutePath());
+		} else {
+			for (File f : toGetFrom.listFiles()) {
+				getNonDirectoryFilePaths(f, toAddTo);
+			}
 		}
 	}
 }
