@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -355,9 +354,20 @@ public class FolderBrowser extends HorizontalScrollView {
 	//*************************************** organization mutation methods****************************************
 	
 	private void moveSelectionsToDirectory (File destination) {
+		closeSelectedFolders();
+		boolean showToast = false;
 		for (File f : selections) {
-			f.renameTo(new File(destination, f.getName()));
+			if (destination.getAbsolutePath().contains(f.getAbsolutePath())) {
+				showToast = true;
+			} else {
+				f.renameTo(new File(destination, f.getName()));
+			}
 		}
+		
+		if (showToast == true) {
+			Toast.makeText(getContext(), "Can't move a file into itself", Toast.LENGTH_SHORT).show();
+		}
+		
 		notifyChildrenOfFolderMutation();
 		cancleSelections();
 	}

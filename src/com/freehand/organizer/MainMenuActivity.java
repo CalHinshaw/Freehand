@@ -12,8 +12,6 @@ import android.app.Activity;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -24,7 +22,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 
 public class MainMenuActivity extends Activity {
-	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final long VIBRATE_DURATION = 50;
 	
 	private FolderBrowser mBrowser;
@@ -97,7 +94,6 @@ public class MainMenuActivity extends Activity {
 	};
 	
 	private OnDragListener shareButtonDragListener = new OnDragListener() {
-
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
