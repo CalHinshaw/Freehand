@@ -22,7 +22,6 @@ import android.view.View.OnDragListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 public class MainMenuActivity extends Activity {
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
@@ -32,9 +31,9 @@ public class MainMenuActivity extends Activity {
 	
 	// itemsSelectedActionBar view references
 	private LinearLayout itemsSelectedActionBar;
-	private Button selectedCancelButton;
-	private Button selectedDeleteButton;
-	private Button selectedShareButton;
+	private HighlightButton selectedCancelButton;
+	private HighlightButton selectedDeleteButton;
+	private HighlightButton selectedShareButton;
 	
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
@@ -58,16 +57,16 @@ public class MainMenuActivity extends Activity {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
+					selectedCancelButton.setHighlight(false);
 					mBrowser.cancleSelections();
-					v.getBackground().setColorFilter(null);
 					break;
 					
 				case DragEvent.ACTION_DRAG_ENTERED:
-					v.getBackground().setColorFilter(new PorterDuffColorFilter(ORANGE_HIGHLIGHT, PorterDuff.Mode.ADD));
+					selectedCancelButton.setHighlight(true);
 					break;
 					
 				case DragEvent.ACTION_DRAG_EXITED:
-					v.getBackground().setColorFilter(null);
+					selectedCancelButton.setHighlight(false);
 					break;
 			}
 			
@@ -80,16 +79,16 @@ public class MainMenuActivity extends Activity {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
 					mBrowser.deleteSelections();
-					v.getBackground().setColorFilter(null);
+					selectedDeleteButton.setHighlight(false);
 					break;
 					
 				case DragEvent.ACTION_DRAG_ENTERED:
-					v.getBackground().setColorFilter(new PorterDuffColorFilter(ORANGE_HIGHLIGHT, PorterDuff.Mode.ADD));
+					selectedDeleteButton.setHighlight(true);
 					((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(VIBRATE_DURATION);
 					break;
 					
 				case DragEvent.ACTION_DRAG_EXITED:
-					v.getBackground().setColorFilter(null);
+					selectedDeleteButton.setHighlight(false);
 					break;
 			}
 			
@@ -103,15 +102,15 @@ public class MainMenuActivity extends Activity {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
 					mBrowser.shareSelections();
-					v.getBackground().setColorFilter(null);
+					selectedShareButton.setHighlight(false);
 					break;
 					
 				case DragEvent.ACTION_DRAG_ENTERED:
-					v.getBackground().setColorFilter(new PorterDuffColorFilter(ORANGE_HIGHLIGHT, PorterDuff.Mode.ADD));
+					selectedShareButton.setHighlight(true);
 					break;
 					
 				case DragEvent.ACTION_DRAG_EXITED:
-					v.getBackground().setColorFilter(null);
+					selectedShareButton.setHighlight(false);
 					break;
 			}
 			
@@ -219,15 +218,15 @@ public class MainMenuActivity extends Activity {
         // Set up the itemsSelectedActionBar
         itemsSelectedActionBar = (LinearLayout) findViewById(R.id.itemsSelectedActionBar);
         
-        selectedCancelButton = (Button) findViewById(R.id.cancelButton);
+        selectedCancelButton = (HighlightButton) findViewById(R.id.cancelButton);
         selectedCancelButton.setOnClickListener(cancelButtonOnClickListener);
         selectedCancelButton.setOnDragListener(cancelButtonDragListener);
         
-        selectedShareButton = (Button) findViewById(R.id.shareButton);
+        selectedShareButton = (HighlightButton) findViewById(R.id.shareButton);
         selectedShareButton.setOnClickListener(shareButtonOnClickListener);
         selectedShareButton.setOnDragListener(shareButtonDragListener);
         
-        selectedDeleteButton = (Button) findViewById(R.id.deleteButton);
+        selectedDeleteButton = (HighlightButton) findViewById(R.id.deleteButton);
         selectedDeleteButton.setOnClickListener(deleteButtonOnClickListener);
         selectedDeleteButton.setOnDragListener(deleteButtonDragListener);
         

@@ -58,7 +58,7 @@
         android:paddingTop="5dip"
         android:paddingBottom="5dip" >
     	
-        <Button 
+        <com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/cancelButton"
 	    	android:text = "@string/cancel"
 	    	android:textSize="15sp"
@@ -69,7 +69,7 @@
     		android:layout_marginRight="5dip"
     		android:layout_marginLeft="5dip" />
         
-        <Button
+        <com.freehand.organizer.HighlightButton
             android:id = "@+id/shareButton"
 	    	android:text = "@string/share_button"
 	    	android:textSize="15sp"
@@ -79,7 +79,7 @@
     		android:layout_height="fill_parent"
     		android:layout_marginRight="5dip" />
         
-        <Button 
+        <com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/deleteButton"
 	    	android:text = "@string/delete"
 	    	android:textSize="15sp"
