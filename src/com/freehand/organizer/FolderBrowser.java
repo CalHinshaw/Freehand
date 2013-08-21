@@ -3,6 +3,7 @@ package com.freehand.organizer;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -414,12 +415,13 @@ public class FolderBrowser extends HorizontalScrollView {
 			}
 		};
 		
-		ArrayList<String> toShare = new ArrayList<String>();
+		// toShare is a set so we avoid duplicates when traversing the file tree
+		Set<String> toShare = new TreeSet<String>();
 		for (File f : selections) {
 			this.getNonDirectoryFilePaths(f, toShare);
 		}
 		
-		new NoteSharer(updater, getContext()).execute(toShare);
+		new NoteSharer(updater, getContext()).execute(new ArrayList<String>(toShare));
 	}
 	
 	public void createNewFile (String name, boolean isFolder) {
@@ -601,7 +603,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 	}
 	
-	private void getNonDirectoryFilePaths (File toGetFrom, List<String> toAddTo) {
+	private void getNonDirectoryFilePaths (File toGetFrom, Collection<String> toAddTo) {
 		if (toGetFrom.isFile()) {
 			toAddTo.add(toGetFrom.getAbsolutePath());
 		} else {
