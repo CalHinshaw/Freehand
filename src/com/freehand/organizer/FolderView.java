@@ -15,8 +15,6 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.os.FileObserver;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -66,7 +64,6 @@ public class FolderView extends ListView {
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
 		public void onItemClick(AdapterView<?> parent, View clickedView, int position, long id) {
 			File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
-			Log.d("PEN", "clicked");
 			mBrowser.openFile(clickedFile);
 			mAdapter.notifyDataSetChanged();
 		}

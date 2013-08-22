@@ -304,6 +304,7 @@ public class NoteActivity extends Activity {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean onOptionsItemSelected (MenuItem item) {
 		switch (item.getItemId()) {

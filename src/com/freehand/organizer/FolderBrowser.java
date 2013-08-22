@@ -347,8 +347,6 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 	}
 	
-
-	
 	
 	
 	//*************************************** organization mutation methods****************************************
@@ -435,8 +433,6 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void createNewFile (String name, boolean isFolder) {
-		Log.d("PEN", name + "  " + Boolean.toString(isFolder));
-		
 		if (isFolder == true) {
 			File newFolder = new File(selectedFolder, name);
 			if (newFolder.mkdirs()) {

@@ -3,7 +3,6 @@ package com.freehand.note_editor;
 import com.freehand.ink.Point;
 
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.graphics.RectF;
 
 public interface ICanvasEventListener {
