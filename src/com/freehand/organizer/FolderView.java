@@ -3,6 +3,8 @@ package com.freehand.organizer;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import com.calhounroberthinshaw.freehand.R;
 import android.app.Activity;
@@ -342,6 +344,18 @@ public class FolderView extends ListView {
 		private final Activity inflaterActivity;
 		private final int mRowViewResourceId;
 		
+		private final Comparator<File> mComparator = new Comparator<File> () {
+			public int compare(File lhs, File rhs) {
+				if (lhs.isFile() && rhs.isDirectory()) {
+					return 1;
+				} else if (lhs.isDirectory() && rhs.isFile()) {
+					return -1;
+				}
+				
+				return lhs.compareTo(rhs);
+			}
+		};
+		
 		public FolderAdapter (Context newContext, int newRowViewResourceId) {
 			super(newContext, newRowViewResourceId, new ArrayList<File>());
 			notifyFolderMutated();
@@ -407,6 +421,9 @@ public class FolderView extends ListView {
 					return f.isDirectory() || f.getName().endsWith(".note");
 				}
 			});
+			
+			Arrays.sort(files, mComparator);
+			
 			this.addAll(files);
 			this.notifyDataSetChanged();
 		}
