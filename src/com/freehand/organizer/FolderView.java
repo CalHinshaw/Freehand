@@ -52,6 +52,8 @@ public class FolderView extends ListView {
 	private boolean watchingForDrag = false;
 	private PointF dragWatcherStartPos = null;
 	private boolean dragWatcherEventResolved = false;
+	
+	private boolean selectionAddedThisEvent = false;
 
 	// These store the persistent information for all of the drag gestures
 	private long actionTimeMarker = 0;
@@ -78,6 +80,10 @@ public class FolderView extends ListView {
 			mAdapter.notifyDataSetChanged();
 			dragWatcherEventResolved = false;
 			dragWatcherStartPos = null;	// I need to set set point inside of the drag watcher method because I don't get coords in here
+			
+			selectionAddedThisEvent = true;
+			mBrowser.setDragWatcherView(FolderView.this);
+			
 			return true;
 		}
 	};
@@ -116,6 +122,11 @@ public class FolderView extends ListView {
 	
 	@Override
 	public boolean onTouchEvent (MotionEvent event) {
+		
+		if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP) {
+			selectionAddedThisEvent = false;
+		}
+		
 		if (watchingForDrag == true) {
 			
 			if (dragWatcherStartPos == null) {
@@ -133,6 +144,21 @@ public class FolderView extends ListView {
 	}
 
 	public void onWatchingForDragTouchEvent (MotionEvent event) {
+		
+		if (selectionAddedThisEvent == true) {
+			if (dragWatcherStartPos == null) {
+				dragWatcherStartPos = new PointF(event.getX(), event.getY());
+			}
+			
+			// Drag start watcher
+			if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
+				dragWatcherEventResolved = true;
+				mBrowser.startDrag();
+			}
+			
+			return;
+		}
+		
 		if (dragWatcherEventResolved == true) { return; }
 		
 		if (dragWatcherStartPos == null) {
@@ -212,7 +238,7 @@ public class FolderView extends ListView {
 			drawScrollDownHighlight = true;
 			invalidate();
 			return;
-		}		
+		}
 		
 		// Watch to see if the user wants to open a folder
 		final int indexUnderPointer = this.pointToPosition((int) x, (int) y);

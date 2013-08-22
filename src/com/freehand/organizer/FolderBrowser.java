@@ -171,6 +171,10 @@ public class FolderBrowser extends HorizontalScrollView {
 		return returnValue;
 	}
 	
+	public void setDragWatcherView (FolderView v) {
+		dragStartWatcherView = mLayout.indexOfChild(v);
+	}
+	
 	
 	
 	//********************************************* drag in progress methods **************************************************
