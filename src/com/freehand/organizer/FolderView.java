@@ -239,6 +239,14 @@ public class FolderView extends ListView {
 		this.invalidate();
 	}
 	
+	public File getDropTarget () {
+		if (indexOfFileUnderDrag == -1) {
+			return folder;
+		} else {
+			return mAdapter.getItem(indexOfFileUnderDrag);
+		}
+	}
+	
 	private void resetDragState () {
 		actionTimeMarker = 0;
 		indexOfFileUnderDrag = -1;

@@ -204,7 +204,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			for (int i = 0; i < mLayout.getChildCount(); i++) {
 				FolderView toTest = (FolderView) mLayout.getChildAt(i);
 				if (pointInView(toTest, getScrollX() + event.getX(), getScrollY() + event.getY())) {
-					this.moveSelectionsToDirectory(toTest.folder);
+					this.moveSelectionsToDirectory(toTest.getDropTarget());
 				}
 				toTest.dragExitedListener();
 			}
@@ -462,6 +462,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	
 	//************************************************** Folder and Note opening ***********************************************
+	
 	public void openFile (File toOpen) {
 		if (toOpen.isDirectory() == false) {
 			openNote(toOpen);
