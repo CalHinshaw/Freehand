@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeSet;
 
 import com.freehand.note_editor.NoteActivity;
@@ -40,6 +42,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	private static final float MIN_FOLDER_WIDTH_DIP = 300;
 	
 	private MainMenuActivity mActivity;
+	
 	private final LinearLayout mLayout = new LinearLayout(this.getContext());
 	
 	private final Set<File> selections = new TreeSet<File>();
@@ -50,13 +53,16 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	private int indexToShow = -1;
 	
+	private Timer scrollTimer = new Timer(true);
+	private TimerTask currentScroll;
+	private boolean scrollInProgress;
+	
 	private boolean dragInProgress = false;
 	private int mDragRegionWidth = 0;
-	private long timeSinceDragUpdate = -1;
-	private boolean drawLeftHighlight = false;
-	private boolean drawRightHighlight = false;
+	private int currentDragRegion = 0;
 
 	private int dragStartWatcherView = -1;
+	
 	
 	
 	//****************************************** setup methods ****************************************************
@@ -205,6 +211,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		// If the drag event is a drop, call the move method in the presenter with the
 		//  child view the drop is over as a parameter
 		if (event.getAction() == DragEvent.ACTION_DROP) {
+			stopScroll();
 			for (int i = 0; i < mLayout.getChildCount(); i++) {
 				FolderView toTest = (FolderView) mLayout.getChildAt(i);
 				if (pointInView(toTest, getScrollX() + event.getX(), getScrollY() + event.getY())) {
@@ -217,6 +224,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		
 		// If the drag event leaves the FolderBrowser or ends without a drop make sure all of the highlights are cleared
 		if (event.getAction() == DragEvent.ACTION_DRAG_EXITED || event.getAction() == DragEvent.ACTION_DRAG_ENDED) {
+			stopScroll();
 			for (int i = 0; i < mLayout.getChildCount(); i++) {
 				((FolderView) mLayout.getChildAt(i)).dragExitedListener();
 			}
@@ -251,46 +259,28 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	private boolean horizontalScrollDragListener (DragEvent event) {
-		if (this.canScrollHorizontally(-1) && event.getX() <= mDragRegionWidth) {
-			drawLeftHighlight = true;
-			drawRightHighlight = false;
-				
-			if (timeSinceDragUpdate > 0) {
-				final long currentTime = System.currentTimeMillis();
-				this.smoothScrollBy((int)((timeSinceDragUpdate-currentTime)/1.5f), 0);
-			}
-			
-			timeSinceDragUpdate = System.currentTimeMillis();
-			this.invalidate();
-			return true;
-		} else if (this.canScrollHorizontally(1) && event.getX() >= (this.getWidth() - mDragRegionWidth)) {
-			drawLeftHighlight = false;
-			drawRightHighlight = true;
-			
-			if (timeSinceDragUpdate > 0) {
-				final long currentTime = System.currentTimeMillis();
-				this.smoothScrollBy((int) ((currentTime-timeSinceDragUpdate)/1.5f), 0);
-			}
-			
-			timeSinceDragUpdate = System.currentTimeMillis();
-			this.invalidate();
-			return true;
-		} else {
-			drawLeftHighlight = false;
-			drawRightHighlight = false;
-			this.invalidate();
-			
-			timeSinceDragUpdate = -1;
-			return false;
+		int newDragRegion = 0;
+		if (event.getX() <= mDragRegionWidth) {
+			newDragRegion = -1;
+		} else if (event.getX() >= (this.getWidth() - mDragRegionWidth)) {
+			newDragRegion = 1;
 		}
-	}
-	
-	private boolean pointInView (View v, float x, float y) {
-		if (x >= v.getLeft() && x <= v.getRight() && y >= v.getTop() && y <= v.getBottom()) {
-			return true;
-		} else {
-			return false;
+			
+		if (newDragRegion == -1 && currentDragRegion != -1) {
+			currentDragRegion = -1;
+			startScroll(-1);
+			this.invalidate();
+		} else if (newDragRegion == 1 && currentDragRegion != 1) {
+			currentDragRegion = 1;
+			startScroll(1);
+			this.invalidate();
+		} else if (newDragRegion == 0 && currentDragRegion != 0) {
+			currentDragRegion = 0;
+			stopScroll();
+			this.invalidate();
 		}
+		
+		return scrollInProgress;
 	}
 	
 	@SuppressLint("DrawAllocation")
@@ -298,14 +288,14 @@ public class FolderBrowser extends HorizontalScrollView {
 	protected void onDraw (Canvas canvas) {
 		super.onDraw(canvas);
 		
-		if (dragInProgress && drawLeftHighlight) {
+		if (dragInProgress && scrollInProgress && currentDragRegion == -1) {
 			Rect highlightRect = new Rect(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, this.getHeight());
 			Shader highlightShader = new LinearGradient(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			Paint highlightPaint = new Paint();
 			highlightPaint.setShader(highlightShader);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (dragInProgress && drawRightHighlight) {
+		} else if (dragInProgress && scrollInProgress && currentDragRegion == 1) {
 			Rect highlightRect = new Rect(this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, this.getScrollX() + this.getWidth(), this.getHeight());
 			Shader highlightShader = new LinearGradient(this.getScrollX() + this.getWidth(), 0, this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			Paint highlightPaint = new Paint();
@@ -558,6 +548,14 @@ public class FolderBrowser extends HorizontalScrollView {
 		return null;
 	}
 	
+	private boolean pointInView (View v, float x, float y) {
+		if (x >= v.getLeft() && x <= v.getRight() && y >= v.getTop() && y <= v.getBottom()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	private FolderView getViewDisplayingFile (File toGet) {
 		for(int i = 0; i < mLayout.getChildCount(); i++) {
 			FolderView current = (FolderView) mLayout.getChildAt(i);
@@ -621,6 +619,43 @@ public class FolderBrowser extends HorizontalScrollView {
 			for (File f : toGetFrom.listFiles()) {
 				getNonDirectoryFilePaths(f, toAddTo);
 			}
+		}
+	}
+	
+	
+	
+	//************************************** Persistant scrolling **********************************
+	
+	private void startScroll (final int direction) {
+		stopScroll();
+		if (this.canScrollHorizontally(direction) == false) { return; }
+		
+		final Runnable scrollRunnable = new Runnable () {
+			public void run() {
+				if (canScrollHorizontally(direction) == false) {
+					if (currentScroll != null) {
+						currentScroll.cancel();
+					}
+				}
+				scrollBy(direction*2, 0);
+			}
+		};
+		
+		currentScroll = new TimerTask() {
+			@Override
+			public void run() {
+				mActivity.runOnUiThread(scrollRunnable);
+			}
+		};
+		
+		scrollTimer.scheduleAtFixedRate(currentScroll, 0, 3);
+		scrollInProgress = true;
+	}
+	
+	private void stopScroll () {
+		if (currentScroll != null) {
+			currentScroll.cancel();
+			scrollInProgress = false;
 		}
 	}
 }

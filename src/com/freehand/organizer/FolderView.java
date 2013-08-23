@@ -17,6 +17,8 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.os.Vibrator;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -186,6 +188,7 @@ public class FolderView extends ListView {
 			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
 			final View touchedView = this.getViewAtPosition(touchedIndex);
 			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+			((Vibrator) this.getContext().getSystemService(Context.VIBRATOR_SERVICE)).vibrate(30);
 			watchingForDrag = mBrowser.toggleSelection(touchedFile);
 			mAdapter.notifyDataSetChanged();
 			
