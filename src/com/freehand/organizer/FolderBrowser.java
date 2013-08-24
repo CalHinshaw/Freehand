@@ -633,9 +633,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		final Runnable scrollRunnable = new Runnable () {
 			public void run() {
 				if (canScrollHorizontally(direction) == false) {
-					if (currentScroll != null) {
-						currentScroll.cancel();
-					}
+					stopScroll();
 				}
 				scrollBy(direction*2, 0);
 			}
@@ -656,6 +654,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		if (currentScroll != null) {
 			currentScroll.cancel();
 			scrollInProgress = false;
+			invalidate();
 		}
 	}
 }
