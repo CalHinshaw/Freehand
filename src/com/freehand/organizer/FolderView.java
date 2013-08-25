@@ -56,8 +56,6 @@ public class FolderView extends ListView {
 	// These store the persistent information for dragWatcher
 	private boolean watchingForDrag = false;
 	private PointF dragWatcherStartPos = null;
-//	private boolean dragWatcherEventResolved = false;
-	
 	private boolean selectionAddedThisEvent = false;
 
 	// These store the persistent information for all of the drag gestures
@@ -68,7 +66,6 @@ public class FolderView extends ListView {
 	private boolean dropHighlight = false;
 	
 	private final Timer mTimer = new Timer(true);
-	private TimerTask currentScroll;
 	private TimerTask currentLongClick;
 	
 	private Paint mSelectedPaint;
@@ -87,7 +84,6 @@ public class FolderView extends ListView {
 			final File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
 			watchingForDrag = mBrowser.toggleSelection(clickedFile);
 			mAdapter.notifyDataSetChanged();
-//			dragWatcherEventResolved = false;
 			dragWatcherStartPos = null;	// I need to set set point inside of the drag watcher method because I don't get coords in here
 			
 			selectionAddedThisEvent = true;
@@ -124,7 +120,6 @@ public class FolderView extends ListView {
 	 */
 	public boolean checkStartWatchingForDrag (float x, float y) {
 		dragWatcherStartPos = null;
-//		dragWatcherEventResolved = false;
 		watchingForDrag = getPointOverSelectedItem(x, y);
 		return watchingForDrag;
 	}
@@ -151,7 +146,6 @@ public class FolderView extends ListView {
 		// This only runs if, during the current touch event, a previously unselected file was selected.
 		if (selectionAddedThisEvent == true) {
 			if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
-				//dragWatcherEventResolved = true;
 				mBrowser.startDrag();
 			}
 			return;
@@ -167,12 +161,9 @@ public class FolderView extends ListView {
 		// Drag start watcher
 		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq) && currentLongClick != null) {
 			stopLongClick();
-			//dragWatcherEventResolved = true;
 			mBrowser.startDrag();
 		}
 		
-		
-		//TODO some sort of check to see if a long click has happened
 		if (event.getAction() == MotionEvent.ACTION_UP && currentLongClick != null) {
 			stopLongClick();
 			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
@@ -180,53 +171,6 @@ public class FolderView extends ListView {
 			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
 			mBrowser.openFile(touchedFile);
 		}
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-
-		
-//		if (dragWatcherEventResolved == true) { return; }
-//		
-//		if (dragWatcherStartPos == null) {
-//			dragWatcherStartPos = new PointF(event.getX(), event.getY());
-//		}
-//		
-//		// Drag start watcher
-//		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
-//			dragWatcherEventResolved = true;
-//			mBrowser.startDrag();
-//		}
-//		
-//		// Click watcher
-//		if (event.getAction() == MotionEvent.ACTION_UP) {
-//			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
-//			final View touchedView = this.getViewAtPosition(touchedIndex);
-//			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
-//			mBrowser.openFile(touchedFile);
-//			
-//			dragWatcherEventResolved = true;
-//		}
-//		
-//		// Long click watcher
-//		if (event.getEventTime()-event.getDownTime() > ViewConfiguration.getLongPressTimeout()) {
-//			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
-//			final View touchedView = this.getViewAtPosition(touchedIndex);
-//			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
-//			((Vibrator) this.getContext().getSystemService(Context.VIBRATOR_SERVICE)).vibrate(30);
-//			watchingForDrag = mBrowser.toggleSelection(touchedFile);
-//			mAdapter.notifyDataSetChanged();
-//			
-//			dragWatcherEventResolved = true;
-//		}
 	}
 	
 	/**
@@ -338,7 +282,6 @@ public class FolderView extends ListView {
 	@Override
 	protected void dispatchDraw (Canvas canvas) {
 		super.dispatchDraw(canvas);
-		//canvas.drawLine(this.getWidth(), 0, this.getWidth(), this.getHeight(), mDividerPaint);
 		drawHighlights(canvas);
 		
 		if (mBrowser.getSelectedFolder().equals(folder) && mBrowser.dragInProgress() == false) {
@@ -403,44 +346,7 @@ public class FolderView extends ListView {
 	
 	
 	
-	//************************************** Persistent scrolling **********************************
-	
-	private void startScroll (final int direction) {
-		stopScroll();
-		if (canScrollVertically(direction) == false) { return; }
-		
-		final Runnable scrollRunnable = new Runnable () {
-			public void run() {
-				if (canScrollVertically(direction) == false) {
-					stopScroll();
-				}
-				scrollBy(0, direction*2);
-			}
-		};
-		
-		currentScroll = new TimerTask() {
-			@Override
-			public void run() {
-				mBrowser.runOnUiThread(scrollRunnable);
-			}
-		};
-		
-		mTimer.scheduleAtFixedRate(currentScroll, 0, 3);
-		//scrollInProgress = true;
-	}
-	
-	private void stopScroll () {
-		if (currentScroll != null) {
-			currentScroll.cancel();
-			//scrollInProgress = false;
-			invalidate();
-		}
-	}
-	
-	
-	
 	//****************************************** LongClick timing code ************************************
-	
 	
 	private void startLongClick (final File file) {
 		stopLongClick();
@@ -470,23 +376,7 @@ public class FolderView extends ListView {
 			currentLongClick = null;
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	
 	
 	private class FolderAdapter extends ArrayAdapter<File> {
