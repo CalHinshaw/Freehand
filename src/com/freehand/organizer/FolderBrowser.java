@@ -109,6 +109,10 @@ public class FolderBrowser extends HorizontalScrollView {
 		mActivity = activity;
 	}
 	
+	public void runOnUiThread (Runnable toRun) {
+		mActivity.runOnUiThread(toRun);
+	}
+	
 	//*************************************** drag starting and touch event routing methods ******************************************
 	
 	/*		A NOTE ABOUT CUSTOM TOUCH EVENT HANDELING FOR STARTING DRAG EVENTS IN THE FolderBrowser/FolderView PAIR
@@ -130,7 +134,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	 */
 	
 	@Override
-	public boolean onInterceptTouchEvent(MotionEvent event) {	
+	public boolean onInterceptTouchEvent(MotionEvent event) {
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			dragStartWatcherView = -1;
 			for(int i = 0; i < mLayout.getChildCount(); i++) {
@@ -171,7 +175,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		try {
 			returnValue = super.onTouchEvent(event);
 		} catch (IllegalArgumentException e) {
-			Log.d("PEN", "Error");
+			Log.d("PEN", "***********Error************************************************************");
 		}
 		
 		return returnValue;
@@ -624,7 +628,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	
 	
-	//************************************** Persistant scrolling **********************************
+	//************************************** Persistent scrolling **********************************
 	
 	private void startScroll (final int direction) {
 		stopScroll();

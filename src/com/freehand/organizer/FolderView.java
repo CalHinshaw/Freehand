@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.calhounroberthinshaw.freehand.R;
 import android.app.Activity;
 import android.content.Context;
@@ -53,7 +56,7 @@ public class FolderView extends ListView {
 	// These store the persistent information for dragWatcher
 	private boolean watchingForDrag = false;
 	private PointF dragWatcherStartPos = null;
-	private boolean dragWatcherEventResolved = false;
+//	private boolean dragWatcherEventResolved = false;
 	
 	private boolean selectionAddedThisEvent = false;
 
@@ -63,6 +66,10 @@ public class FolderView extends ListView {
 	private boolean drawScrollUpHighlight = false;
 	private boolean drawScrollDownHighlight = false;
 	private boolean dropHighlight = false;
+	
+	private final Timer mTimer = new Timer(true);
+	private TimerTask currentScroll;
+	private TimerTask currentLongClick;
 	
 	private Paint mSelectedPaint;
 	
@@ -80,7 +87,7 @@ public class FolderView extends ListView {
 			final File clickedFile = ((FolderAdapter.RowDataHolder) clickedView.getTag()).file;
 			watchingForDrag = mBrowser.toggleSelection(clickedFile);
 			mAdapter.notifyDataSetChanged();
-			dragWatcherEventResolved = false;
+//			dragWatcherEventResolved = false;
 			dragWatcherStartPos = null;	// I need to set set point inside of the drag watcher method because I don't get coords in here
 			
 			selectionAddedThisEvent = true;
@@ -117,28 +124,19 @@ public class FolderView extends ListView {
 	 */
 	public boolean checkStartWatchingForDrag (float x, float y) {
 		dragWatcherStartPos = null;
-		dragWatcherEventResolved = false;
+//		dragWatcherEventResolved = false;
 		watchingForDrag = getPointOverSelectedItem(x, y);
 		return watchingForDrag;
 	}
 	
 	@Override
 	public boolean onTouchEvent (MotionEvent event) {
-		
 		if (event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP) {
 			selectionAddedThisEvent = false;
 		}
 		
-		if (watchingForDrag == true) {
-			
-			if (dragWatcherStartPos == null) {
-				dragWatcherStartPos = new PointF(event.getX(), event.getY());
-			}
-			
-			if (dragWatcherEventResolved == false && pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
-				dragWatcherEventResolved = true;
-				mBrowser.startDrag();
-			}
+		if (selectionAddedThisEvent == true) {
+			onWatchingForDragTouchEvent(event);
 			return true;
 		} else {
 			return super.onTouchEvent(event);
@@ -146,54 +144,89 @@ public class FolderView extends ListView {
 	}
 
 	public void onWatchingForDragTouchEvent (MotionEvent event) {
-		
-		if (selectionAddedThisEvent == true) {
-			if (dragWatcherStartPos == null) {
-				dragWatcherStartPos = new PointF(event.getX(), event.getY());
-			}
-			
-			// Drag start watcher
-			if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
-				dragWatcherEventResolved = true;
-				mBrowser.startDrag();
-			}
-			
-			return;
-		}
-		
-		if (dragWatcherEventResolved == true) { return; }
-		
 		if (dragWatcherStartPos == null) {
 			dragWatcherStartPos = new PointF(event.getX(), event.getY());
 		}
 		
+		// This only runs if, during the current touch event, a previously unselected file was selected.
+		if (selectionAddedThisEvent == true) {
+			if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
+				//dragWatcherEventResolved = true;
+				mBrowser.startDrag();
+			}
+			return;
+		}
+		
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
+			final View touchedView = this.getViewAtPosition(touchedIndex);
+			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+			this.startLongClick(touchedFile);
+		}
+		
 		// Drag start watcher
-		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
-			dragWatcherEventResolved = true;
+		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq) && currentLongClick != null) {
+			stopLongClick();
+			//dragWatcherEventResolved = true;
 			mBrowser.startDrag();
 		}
 		
-		// Click watcher
-		if (event.getAction() == MotionEvent.ACTION_UP) {
+		
+		//TODO some sort of check to see if a long click has happened
+		if (event.getAction() == MotionEvent.ACTION_UP && currentLongClick != null) {
+			stopLongClick();
 			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
 			final View touchedView = this.getViewAtPosition(touchedIndex);
 			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
 			mBrowser.openFile(touchedFile);
-			
-			dragWatcherEventResolved = true;
 		}
 		
-		// Long click watcher
-		if (event.getEventTime()-event.getDownTime() > ViewConfiguration.getLongPressTimeout()) {
-			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
-			final View touchedView = this.getViewAtPosition(touchedIndex);
-			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
-			((Vibrator) this.getContext().getSystemService(Context.VIBRATOR_SERVICE)).vibrate(30);
-			watchingForDrag = mBrowser.toggleSelection(touchedFile);
-			mAdapter.notifyDataSetChanged();
-			
-			dragWatcherEventResolved = true;
-		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+
+		
+//		if (dragWatcherEventResolved == true) { return; }
+//		
+//		if (dragWatcherStartPos == null) {
+//			dragWatcherStartPos = new PointF(event.getX(), event.getY());
+//		}
+//		
+//		// Drag start watcher
+//		if (pointOutOfCircleTest(event.getX(), event.getY(), dragWatcherStartPos, stationaryDistSq)) {
+//			dragWatcherEventResolved = true;
+//			mBrowser.startDrag();
+//		}
+//		
+//		// Click watcher
+//		if (event.getAction() == MotionEvent.ACTION_UP) {
+//			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
+//			final View touchedView = this.getViewAtPosition(touchedIndex);
+//			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+//			mBrowser.openFile(touchedFile);
+//			
+//			dragWatcherEventResolved = true;
+//		}
+//		
+//		// Long click watcher
+//		if (event.getEventTime()-event.getDownTime() > ViewConfiguration.getLongPressTimeout()) {
+//			final int touchedIndex = this.pointToPosition((int) event.getX(), (int) event.getY());
+//			final View touchedView = this.getViewAtPosition(touchedIndex);
+//			final File touchedFile = ((FolderAdapter.RowDataHolder) touchedView.getTag()).file;
+//			((Vibrator) this.getContext().getSystemService(Context.VIBRATOR_SERVICE)).vibrate(30);
+//			watchingForDrag = mBrowser.toggleSelection(touchedFile);
+//			mAdapter.notifyDataSetChanged();
+//			
+//			dragWatcherEventResolved = true;
+//		}
 	}
 	
 	/**
@@ -367,6 +400,93 @@ public class FolderView extends ListView {
 	public void notifyFolderMutated () {
 		mAdapter.notifyFolderMutated();
 	}
+	
+	
+	
+	//************************************** Persistent scrolling **********************************
+	
+	private void startScroll (final int direction) {
+		stopScroll();
+		if (canScrollVertically(direction) == false) { return; }
+		
+		final Runnable scrollRunnable = new Runnable () {
+			public void run() {
+				if (canScrollVertically(direction) == false) {
+					stopScroll();
+				}
+				scrollBy(0, direction*2);
+			}
+		};
+		
+		currentScroll = new TimerTask() {
+			@Override
+			public void run() {
+				mBrowser.runOnUiThread(scrollRunnable);
+			}
+		};
+		
+		mTimer.scheduleAtFixedRate(currentScroll, 0, 3);
+		//scrollInProgress = true;
+	}
+	
+	private void stopScroll () {
+		if (currentScroll != null) {
+			currentScroll.cancel();
+			//scrollInProgress = false;
+			invalidate();
+		}
+	}
+	
+	
+	
+	//****************************************** LongClick timing code ************************************
+	
+	
+	private void startLongClick (final File file) {
+		stopLongClick();
+		
+		final Runnable longClickRunnable = new Runnable () {
+			public void run() {
+				((Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE)).vibrate(30);
+				watchingForDrag = mBrowser.toggleSelection(file);
+				mAdapter.notifyDataSetChanged();
+				stopLongClick();
+			}
+		};
+		
+		currentLongClick = new TimerTask () {
+			@Override
+			public void run() {
+				mBrowser.runOnUiThread(longClickRunnable);
+			}
+		};
+		
+		mTimer.schedule(currentLongClick, ViewConfiguration.getLongPressTimeout());
+	}
+	
+	private void stopLongClick () {
+		if (currentLongClick != null) {
+			currentLongClick.cancel();
+			currentLongClick = null;
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	private class FolderAdapter extends ArrayAdapter<File> {
