@@ -42,7 +42,7 @@
 	        android:id="@+id/preferences"
 	        android:layout_width = "50dip"
 	        android:layout_height = "50dip"
-	        android:background="@drawable/organizer_button"
+	        android:background="@drawable/settings_button_selector"
 	        android:layout_marginRight="5dip"/>
  	</LinearLayout>
  	
