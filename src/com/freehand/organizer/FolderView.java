@@ -21,7 +21,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.os.Vibrator;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -69,6 +68,7 @@ public class FolderView extends ListView {
 	private TimerTask currentLongClick;
 	
 	private Paint mSelectedPaint;
+	private final int selectedRad;
 	
 	// Click listeners
 	private OnItemClickListener DirectoryViewItemClickListener = new OnItemClickListener() {
@@ -106,11 +106,13 @@ public class FolderView extends ListView {
 		this.setOnItemClickListener(DirectoryViewItemClickListener);
 		this.setOnItemLongClickListener(DirectoryViewSelectListener);
 		
+		selectedRad = (int) (2.5*getResources().getDisplayMetrics().density);
+		
 		mSelectedPaint = new Paint();
 		mSelectedPaint.setAntiAlias(true);
 		mSelectedPaint.setStyle(Paint.Style.STROKE);
 		mSelectedPaint.setColor(SOLID_BLUE_HIGHLIGHT);
-		mSelectedPaint.setStrokeWidth(5*getResources().getDisplayMetrics().density);
+		mSelectedPaint.setStrokeWidth(2*selectedRad);
 	}
 
 	//***************************************** Drag Start Detection Methods *************************************************
@@ -285,8 +287,7 @@ public class FolderView extends ListView {
 		drawHighlights(canvas);
 		
 		if (mBrowser.getSelectedFolder().equals(folder) && mBrowser.dragInProgress() == false) {
-			final float buffer = mSelectedPaint.getStrokeWidth()/2.0f;
-			canvas.drawRect(new RectF(buffer, buffer, getWidth()-buffer, getHeight()-buffer), mSelectedPaint);
+			canvas.drawRect(new RectF(selectedRad, selectedRad, getWidth()-selectedRad, getHeight()-selectedRad), mSelectedPaint);
 		}
 	}
 	
@@ -431,13 +432,18 @@ public class FolderView extends ListView {
 				holder.thumbnail.setImageDrawable(inflaterActivity.getResources().getDrawable(R.drawable.pencil));
 			}
 			
-			// Change background color as appropriate
+			// Change background color and indicators as appropriate
+			if (mBrowser.getDisplayStatus(holder.file)) {
+				convertView.findViewById(R.id.DirectoryViewRowBar).setVisibility(VISIBLE);
+			} else {
+				convertView.findViewById(R.id.DirectoryViewRowBar).setVisibility(INVISIBLE);
+			}
+			
+			
 			if (mBrowser.getFileSelectionStatus(holder.file) && mBrowser.dragInProgress()) {
 				convertView.setBackgroundColor(Color.LTGRAY);
 			} else if (mBrowser.getFileSelectionStatus(holder.file)) {
 				convertView.setBackgroundColor(BLUE_HIGHLIGHT);
-			} else if (mBrowser.getDisplayStatus(holder.file)) {
-				convertView.setBackgroundColor(ORANGE_HIGHLIGHT);
 			} else {
 				convertView.setBackgroundColor(0x0000000000);
 			}

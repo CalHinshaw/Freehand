@@ -1,30 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="horizontal" >
     
-    <ImageView android:id="@+id/DirectoryViewRowThumbnail"
+    <ImageView
+        android:id="@+id/DirectoryViewRowThumbnail"
         android:layout_width="75dip"
         android:layout_height="75dip"
         android:layout_marginRight="15dip"
         android:layout_marginLeft="5dip" />
     
-    <LinearLayout android:layout_width = "fill_parent"
+    <LinearLayout
+        android:layout_width="0dip"
         android:layout_height="fill_parent"
+        android:layout_weight="1"
         android:orientation="vertical"
         android:layout_marginRight="5dip">
         
-        <TextView android:id="@+id/DirectoryViewRowName"
+        <TextView
+            android:id="@+id/DirectoryViewRowName"
         	android:layout_width="fill_parent"
         	android:layout_height="wrap_content"
         	android:textSize="20sp"
         	android:maxLines="2" />
         
-        <TextView android:id = "@+id/DirectoryViewRowDate"
+        <TextView
+            android:id = "@+id/DirectoryViewRowDate"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>
+    
+    <View
+        android:id="@+id/DirectoryViewRowBar"
+        android:layout_height="fill_parent"
+        android:layout_width="10dip"
+        android:background="@color/orange"
+        android:visibility="invisible" />
     	
     
     

@@ -48,6 +48,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	private final Set<File> selections = new TreeSet<File>();
 	private File selectedFolder;
 	
+	private int dividerWidth = 0;
 	private int pxPerFolder = 0;
 	private int foldersPerScreen = 0;
 	
@@ -74,8 +75,9 @@ public class FolderBrowser extends HorizontalScrollView {
 		
 		mDragRegionWidth = (int) (DRAG_SCROLL_REGION_WIDTH_DIP * getResources().getDisplayMetrics().density);
 		
+		dividerWidth = (int) (2*getResources().getDisplayMetrics().density + 1);
 		final PaintDrawable divider = new PaintDrawable(Color.DKGRAY);
-		divider.setIntrinsicWidth((int) (2*getResources().getDisplayMetrics().density + 1));
+		divider.setIntrinsicWidth(dividerWidth);
 		mLayout.setDividerDrawable(divider);
 		mLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE + LinearLayout.SHOW_DIVIDER_END);
 		
@@ -88,7 +90,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		final float scale = getResources().getDisplayMetrics().density;
 		final float minFolderWidthPx = MIN_FOLDER_WIDTH_DIP * scale;
 		final int numFoldersToShow = (int) (screenWidth/minFolderWidthPx);
-		final int folderWidth = (int) (screenWidth/numFoldersToShow);
+		final int folderWidth = (int) (screenWidth/numFoldersToShow) - dividerWidth;
 		
 		pxPerFolder = folderWidth;
 		foldersPerScreen = numFoldersToShow;
