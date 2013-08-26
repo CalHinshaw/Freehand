@@ -108,7 +108,7 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 		aabb.top -= 150;
 		aabb.bottom += 150;
 		
-		long maxMemory = (long) (Runtime.getRuntime().maxMemory() * 0.8f);			// Eighty percent of the maximum continuous memory the VM will try to allocate in bytes
+		long maxMemory = (long) (Runtime.getRuntime().maxMemory() * 0.5f);			// Eighty percent of the maximum continuous memory the VM will try to allocate in bytes
 		long noteMemory = (long) (2 * (aabb.width()+1) * (aabb.height()+1));		// The size of the bitmap required to display the entire note in bytes
 		int numPngs = (int) ((noteMemory/maxMemory) + 1);							// The number of images we're going to save
 		
