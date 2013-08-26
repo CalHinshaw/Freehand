@@ -36,7 +36,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class FolderBrowser extends HorizontalScrollView {
-	private static final float DRAG_SCROLL_REGION_WIDTH_DIP = 100;
+	private static final float DRAG_SCROLL_REGION_SCREEN_PERCENTAGE = 0.10f;
 	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
 	private static final int NO_COLOR = 0x00FFFFFF;
 	private static final float MIN_FOLDER_WIDTH_DIP = 300;
@@ -53,6 +53,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	private int foldersPerScreen = 0;
 	
 	private int indexToShow = -1;
+	private int toScrollTo = -1;
 	
 	private Timer scrollTimer = new Timer(true);
 	private TimerTask currentScroll;
@@ -73,7 +74,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		this.setOverScrollMode(HorizontalScrollView.OVER_SCROLL_ALWAYS);
 		this.setWillNotDraw(false);
 		
-		mDragRegionWidth = (int) (DRAG_SCROLL_REGION_WIDTH_DIP * getResources().getDisplayMetrics().density);
+		mDragRegionWidth = (int) (DRAG_SCROLL_REGION_SCREEN_PERCENTAGE * getResources().getDisplayMetrics().widthPixels * getResources().getDisplayMetrics().density);
 		
 		dividerWidth = (int) (2*getResources().getDisplayMetrics().density + 1);
 		final PaintDrawable divider = new PaintDrawable(Color.DKGRAY);
@@ -504,6 +505,11 @@ public class FolderBrowser extends HorizontalScrollView {
 	public void computeScroll () {
 		super.computeScroll();
 		
+		if (toScrollTo != -1) {
+			this.setScrollX(toScrollTo);
+			toScrollTo = -1;
+		}
+		
 		if (indexToShow >= 0) {
 			final float leftFolderPos = ((float) getScrollX()) / ((float) pxPerFolder);
 			if (indexToShow < leftFolderPos) {
@@ -605,6 +611,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	private void closeSelectedFolders() {
+		toScrollTo = this.getScrollX();
 		for (File f : selections) {
 			int i = 0;
 			for(; i < mLayout.getChildCount(); i++) {
