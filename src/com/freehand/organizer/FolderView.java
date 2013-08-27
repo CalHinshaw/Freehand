@@ -21,6 +21,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.os.Vibrator;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -398,7 +399,7 @@ public class FolderView extends ListView {
 		
 		public FolderAdapter (Context newContext, int newRowViewResourceId) {
 			super(newContext, newRowViewResourceId, new ArrayList<File>());
-			notifyFolderMutated();
+			this.notifyFolderMutated();
 			inflaterActivity = (Activity) newContext;
 			mRowViewResourceId = newRowViewResourceId;
 		}
@@ -466,6 +467,11 @@ public class FolderView extends ListView {
 					return f.isDirectory() || f.getName().endsWith(".note");
 				}
 			});
+			
+			if (files == null) {
+				Log.d("PEN", "Files == null in FolderAdapter");
+				return;
+			}
 			
 			Arrays.sort(files, mComparator);
 			
