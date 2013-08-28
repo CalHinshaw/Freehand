@@ -450,6 +450,14 @@ public class FolderBrowser extends HorizontalScrollView {
 		} else {
 			File newNote = new File(selectedFolder, name);
 			try {
+				
+				if (newNote.getParentFile().isDirectory() == false) {
+					if (newNote.getParentFile().mkdirs() == false) {
+						Toast.makeText(getContext(), "Unable to create folder, please make sure your sd card is mounted and try again.", Toast.LENGTH_SHORT).show();
+						return;
+					}
+				}
+				
 				newNote.createNewFile();
 				this.getViewDisplayingFile(selectedFolder).notifyFolderMutated();
 				openFile(newNote);

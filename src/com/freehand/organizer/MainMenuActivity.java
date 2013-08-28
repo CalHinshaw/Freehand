@@ -188,6 +188,9 @@ public class MainMenuActivity extends Activity {
 	
 	private boolean directoryContainsName (File dir, String name) {
 		final String[] names = dir.list();
+		
+		if (names == null) { return false; }
+		
 		for (String s : names) {
 			if (s.equals(name)) {
 				return true;
