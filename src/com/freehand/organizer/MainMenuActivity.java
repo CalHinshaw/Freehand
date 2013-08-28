@@ -17,9 +17,9 @@ import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnDragListener;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.LinearLayout;
 
 public class MainMenuActivity extends Activity {
 	private static final long VIBRATE_DURATION = 50;
@@ -27,7 +27,7 @@ public class MainMenuActivity extends Activity {
 	private FolderBrowser mBrowser;
 	
 	// itemsSelectedActionBar view references
-	private LinearLayout itemsSelectedActionBar;
+	private ViewGroup itemsSelectedActionBar;
 	private HighlightButton selectedCancelButton;
 	private HighlightButton selectedDeleteButton;
 	private HighlightButton selectedShareButton;
@@ -118,7 +118,7 @@ public class MainMenuActivity extends Activity {
 	
 	
 	// defaultActionBar view references
-	private LinearLayout defaultActionBar;
+	private ViewGroup defaultActionBar;
 	private Button defaultNewNoteButton;
 	private Button defaultNewFolderButton;
 	
@@ -203,7 +203,7 @@ public class MainMenuActivity extends Activity {
         setContentView(R.layout.organizer_layout);
         
         // Set up the defaultActionBar
-        defaultActionBar = (LinearLayout) findViewById(R.id.defaultActionBar);
+        defaultActionBar = (ViewGroup) findViewById(R.id.defaultActionBar);
         
         defaultNewNoteButton = (Button) findViewById(R.id.newNoteButton);
         defaultNewNoteButton.setOnClickListener(newNoteButtonOnClickListener);
@@ -212,7 +212,7 @@ public class MainMenuActivity extends Activity {
         defaultNewFolderButton.setOnClickListener(newFolderButtonOnClickListener);
         
         // Set up the itemsSelectedActionBar
-        itemsSelectedActionBar = (LinearLayout) findViewById(R.id.itemsSelectedActionBar);
+        itemsSelectedActionBar = (ViewGroup) findViewById(R.id.itemsSelectedActionBar);
         
         selectedCancelButton = (HighlightButton) findViewById(R.id.cancelButton);
         selectedCancelButton.setOnClickListener(cancelButtonOnClickListener);

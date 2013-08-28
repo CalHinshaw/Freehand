@@ -401,6 +401,17 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	@SuppressWarnings("unchecked")
 	public void shareSelections () {
+		// toShare is a set so we avoid duplicates when traversing the file tree
+		Set<String> toShare = new TreeSet<String>();
+		for (File f : selections) {
+			this.getNonDirectoryFilePaths(f, toShare);
+		}
+		
+		if (toShare.size() == 0) {
+			Toast.makeText(this.getContext(), "No notes selected to share. Please select some notes and try again.", Toast.LENGTH_LONG).show();
+			return;
+		}
+		
 		final ProgressDialog progressDialog = new ProgressDialog(getContext(), ProgressDialog.THEME_HOLO_LIGHT);
 		progressDialog.setProgressNumberFormat(null);
 		progressDialog.setTitle("Preparing to Share");
@@ -423,12 +434,6 @@ public class FolderBrowser extends HorizontalScrollView {
 				
 			}
 		};
-		
-		// toShare is a set so we avoid duplicates when traversing the file tree
-		Set<String> toShare = new TreeSet<String>();
-		for (File f : selections) {
-			this.getNonDirectoryFilePaths(f, toShare);
-		}
 		
 		new NoteSharer(updater, getContext()).execute(new ArrayList<String>(toShare));
 	}

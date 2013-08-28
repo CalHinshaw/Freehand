@@ -52,7 +52,11 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 		// Convert all of the Notes to PNG images and put the file Uris into imageUris
 		ArrayList<Uri> imageUris = new ArrayList<Uri>();
 		List<String> notePaths = params[0];
-		int progressIncrement = (int) (100/notePaths.size());
+		
+		int progressIncrement = 100;
+		if (notePaths.size() > 0) {
+			progressIncrement = (int) (100/notePaths.size());
+		}
 		
 		for (int i = 0; i < notePaths.size(); i++) {
 			imageUris.addAll(saveNoteAsPNGs(notePaths.get(i), rootDirectory));
