@@ -4,91 +4,118 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
+    
+    <View
+        android:id="@+id/organizer_top_bar"
+        android:layout_alignParentTop="true"
+        android:layout_width="fill_parent"
+        android:layout_height="60dip"
+        android:background="@color/dkgray" />
+    
+    <ImageView
+        android:id="@+id/organizer_icon"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_height="60dip"
+        android:layout_width="60dip"
+        android:background="@drawable/freehand_icon" />
+    
+    <TextView 
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@id/organizer_icon"
+        android:layout_marginLeft="5dip"
+        android:layout_height="60dip"
+        android:layout_width="wrap_content"
+        android:text="Freehand"
+        android:textColor="@color/white"
+        android:textSize="40sp"
+        />
 
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/defaultActionBar"
-        
+        android:layout_alignParentRight="true"
 	    android:layout_alignParentTop="true"
-	    android:layout_width="fill_parent"
+	    android:layout_width="wrap_content"
         android:layout_height="60dip"
-  		android:background="@color/dkgray"
         android:orientation="horizontal"
         android:paddingTop="5dip"
         android:paddingBottom="5dip" >
         
-    	<Button 
+        <Button 
 	   		android:id = "@+id/newNoteButton"
+	   		android:layout_width="wrap_content"
+    		android:layout_height="fill_parent"
+    		android:layout_marginRight="5dip"
+    		android:paddingLeft="15dip"
+    	    android:paddingRight="15dip"
 	    	android:text = "@string/new_note"
 	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button"
-    		android:layout_width="wrap_content"
-    		android:layout_height="fill_parent"
-    		android:layout_weight="2"
-    		android:layout_marginRight="5dip"
-    		android:layout_marginLeft="5dip" />
-    	
-    	<Button 
+	    	android:background="@drawable/organizer_button" />
+        
+        <Button 
     	    android:id="@+id/newFolderButton"
-    	    android:text="@string/new_folder"
-    	    android:textSize="15sp"
-    	    android:background="@drawable/organizer_button"
     	    android:layout_width="wrap_content" 
     	    android:layout_height="fill_parent"
-    	    android:layout_weight="2"
-    	    android:layout_marginRight="5dip" />
-    	
-    	<Button
+    	    android:paddingLeft="15dip"
+    	    android:paddingRight="15dip"
+    	    android:layout_marginRight="5dip"
+    	    android:text="@string/new_folder"
+    	    android:textSize="15sp"
+    	    android:background="@drawable/organizer_button" />
+        
+        <Button
 	        android:id="@+id/preferences"
 	        android:layout_width = "50dip"
 	        android:layout_height = "50dip"
-	        android:background="@drawable/settings_button_selector"
-	        android:layout_marginRight="5dip"/>
+	        android:layout_marginRight="5dip"
+	        android:background="@drawable/settings_button_selector" />
  	</LinearLayout>
  	
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android" 
         android:id="@+id/itemsSelectedActionBar"
-        
+        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-	    android:layout_width="fill_parent"
+	    android:layout_width="wrap_content"
         android:layout_height="60dip"
-  		android:background="@color/dkgray"
         android:orientation="horizontal"
         android:paddingTop="5dip"
         android:paddingBottom="5dip" >
     	
         <com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/cancelButton"
-	    	android:text = "@string/cancel"
-	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button"
-    		android:layout_width="0dip"
-    		android:layout_weight="2"
+	   		android:layout_width="wrap_content"
     		android:layout_height="fill_parent"
     		android:layout_marginRight="5dip"
-    		android:layout_marginLeft="5dip" />
-        
+    		android:layout_marginLeft="5dip"
+    		android:paddingLeft="15dip"
+    		android:paddingRight="15dip"
+	    	android:text = "@string/cancel"
+	    	android:textSize="15sp"
+	    	android:background="@drawable/organizer_button" />
+        	
         <com.freehand.organizer.HighlightButton
             android:id = "@+id/shareButton"
+            android:layout_width="wrap_content"
+    		android:layout_height="fill_parent"
+    		android:layout_marginRight="5dip"
+    		android:paddingLeft="15dip"
+    		android:paddingRight="15dip"
 	    	android:text = "@string/share_button"
 	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button"
-    		android:layout_width="0dip"
-    		android:layout_weight="1"
-    		android:layout_height="fill_parent"
-    		android:layout_marginRight="5dip" />
+	    	android:background="@drawable/organizer_button" />
         
-        <com.freehand.organizer.HighlightButton 
+		<com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/deleteButton"
-	    	android:text = "@string/delete"
-	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button"
     		android:layout_width="wrap_content"
-    		android:paddingLeft="10dip"
-    		android:paddingRight="10dip"
     		android:layout_height="fill_parent"
-    		android:layout_marginRight="5dip" />
+    		android:layout_marginRight="5dip"
+    		android:paddingLeft="15dip"
+    		android:paddingRight="15dip"
+    		android:text = "@string/delete"
+	    	android:textSize="15sp"
+	    	android:background="@drawable/organizer_button" />
 	</LinearLayout>
         	   
 	    
@@ -97,7 +124,7 @@
 	    
 	    android:layout_alignParentLeft="true"
 	    android:layout_alignParentBottom="true"
-	    android:layout_below="@id/defaultActionBar"
+	    android:layout_below="@id/organizer_top_bar"
 	    android:layout_width="fill_parent"
 	    
 	    android:layout_height= "0dip"
