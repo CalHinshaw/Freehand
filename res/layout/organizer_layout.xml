@@ -44,25 +44,13 @@
         
         <Button 
 	   		android:id = "@+id/newNoteButton"
-	   		android:layout_width="wrap_content"
-    		android:layout_height="fill_parent"
-    		android:layout_marginRight="5dip"
-    		android:paddingLeft="15dip"
-    	    android:paddingRight="15dip"
-	    	android:text = "@string/new_note"
-	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button" />
+	   		style="@style/TextButton"
+	    	android:text = "@string/new_note" />
         
         <Button 
     	    android:id="@+id/newFolderButton"
-    	    android:layout_width="wrap_content" 
-    	    android:layout_height="fill_parent"
-    	    android:paddingLeft="15dip"
-    	    android:paddingRight="15dip"
-    	    android:layout_marginRight="5dip"
-    	    android:text="@string/new_folder"
-    	    android:textSize="15sp"
-    	    android:background="@drawable/organizer_button" />
+    	    style="@style/TextButton"
+    	    android:text="@string/new_folder" />
         
         <Button
 	        android:id="@+id/preferences"
@@ -85,37 +73,18 @@
     	
         <com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/cancelButton"
-	   		android:layout_width="wrap_content"
-    		android:layout_height="fill_parent"
-    		android:layout_marginRight="5dip"
-    		android:layout_marginLeft="5dip"
-    		android:paddingLeft="15dip"
-    		android:paddingRight="15dip"
-	    	android:text = "@string/cancel"
-	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button" />
+	   		style="@style/TextButton"
+	    	android:text = "@string/cancel"/>
         	
         <com.freehand.organizer.HighlightButton
             android:id = "@+id/shareButton"
-            android:layout_width="wrap_content"
-    		android:layout_height="fill_parent"
-    		android:layout_marginRight="5dip"
-    		android:paddingLeft="15dip"
-    		android:paddingRight="15dip"
-	    	android:text = "@string/share_button"
-	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button" />
+            style="@style/TextButton"
+	    	android:text = "@string/share_button" />
         
 		<com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/deleteButton"
-    		android:layout_width="wrap_content"
-    		android:layout_height="fill_parent"
-    		android:layout_marginRight="5dip"
-    		android:paddingLeft="15dip"
-    		android:paddingRight="15dip"
-    		android:text = "@string/delete"
-	    	android:textSize="15sp"
-	    	android:background="@drawable/organizer_button" />
+    		style="@style/TextButton"
+    		android:text = "@string/delete" />
 	</LinearLayout>
         	   
 	    
