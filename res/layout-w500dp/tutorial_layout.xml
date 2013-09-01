@@ -20,28 +20,26 @@
         android:paddingTop="5dip"
         android:paddingBottom="5dip" >
         
+        <View
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        
         <Button
             android:id="@+id/tutorial_previous_button"
 			style="@style/TextButton"
-			android:layout_marginLeft="5dip"
-			android:padding="0dip"
-			android:layout_weight="1"
             android:text="Previous Slide" />
         
 	    <Button 
 	        android:id="@+id/skip_tutorial_button"
 	        style="@style/TextButton"
-	        android:padding="0dip"
-	        android:layout_weight="1"
 	        android:text="Close Tutorial" />
 	    
 	    <Button
             android:id="@+id/tutorial_next_button"
             style="@style/TextButton"
-            android:padding="0dip"
-            android:layout_weight="1"
             android:text="Next Slide" />
-    	
+    
     </LinearLayout>
     
 </LinearLayout>
