@@ -25,10 +25,20 @@
 			style="@style/TextButton"
             android:text="Previous Slide" />
     
+        <View
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        
 	    <Button 
 	        android:id="@+id/skip_tutorial_button"
 	        style="@style/TextButton"
-	        android:text="Skip Tutorial" />
+	        android:text="Close Tutorial" />
+	    
+	    <View
+            android:layout_width="0dip"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
 	    
 	    <Button
             android:id="@+id/tutorial_next_button"
