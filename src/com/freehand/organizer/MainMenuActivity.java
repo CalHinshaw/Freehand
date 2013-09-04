@@ -12,6 +12,7 @@ import android.app.Activity;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -23,6 +24,7 @@ import android.widget.Button;
 
 public class MainMenuActivity extends Activity {
 	private static final long VIBRATE_DURATION = 50;
+	private static boolean isRunning = false;
 	
 	private FolderBrowser mBrowser;
 	
@@ -272,5 +274,21 @@ public class MainMenuActivity extends Activity {
     public void setDefaultActionBarOn () {
     	itemsSelectedActionBar.setVisibility(View.INVISIBLE);
     	defaultActionBar.setVisibility(View.VISIBLE);
+    }
+    
+    @Override
+    protected void onStart() {
+    	super.onStart();
+    	isRunning = true;
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+    	isRunning = false;
+    }
+    
+    public static boolean isRunning () {
+    	return isRunning;
     }
 }

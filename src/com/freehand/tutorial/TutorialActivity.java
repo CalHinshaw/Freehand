@@ -27,7 +27,13 @@ public class TutorialActivity extends Activity {
         skipButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				Intent startOrganizer = new Intent(getBaseContext(), MainMenuActivity.class);
-				startActivity(startOrganizer);
+				if (MainMenuActivity.isRunning() == false) {
+					startActivity(startOrganizer);
+					TutorialActivity.this.finish();
+				} else {
+					TutorialActivity.this.onBackPressed();
+				}
+				
 			}
         });
         

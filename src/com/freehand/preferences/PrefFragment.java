@@ -1,7 +1,6 @@
 package com.freehand.preferences;
 
 import com.calhounroberthinshaw.freehand.R;
-
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceFragment;
