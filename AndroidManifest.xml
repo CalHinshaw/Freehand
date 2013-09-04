@@ -20,22 +20,19 @@
             android:name="com.freehand.organizer.MainMenuActivity"
             android:label="@string/title_activity_main_menu"
             android:hardwareAccelerated="true" >
-            
-        </activity>
-        
-        <activity
-            android:name="com.freehand.tutorial.TutorialActivity" >
-            
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            
+        </activity>
+        
+        <activity
+            android:name="com.freehand.tutorial.TutorialActivity" >
+			
 			<intent-filter>
-                <action android:name="open_tutorial"/>
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            
+				<action android:name="open_tutorial"/>
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter> 
         </activity>
             
         

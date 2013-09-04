@@ -3,8 +3,11 @@ package com.freehand.organizer;
 import java.io.File;
 
 import com.calhounroberthinshaw.freehand.R;
+import com.calhounroberthinshaw.freehand.R.color;
 
 import com.freehand.preferences.PrefActivity;
+import com.freehand.tutorial.TutorialActivity;
+
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -203,6 +206,11 @@ public class MainMenuActivity extends Activity {
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	
+    	if (getSharedPreferences("freehand", Context.MODE_PRIVATE).contains("tutorialShown") == false) {
+			startActivity(new Intent(getBaseContext(), TutorialActivity.class));
+    	}
+    	
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.organizer_layout);

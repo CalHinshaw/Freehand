@@ -3,8 +3,11 @@ package com.freehand.tutorial;
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.organizer.MainMenuActivity;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -53,6 +56,8 @@ public class TutorialActivity extends Activity {
         
         mSwitcher = (ImageSwitcher) this.findViewById(R.id.tutorial_slideshow);
         updateSlide(0);
+        
+        getSharedPreferences("freehand", Context.MODE_PRIVATE).edit().putBoolean("tutorialShown", true).commit();
 	}
 	
 	private void updateSlide (int delta) {
