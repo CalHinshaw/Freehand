@@ -73,6 +73,11 @@
 	    	android:text = "@string/share_button"
 	    	android:layout_weight="2" />
         
+        <com.freehand.organizer.HighlightButton
+            android:id="@+id/renameButton"
+            style="@style/TextButton"
+            android:text="Rename" />
+        
 		<com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/deleteButton"
     		style="@style/TextButton"

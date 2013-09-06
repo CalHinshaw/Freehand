@@ -3,7 +3,6 @@ package com.freehand.organizer;
 import java.io.File;
 
 import com.calhounroberthinshaw.freehand.R;
-import com.calhounroberthinshaw.freehand.R.color;
 
 import com.freehand.preferences.PrefActivity;
 import com.freehand.tutorial.TutorialActivity;
@@ -15,7 +14,6 @@ import android.app.Activity;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -36,10 +34,11 @@ public class MainMenuActivity extends Activity {
 	private HighlightButton selectedCancelButton;
 	private HighlightButton selectedDeleteButton;
 	private HighlightButton selectedShareButton;
+	private HighlightButton selectedRenameButton;
 	
 	private OnClickListener cancelButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			mBrowser.cancleSelections();
+			mBrowser.cancelSelections();
 		}
 	};
 	
@@ -55,12 +54,18 @@ public class MainMenuActivity extends Activity {
 		}
 	};
 	
+	private OnClickListener renameButtonOnClickListener = new OnClickListener() {
+		public void onClick(View v) {
+			mBrowser.renameSelection();
+		}
+	};
+	
 	private OnDragListener cancelButtonDragListener = new OnDragListener () {
 		public boolean onDrag(View v, DragEvent event) {
 			switch(event.getAction()) {
 				case DragEvent.ACTION_DROP:
 					selectedCancelButton.setHighlight(false);
-					mBrowser.cancleSelections();
+					mBrowser.cancelSelections();
 					break;
 					
 				case DragEvent.ACTION_DRAG_ENTERED:
@@ -117,9 +122,28 @@ public class MainMenuActivity extends Activity {
 			
 			return true;
 		}
-		
 	};
 	
+	private OnDragListener renameButtonDragListener = new OnDragListener () {
+		public boolean onDrag(View v, DragEvent event) {
+			switch(event.getAction()) {
+				case DragEvent.ACTION_DROP:
+					mBrowser.renameSelection();
+					selectedRenameButton.setHighlight(false);
+					break;
+					
+				case DragEvent.ACTION_DRAG_ENTERED:
+					selectedRenameButton.setHighlight(true);
+					break;
+					
+				case DragEvent.ACTION_DRAG_EXITED:
+					selectedRenameButton.setHighlight(false);
+					break;
+			}
+			
+			return true;
+		}
+	};
 	
 	
 	// defaultActionBar view references
@@ -239,6 +263,10 @@ public class MainMenuActivity extends Activity {
         selectedDeleteButton.setOnClickListener(deleteButtonOnClickListener);
         selectedDeleteButton.setOnDragListener(deleteButtonDragListener);
         
+        selectedRenameButton = (HighlightButton) findViewById(R.id.renameButton);
+        selectedRenameButton.setOnClickListener(renameButtonOnClickListener);
+        selectedRenameButton.setOnDragListener(renameButtonDragListener);
+        
         itemsSelectedActionBar.setVisibility(View.INVISIBLE);
         
         
@@ -274,14 +302,19 @@ public class MainMenuActivity extends Activity {
     	//TODO
     }
     
-    public void setItemsSelectedActionBarOn () {
-    	itemsSelectedActionBar.setVisibility(View.VISIBLE);
-    	defaultActionBar.setVisibility(View.INVISIBLE);
-    }
-    
-    public void setDefaultActionBarOn () {
-    	itemsSelectedActionBar.setVisibility(View.INVISIBLE);
-    	defaultActionBar.setVisibility(View.VISIBLE);
+    public void setActionBar (int numSelections) {
+    	if (numSelections == 0) {
+    		itemsSelectedActionBar.setVisibility(View.GONE);
+        	defaultActionBar.setVisibility(View.VISIBLE);
+    	} else if (numSelections == 1) {
+    		itemsSelectedActionBar.setVisibility(View.VISIBLE);
+        	defaultActionBar.setVisibility(View.GONE);
+        	selectedRenameButton.setVisibility(View.VISIBLE);
+    	} else {
+    		itemsSelectedActionBar.setVisibility(View.VISIBLE);
+        	defaultActionBar.setVisibility(View.GONE);
+        	selectedRenameButton.setVisibility(View.GONE);
+    	}
     }
     
     @Override

@@ -15,6 +15,7 @@ import com.freehand.share.ProgressUpdateFunction;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -329,7 +330,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		return selections.contains(toToggle);
 	}
 	
-	public void cancleSelections () {
+	public void cancelSelections () {
 		selections.clear();
 		notifyChildrenOfDatasetChange();
 		invalidateChildren();
@@ -341,11 +342,11 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	private void selectionsChanged () {
-		if (selections.size() == 0) {
-			mActivity.setDefaultActionBarOn();
-		} else {
-			mActivity.setItemsSelectedActionBarOn();
-		}
+		mActivity.setActionBar(selections.size());
+	}
+	
+	public int getNumSelections () {
+		return selections.size();
 	}
 	
 	
@@ -368,7 +369,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 		
 		notifyChildrenOfFolderMutation();
-		cancleSelections();
+		cancelSelections();
 	}
 	
 	public void deleteSelections () {
@@ -386,7 +387,7 @@ public class FolderBrowser extends HorizontalScrollView {
 				if (numFailures > 0) {
 					Toast.makeText(getContext(), "Failed to delete " + Integer.toString(numFailures)+ " files, please try again.", Toast.LENGTH_SHORT).show();
 				}
-				cancleSelections();
+				cancelSelections();
 				notifyChildrenOfFolderMutation();
 			}
 		};
@@ -466,6 +467,23 @@ public class FolderBrowser extends HorizontalScrollView {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public void renameSelection () {
+		final File selection = selections.iterator().next();
+		String defaultInput = selection.getName().replace(".note", "");
+		final NewItemFn onFinish = new NewItemFn() {
+			@Override
+			public void function(String s) {
+				closeSelectedFolders();
+				cancelSelections();
+				selection.renameTo(new File(selection.getParentFile(), s + (selection.isDirectory()? "" : ".note")));
+				getViewDisplayingFile(selection.getParentFile()).notifyFolderMutated();
+			}
+		};
+		
+		DialogFragment d = new NewItemDialog("Rename Selected Item", "Enter the new name of the file.", defaultInput, "Rename", "Cancel", onFinish);
+		d.show(mActivity.getFragmentManager(), "Rename");
 	}
 	
 	
