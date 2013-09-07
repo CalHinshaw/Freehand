@@ -86,22 +86,29 @@ public class FolderBrowser extends HorizontalScrollView {
 		this.addView(mLayout);
 	}
 	
+
+	
 	@Override
-	protected void onLayout (boolean changed, int left, int top, int right, int bottom) {
-		final int screenWidth = right-left;
+	protected void onMeasure (final int width, final int height) {
+		super.onMeasure(width, height);
+		setFolderWidthFields(this.getMeasuredWidth());
+		
+		final int wSpec = MeasureSpec.makeMeasureSpec(pxPerFolder, MeasureSpec.EXACTLY);
+		final int hSpec = MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY);
+		for (int i = 0; i < mLayout.getChildCount(); i++) {
+			mLayout.getChildAt(i).getLayoutParams().width = pxPerFolder;
+			mLayout.getChildAt(i).measure(wSpec, hSpec);
+		}
+	}
+
+	private void setFolderWidthFields (final int width) {
 		final float scale = getResources().getDisplayMetrics().density;
 		final float minFolderWidthPx = MIN_FOLDER_WIDTH_DIP * scale;
-		final int numFoldersToShow = (int) (screenWidth/minFolderWidthPx);
-		final int folderWidth = (int) (screenWidth/numFoldersToShow) - dividerWidth;
+		final int numFoldersToShow = (int) (width/minFolderWidthPx);
+		final int folderWidth = (int) (width/numFoldersToShow) - dividerWidth;
 		
 		pxPerFolder = folderWidth;
 		foldersPerScreen = numFoldersToShow;
-		
-		super.onLayout(changed, left, top, right, bottom);
-		
-		for (int i = 0; i < mLayout.getChildCount(); i++) {
-			mLayout.getChildAt(i).getLayoutParams().width = pxPerFolder;
-		}
 	}
 	
 	public void setRootDirectory (File root) {
