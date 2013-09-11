@@ -15,6 +15,10 @@ import android.widget.RadioButton;
 class PreviousStateAwareRadioButton extends RadioButton {
 	private boolean previousStateChecked = false;
 	
+	public PreviousStateAwareRadioButton(Context context) {
+		super(context);
+	}
+	
 	public PreviousStateAwareRadioButton(Context context, AttributeSet attrs) {
 		super(context, attrs);
 	}

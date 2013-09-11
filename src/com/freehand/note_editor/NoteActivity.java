@@ -8,11 +8,9 @@ import com.freehand.share.ProgressUpdateFunction;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -20,90 +18,18 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
 import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.PopupWindow;
-import android.widget.RadioGroup;
 import android.widget.Toast;
 
 public class NoteActivity extends Activity {
 	private NoteEditorController mPresenter;
-	
+	private ActionBar mActionBar;
 	private NoteView mNoteView;
 	
-	private RadioGroup mRadioGroup;
-	private PreviousStateAwareRadioButton mEraseButton;
-	private AnchorWindow mEraseMenuWindow;
-	private float eraserSize = 22.5f;
-	private boolean eraseStrokes = true;
-	private PreviousStateAwareRadioButton mSelectButton;
-	private ArrayList<PenRadioButton> penButtons = new ArrayList<PenRadioButton>(5);
-	
-	private Button undoButton;
-	private Button redoButton;
-	
-	private CompoundButton.OnCheckedChangeListener eraseButtonCheckListener = new CompoundButton.OnCheckedChangeListener() {
-		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			if (isChecked == true) {
-				if (eraseStrokes == true) {
-					mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
-				} else {
-					mPresenter.setTool(IActionBarListener.Tool.SMOOTH_ERASER, eraserSize, 0);
-				}
-			}
-		}
-	};
-	
-	private View.OnClickListener eraseButtonClickListener = new View.OnClickListener() {
-		public void onClick(View v) {
-			if (mEraseMenuWindow.lastClosedByAnchorTouch() == true) {
-				return;
-			}
-			
-			if (mEraseButton.previousStateWasChecked()) {
-				Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-				vibrator.vibrate(40);
-				mEraseMenuWindow.show();
-			}
-		}
-	};
-	
-	private OnLongClickListener eraseButtonLongClickListener = new OnLongClickListener () {
-		public boolean onLongClick(View v) {
-			mEraseButton.setChecked(true);
-			Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-			vibrator.vibrate(40);
-			mEraseMenuWindow.show();
-			
-			return true;
-		}
-	};
-	
-	private CompoundButton.OnCheckedChangeListener selectButtonListener = new CompoundButton.OnCheckedChangeListener() {
-		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			if (isChecked == true) {
-				mPresenter.setTool(IActionBarListener.Tool.STROKE_SELECTOR, 0, 0);
-			}
-		}
-	};
-	
-	private OnClickListener undoButtonListener = new OnClickListener () {
-		public void onClick (View v) {
-			mPresenter.undo();
-		}
-	};
-	
-	private OnClickListener redoButtonListener = new OnClickListener () {
-		public void onClick (View v) {
-			mPresenter.redo();
-		}
-	};
-	
+	private int checkedOnPause = -1;
 	
 	public void onCreate (Bundle savedInstanceState) {
 		// "system" level stuff
@@ -115,52 +41,31 @@ public class NoteActivity extends Activity {
 		
 		// Load the previous object on a runtime change
 		@SuppressWarnings("deprecation")
-		final NoteEditorController savedController = (NoteEditorController) getLastNonConfigurationInstance();
-		if (savedController == null) {
+		final Object saved = getLastNonConfigurationInstance();
+		
+		
+		
+		if (saved == null) {
 			String notePath = getIntent().getStringExtra("note_path");
 			Note note = new Note(notePath);
 			mPresenter = new NoteEditorController(note, getPressureSensitivity());
+			
 		} else {
-			mPresenter = savedController;
+			final Object[] savedArr = (Object[]) saved;
+			checkedOnPause = (Integer) savedArr[0];
+			mPresenter = (NoteEditorController) savedArr[1];
 		}
-		
 		
 		// getting views from xml layout
 		mNoteView = (NoteView) findViewById(R.id.note);
-		mRadioGroup = (RadioGroup) findViewById(R.id.penSelectorRadioGroup);
+		mActionBar = (ActionBar) findViewById(R.id.actionBar);
 		
-		mEraseButton = (PreviousStateAwareRadioButton) findViewById(R.id.erase);
-		mEraseButton.setOnCheckedChangeListener(eraseButtonCheckListener);
-		mEraseButton.setOnClickListener(eraseButtonClickListener);
-		mEraseButton.setOnLongClickListener(eraseButtonLongClickListener);
-		
-		mSelectButton = (PreviousStateAwareRadioButton) findViewById(R.id.select);
-		mSelectButton.setOnCheckedChangeListener(selectButtonListener);
-		
-		undoButton = (Button) findViewById(R.id.undo);
-		undoButton.setOnClickListener(undoButtonListener);
-		
-		redoButton = (Button) findViewById(R.id.redo);
-		redoButton.setOnClickListener(redoButtonListener);
-		
-
 		
 		mNoteView.setListener(mPresenter);
 		mNoteView.setUsingCapDrawing(getUsingCapDrawing());
 		mPresenter.setNoteView(mNoteView);
 		
-		LinearLayout eraseMenu = (LinearLayout) this.getLayoutInflater().inflate(R.layout.eraser_menu, null);
-		mEraseMenuWindow = new AnchorWindow(mEraseButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
-		
-		final SizeSliderView eraseSizeSlider = (SizeSliderView) eraseMenu.findViewById(R.id.eraser_size_slider);
-		eraseSizeSlider.setActionBarListener(mPresenter);
-		
-		mEraseMenuWindow.setDismissListener(new PopupWindow.OnDismissListener() {
-			public void onDismiss() {
-				eraserSize = eraseSizeSlider.getSize();
-				mPresenter.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
-			}
-		});
+		mActionBar.setActionBarListener(mPresenter);
 	}
 	
 	private float getPressureSensitivity() {
@@ -187,30 +92,16 @@ public class NoteActivity extends Activity {
 	public void onResume() {
 		super.onResume();
 		
-		SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
-		
-		if (initPenButtons(mPrefs) == false) {
-			setDefaultPrefs(mPrefs);
-			initPenButtons(mPrefs);
+		final SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+		final int[] colors = new int[5];
+		final float[] sizes = new float[5];
+		if (readPenPrefs(mPrefs, colors, sizes) == false) {
+			initPenPrefs(mPrefs);
+			readPenPrefs(mPrefs, colors, sizes);
 		}
+		mActionBar.setPens(colors, sizes);
 		
-		// Reselect the correct item from the radio group
-		if (mEraseButton.isChecked()) {
-			mEraseButton.setChecked(true);
-		} else if (mSelectButton.isChecked()){
-			mSelectButton.setChecked(true);
-		} else {
-			for (PenRadioButton button : penButtons) {
-				if (button.isChecked()) {
-					button.setChecked(true);
-				}
-			}
-		}
-		
-		// If none of the radio buttons are selected check the first pen
-		if (mRadioGroup.getCheckedRadioButtonId() == -1) {
-			penButtons.get(0).setChecked(true);
-		}
+		mActionBar.setCheckedButton(checkedOnPause);
 	}
 	
 
@@ -218,7 +109,8 @@ public class NoteActivity extends Activity {
 	@Override
 	public Object onRetainNonConfigurationInstance() {
 		mPresenter.setNoteView(null);
-		return mPresenter;
+		final Object[] toRetain = {checkedOnPause, mPresenter};
+		return toRetain;
 	}
 	
 	@Override
@@ -226,22 +118,18 @@ public class NoteActivity extends Activity {
 		super.onPause();
 		mPresenter.saveNote();
 		
-		SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
-		SharedPreferences.Editor editor = mPrefs.edit();
+		final int[] colors = new int[5];
+		final float[] sizes = new float[5];
+		mActionBar.getPens(colors, sizes);
+		final SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
+		savePenPrefs(mPrefs, colors, sizes);
 		
-		editor.clear();
-		
-		for (int i = 0; i < penButtons.size(); i++) {
-			editor.putInt("Pen" + Integer.toString(i) + "Color", penButtons.get(i).getColor());
-			editor.putFloat("Pen" + Integer.toString(i) + "Size", penButtons.get(i).getSize());
-		}
-		
-		editor.commit();
+		Log.d("PEN", "before:  " + Integer.toString(checkedOnPause));
+		checkedOnPause = mActionBar.getCheckedButton();
+		Log.d("PEN", "after:  " + Integer.toString(checkedOnPause));
 	}
 	
-	private void setDefaultPrefs(SharedPreferences mPrefs) {
-		Log.d("PEN", "Setting default preferences");
-		
+	private void initPenPrefs (SharedPreferences mPrefs) {
 		SharedPreferences.Editor editor = mPrefs.edit();
 		editor.clear();
 		
@@ -263,36 +151,37 @@ public class NoteActivity extends Activity {
 		editor.commit();
 	}
 	
-	private boolean initPenButtons (SharedPreferences mPrefs) {
-		penButtons.clear();
-		penButtons.add(0,(PenRadioButton) findViewById(R.id.pen1Button));
-		penButtons.add(1,(PenRadioButton) findViewById(R.id.pen2Button));
-		penButtons.add(2,(PenRadioButton) findViewById(R.id.pen3Button));
-		penButtons.add(3,(PenRadioButton) findViewById(R.id.pen4Button));
-		penButtons.add(4,(PenRadioButton) findViewById(R.id.pen5Button));
-		
+	private boolean readPenPrefs (final SharedPreferences mPrefs, final int colors[], final float sizes[]) {
 		try {
-			int tempColor;
-			float tempSize;
-			
-			for (int i = 0; i < penButtons.size(); i++) {
-				tempColor = mPrefs.getInt("Pen" + Integer.toString(i) + "Color", 0);
-				tempSize = mPrefs.getFloat("Pen" + Integer.toString(i) + "Size", 0f);
-				
-				if (tempColor == 0 || tempSize == 0) {
-					Log.d("PEN", "pen SharedPreferences empty");
-					return false;
-				}
-				
-				penButtons.get(i).setListener(mPresenter);
-				penButtons.get(i).setPen(tempColor, tempSize);
+			for (int i = 0; i < colors.length; i++) {
+				colors[i] = mPrefs.getInt("Pen" + Integer.toString(i) + "Color", 0);
+				sizes[i] = mPrefs.getFloat("Pen" + Integer.toString(i) + "Size", 0f);
 			}
-			
-			return true;
 		} catch (ClassCastException e) {
 			Log.d("PEN", "Something is wrong with one of the PenRadioButton's SharedPreferences entries.");
 			return false;
 		}
+		
+		// Checking to make sure the preferences aren't empty
+		for (int i = 0; i < colors.length; i++) {
+			if (colors[i] != 0 || sizes[i] != 0) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	private void savePenPrefs (final SharedPreferences mPrefs, final int colors[], final float sizes[]) {
+		final SharedPreferences.Editor editor = mPrefs.edit();
+		editor.clear();
+		
+		for (int i = 0; i < colors.length; i++) {
+			editor.putInt("Pen" + Integer.toString(i) + "Color", colors[i]);
+			editor.putFloat("Pen" + Integer.toString(i) + "Size", sizes[i]);
+		}
+		
+		editor.commit();
 	}
 	
 	

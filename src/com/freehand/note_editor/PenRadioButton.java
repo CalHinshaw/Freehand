@@ -15,6 +15,8 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	private Drawable mBackground;
 	private IActionBarListener mListener = null;
 	
+	private final float dipScale = getResources().getDisplayMetrics().density;
+	
 	private int color = Color.BLACK;
 	private float size = 6.5f;
 	
@@ -68,7 +70,15 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	
 	public PenRadioButton (Context context, AttributeSet attrs) {
 		super(context, attrs);
-
+		init();
+	}
+	
+	public PenRadioButton (Context context) {
+		super(context);
+		init();
+	}
+	
+	private void init () {
 		mBackground = new AlphaPatternDrawable((int) (5*getContext().getResources().getDisplayMetrics().density));
 		
 		samplePaint.setColor(color);
@@ -90,7 +100,8 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 		this.setOnCheckedChangeListener(mCheckListener);
 		
 		mPenCreatorView = new PenCreatorView(this.getContext(), this, color, size);
-		mPenCreator = new AnchorWindow(this, mPenCreatorView, 450, (int) (450*PenCreatorView.HEIGHT_SCALAR));
+		mPenCreator = new AnchorWindow(this, mPenCreatorView, (int) (450 * getResources().getDisplayMetrics().density),
+			(int) (450*PenCreatorView.HEIGHT_SCALAR * getResources().getDisplayMetrics().density));
 	}
 	
 	/**
@@ -139,7 +150,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 		setPen(newColor, newSize);
 		
 		if (mListener != null) {
-			mListener.setTool(IActionBarListener.Tool.PEN, size, color);
+			mListener.setTool(IActionBarListener.Tool.PEN, size*dipScale, color);
 		}
 		
 		invalidate();
