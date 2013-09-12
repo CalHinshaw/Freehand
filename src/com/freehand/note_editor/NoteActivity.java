@@ -124,9 +124,7 @@ public class NoteActivity extends Activity {
 		final SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
 		savePenPrefs(mPrefs, colors, sizes);
 		
-		Log.d("PEN", "before:  " + Integer.toString(checkedOnPause));
 		checkedOnPause = mActionBar.getCheckedButton();
-		Log.d("PEN", "after:  " + Integer.toString(checkedOnPause));
 	}
 	
 	private void initPenPrefs (SharedPreferences mPrefs) {
@@ -261,7 +259,6 @@ public class NoteActivity extends Activity {
 	public void onBackPressed() {
 		this.finish();
 		overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
-		super.onBackPressed();
 	}
 
 

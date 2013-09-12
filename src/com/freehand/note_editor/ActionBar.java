@@ -5,7 +5,6 @@ import com.calhounroberthinshaw.freehand.R;
 import android.content.Context;
 import android.os.Vibrator;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Button;
@@ -248,6 +247,18 @@ class ActionBar extends LinearLayout {
 	}
 	
 	private void adjustShowingViews (final int numPens, final boolean hwMenuKey) {
+		if (hwMenuKey == false) {
+			menuButton.setVisibility(View.VISIBLE);
+		} else {
+			menuButton.setVisibility(View.GONE);
+		}
 		
+		int i = 0;
+		for (; i < numPens; i++) {
+			penButtons[i].setVisibility(View.VISIBLE);
+		}
+		for (; i <5; i++) {
+			penButtons[i].setVisibility(View.GONE);
+		}
 	}
 }
