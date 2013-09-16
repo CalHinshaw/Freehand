@@ -79,10 +79,6 @@ class ActionBar extends LinearLayout {
 	private OnClickListener undoButtonListener = new OnClickListener () {
 		public void onClick (View v) {
 			mListener.undo();
-			
-			//TODO remove
-			Log.d("PEN", Integer.toString(v.getWidth()));
-			
 		}
 	};
 	
@@ -246,22 +242,12 @@ class ActionBar extends LinearLayout {
 	}
 	
 	private int calcNumPenButtons (final int w, final boolean hwMenuKey) {
-		
-		Log.d("PEN", "px width == " + Integer.toString(w) + "        dip width == " + Float.toString(w * getResources().getDisplayMetrics().density));
-		Log.d("PEN", "buttonWidth+buttonMargin == " + Integer.toString(buttonWidth+buttonMargin));
-		
 		final float layoutWidth = w - buttonMargin;
 		final int numButtons = (int) (layoutWidth/(buttonWidth+buttonMargin));
-		
-		Log.d("PEN", "set button num == " + Integer.toString((hwMenuKey ? 4 : 5)));
-		
 		return Math.min(5, numButtons - (hwMenuKey ? 4 : 5));
 	}
 	
 	private void adjustShowingViews (final int numPens, final boolean hwMenuKey) {
-		
-		Log.d("PEN", Integer.toString(numPens));
-		
 		if (hwMenuKey == false) {
 			menuButton.setVisibility(View.VISIBLE);
 		} else {
