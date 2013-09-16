@@ -5,6 +5,7 @@ import com.calhounroberthinshaw.freehand.R;
 import android.content.Context;
 import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Button;
@@ -78,6 +79,10 @@ class ActionBar extends LinearLayout {
 	private OnClickListener undoButtonListener = new OnClickListener () {
 		public void onClick (View v) {
 			mListener.undo();
+			
+			//TODO remove
+			Log.d("PEN", Integer.toString(v.getWidth()));
+			
 		}
 	};
 	
@@ -160,7 +165,7 @@ class ActionBar extends LinearLayout {
 		
 		
 		LinearLayout eraseMenu = (LinearLayout) inflate(getContext(), R.layout.eraser_menu, null);
-		mEraseMenuWindow = new AnchorWindow(eraserButton, eraseMenu, 450, LayoutParams.WRAP_CONTENT);
+		mEraseMenuWindow = new AnchorWindow(eraserButton, eraseMenu, (int) (320 * getResources().getDisplayMetrics().density), LayoutParams.WRAP_CONTENT);
 		
 		final SizeSliderView eraseSizeSlider = (SizeSliderView) eraseMenu.findViewById(R.id.eraser_size_slider);
 		eraseSizeSlider.setActionBarListener(mListener);
@@ -241,12 +246,22 @@ class ActionBar extends LinearLayout {
 	}
 	
 	private int calcNumPenButtons (final int w, final boolean hwMenuKey) {
-		final float layoutWidth = w * getResources().getDisplayMetrics().density - buttonMargin;
-		final int numButtons = (int) (layoutWidth/buttonWidth);
+		
+		Log.d("PEN", "px width == " + Integer.toString(w) + "        dip width == " + Float.toString(w * getResources().getDisplayMetrics().density));
+		Log.d("PEN", "buttonWidth+buttonMargin == " + Integer.toString(buttonWidth+buttonMargin));
+		
+		final float layoutWidth = w - buttonMargin;
+		final int numButtons = (int) (layoutWidth/(buttonWidth+buttonMargin));
+		
+		Log.d("PEN", "set button num == " + Integer.toString((hwMenuKey ? 4 : 5)));
+		
 		return Math.min(5, numButtons - (hwMenuKey ? 4 : 5));
 	}
 	
 	private void adjustShowingViews (final int numPens, final boolean hwMenuKey) {
+		
+		Log.d("PEN", Integer.toString(numPens));
+		
 		if (hwMenuKey == false) {
 			menuButton.setVisibility(View.VISIBLE);
 		} else {
