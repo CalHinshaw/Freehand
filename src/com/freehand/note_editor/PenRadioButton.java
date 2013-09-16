@@ -100,8 +100,8 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 		this.setOnCheckedChangeListener(mCheckListener);
 		
 		mPenCreatorView = new PenCreatorView(this.getContext(), this, color, size);
-		mPenCreator = new AnchorWindow(this, mPenCreatorView, (int) (450 * getResources().getDisplayMetrics().density),
-			(int) (450*PenCreatorView.HEIGHT_SCALAR * getResources().getDisplayMetrics().density));
+		mPenCreator = new AnchorWindow(this, mPenCreatorView, (int) (320 * getResources().getDisplayMetrics().density),
+			(int) (320*PenCreatorView.HEIGHT_SCALAR * getResources().getDisplayMetrics().density));
 	}
 	
 	/**
