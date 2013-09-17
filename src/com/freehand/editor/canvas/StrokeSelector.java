@@ -1,4 +1,4 @@
-package com.freehand.note_editor.tool;
+package com.freehand.editor.canvas;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,13 +11,12 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+
+import com.freehand.editor.canvas.Note.Action;
 import com.freehand.ink.MiscPolyGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
-import com.freehand.note_editor.ICanvasEventListener;
-import com.freehand.note_editor.Note;
-import com.freehand.note_editor.Note.Action;
 
 
 public class StrokeSelector implements ICanvasEventListener {

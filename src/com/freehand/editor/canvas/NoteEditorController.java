@@ -1,11 +1,8 @@
-package com.freehand.note_editor;
+package com.freehand.editor.canvas;
 
 
+import com.freehand.editor.tool_bar.IActionBarListener;
 import com.freehand.ink.Point;
-import com.freehand.note_editor.tool.DistConverter;
-import com.freehand.note_editor.tool.Pen;
-import com.freehand.note_editor.tool.StrokeEraser;
-import com.freehand.note_editor.tool.StrokeSelector;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -14,7 +11,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.widget.Toast;
 
-class NoteEditorController implements IActionBarListener, IScreenEventListener {
+public class NoteEditorController implements IActionBarListener, IScreenEventListener {
 	
 	private final Note mNote;
 	private NoteView mNoteView;

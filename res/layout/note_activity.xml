@@ -8,7 +8,7 @@
     android:background="@color/dkgray"
     android:orientation="vertical" >
     
-    <com.freehand.note_editor.ActionBar
+    <com.freehand.editor.tool_bar.ActionBar
         android:id = "@+id/actionBar"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
@@ -20,7 +20,7 @@
         android:baselineAligned="false" />
         
 
-	<com.freehand.note_editor.NoteView
+	<com.freehand.editor.canvas.NoteView
 	    android:id = "@+id/note"
 	    android:layout_width = "fill_parent"
 	    android:layout_height="fill_parent"

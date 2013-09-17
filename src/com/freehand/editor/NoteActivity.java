@@ -1,7 +1,11 @@
-package com.freehand.note_editor;
+package com.freehand.editor;
 
 import java.util.ArrayList;
 import com.calhounroberthinshaw.freehand.R;
+import com.freehand.editor.canvas.Note;
+import com.freehand.editor.canvas.NoteEditorController;
+import com.freehand.editor.canvas.NoteView;
+import com.freehand.editor.tool_bar.ActionBar;
 import com.freehand.share.NoteSharer;
 import com.freehand.share.ProgressUpdateFunction;
 

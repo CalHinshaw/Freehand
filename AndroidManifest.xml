@@ -29,7 +29,7 @@
         
         <activity
             android:label="@string/app_name"
-            android:name="com.freehand.note_editor.NoteActivity" />
+            android:name="com.freehand.editor.NoteActivity" />
         
         <activity
             android:label="@string/preferences"

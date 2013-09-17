@@ -6,8 +6,8 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.freehand.editor.canvas.Note;
 import com.freehand.ink.Stroke;
-import com.freehand.note_editor.Note;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;

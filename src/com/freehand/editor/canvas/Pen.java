@@ -1,4 +1,4 @@
-package com.freehand.note_editor.tool;
+package com.freehand.editor.canvas;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -10,13 +10,11 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.Log;
 
+import com.freehand.editor.canvas.Note.Action;
 import com.freehand.ink.MiscGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
-import com.freehand.note_editor.ICanvasEventListener;
-import com.freehand.note_editor.Note;
-import com.freehand.note_editor.Note.Action;
 
 public class Pen implements ICanvasEventListener {
 	private static final int ARC_RES = 20;

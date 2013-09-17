@@ -1,4 +1,5 @@
-package com.freehand.note_editor;
+package com.freehand.editor.tool_bar;
+
 
 import android.content.Context;
 import android.graphics.Canvas;

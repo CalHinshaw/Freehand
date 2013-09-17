@@ -1,4 +1,4 @@
-package com.freehand.note_editor;
+package com.freehand.editor.canvas;
 
 import android.graphics.Canvas;
 import android.graphics.Rect;

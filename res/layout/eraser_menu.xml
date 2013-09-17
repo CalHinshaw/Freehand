@@ -33,7 +33,7 @@
     </RadioGroup>
      -->
 
-	<com.freehand.note_editor.SizeSliderView
+	<com.freehand.editor.tool_bar.SizeSliderView
 	    android:id="@+id/eraser_size_slider"
 	    android:layout_width="fill_parent"
         android:layout_height="30dip"

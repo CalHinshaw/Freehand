@@ -1,4 +1,4 @@
-package com.freehand.note_editor;
+package com.freehand.editor.canvas;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -20,8 +20,6 @@ import android.util.Log;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
-import com.freehand.note_editor.tool.DistConverter;
-import com.freehand.note_editor.tool.Pen;
 
 public class Note {
 	private File noteFile;

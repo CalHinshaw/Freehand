@@ -9,7 +9,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
-import com.freehand.note_editor.NoteActivity;
 import com.freehand.share.NoteSharer;
 import com.freehand.share.ProgressUpdateFunction;
 
@@ -482,7 +481,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	private void openNote (File toOpen) {
-		Intent i = new Intent(this.getContext(), NoteActivity.class);
+		Intent i = new Intent(this.getContext(), com.freehand.editor.NoteActivity.class);
 		i.putExtra("note_path", toOpen.getPath());
 		i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
 		this.getContext().startActivity(i);

@@ -1,4 +1,4 @@
-package com.freehand.note_editor.tool;
+package com.freehand.editor.canvas;
 
 public abstract class DistConverter {
 	public abstract float canvasToScreenDist(float canvasDist);

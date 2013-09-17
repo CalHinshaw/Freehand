@@ -1,7 +1,7 @@
-package com.freehand.note_editor;
+package com.freehand.editor.tool_bar;
 
 import com.calhounroberthinshaw.freehand.R;
-
+import android.app.Activity;
 import android.content.Context;
 import android.os.Vibrator;
 import android.util.AttributeSet;
@@ -14,7 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioGroup;
 
-class ActionBar extends LinearLayout {
+public class ActionBar extends LinearLayout {
 	private IActionBarListener mListener = null;
 	
 	private final AnchorWindow mEraseMenuWindow;
@@ -88,7 +88,12 @@ class ActionBar extends LinearLayout {
 		}
 	};
 	
-	
+	private OnClickListener menuButtonListener = new OnClickListener () {
+		public void onClick (View v) {
+			Log.d("PEN", "clicked");
+			((Activity) getContext()).openOptionsMenu();
+		}
+	};
 	
 	
 	
@@ -157,6 +162,7 @@ class ActionBar extends LinearLayout {
 		menuButton.setBackgroundResource(R.drawable.settings_button_selector);
 		menuButton.setPadding(0, 0, 0, 0);
 		menuButton.setLayoutParams(llButtonParams);
+		menuButton.setOnClickListener(menuButtonListener);
 		this.addView(menuButton);
 		
 		

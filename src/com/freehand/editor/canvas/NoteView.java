@@ -1,4 +1,4 @@
-package com.freehand.note_editor;
+package com.freehand.editor.canvas;
 
 import com.freehand.ink.MiscGeom;
 import android.content.Context;
