@@ -16,7 +16,7 @@ class AnchorWindow {
 	private boolean closedByAnchorTouch = false;
 	
 	@SuppressWarnings("deprecation")
-	public AnchorWindow (View anchorView, View contentView, int width, int height) {
+	public AnchorWindow (final View anchorView, final View contentView, final int width, final int height) {
 		mAnchor = anchorView;
 		mContent = contentView;
 		
@@ -46,7 +46,7 @@ class AnchorWindow {
 				} else {
 					closedByAnchorTouch = false;
 				}
-
+				
 				return false;
 			}
 		});

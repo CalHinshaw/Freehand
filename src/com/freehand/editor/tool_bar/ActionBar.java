@@ -1,11 +1,11 @@
 package com.freehand.editor.tool_bar;
 
 import com.calhounroberthinshaw.freehand.R;
-import android.app.Activity;
 import android.content.Context;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Vibrator;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.Button;
@@ -16,8 +16,6 @@ import android.widget.RadioGroup;
 
 public class ActionBar extends LinearLayout {
 	private IActionBarListener mListener = null;
-	
-	private final AnchorWindow mEraseMenuWindow;
 
 	private final int buttonWidth = (int) (40 * getResources().getDisplayMetrics().density);
 	private final int buttonMargin = (int) (4 * getResources().getDisplayMetrics().density);
@@ -30,12 +28,14 @@ public class ActionBar extends LinearLayout {
 	private final View menuButtonSpacer;
 	private final Button menuButton;
 	
+	private final AnchorWindow mEraseMenuWindow;
 	private float eraserSize = 6.0f;
 	
+	private final PopupWindow mMenuWindow;
 	
 	
 	
-	private CompoundButton.OnCheckedChangeListener eraseButtonCheckListener = new CompoundButton.OnCheckedChangeListener() {
+	private final CompoundButton.OnCheckedChangeListener eraseButtonCheckListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
 				mListener.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
@@ -43,7 +43,7 @@ public class ActionBar extends LinearLayout {
 		}
 	};
 	
-	private View.OnClickListener eraseButtonClickListener = new View.OnClickListener() {
+	private final View.OnClickListener eraseButtonClickListener = new View.OnClickListener() {
 		public void onClick(View v) {
 			if (mEraseMenuWindow.lastClosedByAnchorTouch() == true) {
 				return;
@@ -57,7 +57,7 @@ public class ActionBar extends LinearLayout {
 		}
 	};
 	
-	private OnLongClickListener eraseButtonLongClickListener = new OnLongClickListener () {
+	private final OnLongClickListener eraseButtonLongClickListener = new OnLongClickListener () {
 		public boolean onLongClick(View v) {
 			eraserButton.setChecked(true);
 			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
@@ -68,7 +68,7 @@ public class ActionBar extends LinearLayout {
 		}
 	};
 	
-	private CompoundButton.OnCheckedChangeListener selectButtonListener = new CompoundButton.OnCheckedChangeListener() {
+	private final CompoundButton.OnCheckedChangeListener selectButtonListener = new CompoundButton.OnCheckedChangeListener() {
 		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 			if (isChecked == true) {
 				mListener.setTool(IActionBarListener.Tool.STROKE_SELECTOR, 0, 0);
@@ -76,22 +76,21 @@ public class ActionBar extends LinearLayout {
 		}
 	};
 	
-	private OnClickListener undoButtonListener = new OnClickListener () {
+	private final OnClickListener undoButtonListener = new OnClickListener () {
 		public void onClick (View v) {
 			mListener.undo();
 		}
 	};
 	
-	private OnClickListener redoButtonListener = new OnClickListener () {
+	private final OnClickListener redoButtonListener = new OnClickListener () {
 		public void onClick (View v) {
 			mListener.redo();
 		}
 	};
 	
-	private OnClickListener menuButtonListener = new OnClickListener () {
+	private final OnClickListener menuButtonListener = new OnClickListener () {
 		public void onClick (View v) {
-			Log.d("PEN", "clicked");
-			((Activity) getContext()).openOptionsMenu();
+			mMenuWindow.showAtLocation(ActionBar.this, Gravity.TOP + Gravity.RIGHT, 0, ActionBar.this.getHeight() + 2 * buttonMargin);
 		}
 	};
 	
@@ -178,6 +177,26 @@ public class ActionBar extends LinearLayout {
 				mListener.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
 			}
 		});
+		
+		
+		
+		
+		
+		
+		
+		LinearLayout menuView = new LinearLayout(this.getContext());
+		menuView.addView(new Button(this.getContext()));
+		
+		mMenuWindow = new PopupWindow(menuView, LayoutParams.WRAP_CONTENT,  LayoutParams.WRAP_CONTENT);
+		mMenuWindow.setOutsideTouchable(true);
+		mMenuWindow.setBackgroundDrawable(new BitmapDrawable());	// PopupWindow doesn't close on outside touch without background...
+		
+		
+		
+		
+		
+		
+		
 		
 		penButtons[0].setChecked(true);
 	}

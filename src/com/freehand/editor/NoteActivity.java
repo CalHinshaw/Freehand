@@ -189,11 +189,18 @@ public class NoteActivity extends Activity {
 	
 	@Override
 	public boolean onCreateOptionsMenu (Menu menu) {
+		Log.d("PEN", "onCreateOptionsMenu");
+		
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.note_activity_menu, menu);
 		return true;
 	}
 	
+	@Override
+	public void openOptionsMenu () {
+		Log.d("PEN", "openOptionsMenuCalled");
+		super.openOptionsMenu();
+	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
