@@ -2,9 +2,11 @@ package com.freehand.editor.tool_bar;
 
 import com.calhounroberthinshaw.freehand.R;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -20,18 +22,22 @@ public class ActionBar extends LinearLayout {
 	private final int buttonWidth = (int) (40 * getResources().getDisplayMetrics().density);
 	private final int buttonMargin = (int) (4 * getResources().getDisplayMetrics().density);
 	
-	private final Button undoButton;
-	private final Button redoButton;
-	private final PreviousStateAwareRadioButton eraserButton;
-	private final PreviousStateAwareRadioButton selectButton;
+	private final Button undoButton = new Button(this.getContext());
+	private final Button redoButton = new Button(this.getContext());
+	private final PreviousStateAwareRadioButton eraserButton = new PreviousStateAwareRadioButton(this.getContext());
+	private final PreviousStateAwareRadioButton selectButton = new PreviousStateAwareRadioButton(this.getContext());
 	private final PenRadioButton[] penButtons = new PenRadioButton[5];
-	private final View menuButtonSpacer;
-	private final Button menuButton;
+	private final View menuButtonSpacer = new View(this.getContext());
+	private final Button menuButton = new Button(this.getContext());
 	
 	private final AnchorWindow mEraseMenuWindow;
 	private float eraserSize = 6.0f;
 	
 	private final PopupWindow mMenuWindow;
+	private final LinearLayout menuLayout = new LinearLayout(this.getContext());
+	private final Button saveButton = new Button(this.getContext());
+	private final Button shareButton = new Button(this.getContext());
+	private final Button renameButton = new Button(this.getContext());
 	
 	
 	
@@ -94,28 +100,69 @@ public class ActionBar extends LinearLayout {
 		}
 	};
 	
+	private final OnClickListener saveButtonListener = new OnClickListener () {
+		public void onClick(View v) {
+			// TODO Auto-generated method stub
+			
+		}
+	};
+	
+	private final OnClickListener shareButtonListener = new OnClickListener () {
+		public void onClick(View v) {
+			// TODO Auto-generated method stub
+			
+		}
+	};
+	
+	private final OnClickListener renameButtonListener = new OnClickListener () {
+		public void onClick(View v) {
+			// TODO Auto-generated method stub
+			
+		}
+	};
 	
 	
 	
 	
 	
 	
+	
+	@SuppressWarnings("deprecation")
 	public ActionBar(Context context, AttributeSet attributes) {
 		super(context, attributes);
 		
-		// All of the child view declarations happen in here so i can make the member variables that reference them final.
-		// Thanks Java...
+		initBarButtons();
+		initMenuButtons();
 		
+		LinearLayout eraseMenu = (LinearLayout) inflate(getContext(), R.layout.eraser_menu, null);
+		mEraseMenuWindow = new AnchorWindow(eraserButton, eraseMenu, (int) (320 * getResources().getDisplayMetrics().density), LayoutParams.WRAP_CONTENT);
+		
+		final SizeSliderView eraseSizeSlider = (SizeSliderView) eraseMenu.findViewById(R.id.eraser_size_slider);
+		eraseSizeSlider.setActionBarListener(mListener);
+		
+		mEraseMenuWindow.setDismissListener(new PopupWindow.OnDismissListener() {
+			public void onDismiss() {
+				eraserSize = eraseSizeSlider.getSize();
+				mListener.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
+			}
+		});
+		
+		mMenuWindow = new PopupWindow(menuLayout, LayoutParams.WRAP_CONTENT,  LayoutParams.WRAP_CONTENT);
+		mMenuWindow.setOutsideTouchable(true);
+		mMenuWindow.setBackgroundDrawable(new BitmapDrawable());	// PopupWindow doesn't close on outside touch without background...
+		
+		penButtons[0].setChecked(true);
+	}
+	
+	private void initBarButtons () {
 		final LinearLayout.LayoutParams llButtonParams = new LinearLayout.LayoutParams(buttonWidth, buttonWidth);
 		llButtonParams.setMargins(0, 0, buttonMargin, 0);
 		
-		undoButton = new Button(this.getContext());
 		undoButton.setBackgroundResource(R.drawable.undo_button_selector);
 		undoButton.setPadding(0, 0, 0, 0);
 		undoButton.setLayoutParams(llButtonParams);
 		this.addView(undoButton);
 		
-		redoButton = new Button(this.getContext());
 		redoButton.setBackgroundResource(R.drawable.redo_button_selector);
 		redoButton.setPadding(0, 0, 0, 0);
 		redoButton.setLayoutParams(llButtonParams);
@@ -134,12 +181,10 @@ public class ActionBar extends LinearLayout {
 		final RadioGroup.LayoutParams rgButtonParams = new RadioGroup.LayoutParams(buttonWidth, buttonWidth);
 		rgButtonParams.setMargins(0, 0, buttonMargin, 0);
 		
-		selectButton = new PreviousStateAwareRadioButton(this.getContext());
 		selectButton.setButtonDrawable(R.drawable.select_button_selector);
 		selectButton.setLayoutParams(rgButtonParams);
 		toolRadioGroup.addView(selectButton);
 		
-		eraserButton = new PreviousStateAwareRadioButton(this.getContext());
 		eraserButton.setButtonDrawable(R.drawable.erase_button_selector);
 		eraserButton.setLayoutParams(rgButtonParams);
 		toolRadioGroup.addView(eraserButton);
@@ -153,53 +198,31 @@ public class ActionBar extends LinearLayout {
 		this.addView(toolRadioGroup);
 		
 		
-		menuButtonSpacer = new View(this.getContext());
 		menuButtonSpacer.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1.0f));
 		this.addView(menuButtonSpacer);
 		
-		menuButton = new Button(this.getContext());
 		menuButton.setBackgroundResource(R.drawable.settings_button_selector);
 		menuButton.setPadding(0, 0, 0, 0);
 		menuButton.setLayoutParams(llButtonParams);
 		menuButton.setOnClickListener(menuButtonListener);
 		this.addView(menuButton);
-		
-		
-		LinearLayout eraseMenu = (LinearLayout) inflate(getContext(), R.layout.eraser_menu, null);
-		mEraseMenuWindow = new AnchorWindow(eraserButton, eraseMenu, (int) (320 * getResources().getDisplayMetrics().density), LayoutParams.WRAP_CONTENT);
-		
-		final SizeSliderView eraseSizeSlider = (SizeSliderView) eraseMenu.findViewById(R.id.eraser_size_slider);
-		eraseSizeSlider.setActionBarListener(mListener);
-		
-		mEraseMenuWindow.setDismissListener(new PopupWindow.OnDismissListener() {
-			public void onDismiss() {
-				eraserSize = eraseSizeSlider.getSize();
-				mListener.setTool(IActionBarListener.Tool.STROKE_ERASER, eraserSize, 0);
-			}
-		});
-		
-		
-		
-		
-		
-		
-		
-		LinearLayout menuView = new LinearLayout(this.getContext());
-		menuView.addView(new Button(this.getContext()));
-		
-		mMenuWindow = new PopupWindow(menuView, LayoutParams.WRAP_CONTENT,  LayoutParams.WRAP_CONTENT);
-		mMenuWindow.setOutsideTouchable(true);
-		mMenuWindow.setBackgroundDrawable(new BitmapDrawable());	// PopupWindow doesn't close on outside touch without background...
-		
-		
-		
-		
-		
-		
-		
-		
-		penButtons[0].setChecked(true);
 	}
+	
+	private void initMenuButtons () {
+		menuLayout.setOrientation(LinearLayout.VERTICAL);
+		menuLayout.setBackgroundColor(Color.DKGRAY);
+		menuLayout.setPadding(0, buttonMargin, 0, 0);
+		
+		saveButton.setText("Save");
+		menuLayout.addView(saveButton);
+		
+		shareButton.setText("Share");
+		menuLayout.addView(shareButton);
+		
+		renameButton.setText("Rename");
+		menuLayout.addView(renameButton);
+	}
+	
 	
 	public void setActionBarListener (final IActionBarListener newListener) {
 		mListener = newListener;
@@ -256,6 +279,41 @@ public class ActionBar extends LinearLayout {
 			penButtons[checked-2].setChecked(true);
 		} else {
 			penButtons[0].setChecked(true);
+		}
+	}
+	
+	public void toggleHwMenu () {
+		if (mMenuWindow.isShowing() == true) {
+			mMenuWindow.dismiss();
+		} else {
+			mMenuWindow.showAtLocation(this, Gravity.BOTTOM + Gravity.CENTER_HORIZONTAL, 0, 0);
+		}
+	}
+	
+	public boolean hasOpenWindows () {
+		if (mMenuWindow.isShowing()) {
+			return true;
+		}
+		
+		if (mEraseMenuWindow.isShowing()) {
+			return true;
+		}
+		
+		for (PenRadioButton b : penButtons) {
+			if (b.getPenCreatorShowing()) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	public void closeWindows () {
+		mMenuWindow.dismiss();
+		mEraseMenuWindow.dismiss();
+		
+		for (PenRadioButton b : penButtons) {
+			b.closePenCreatorWindow();
 		}
 	}
 	

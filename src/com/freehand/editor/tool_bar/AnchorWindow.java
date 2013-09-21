@@ -62,6 +62,14 @@ class AnchorWindow {
 		mWindow.showAsDropDown(mAnchor);
 	}
 	
+	public boolean isShowing() {
+		return mWindow.isShowing();
+	}
+	
+	public void dismiss() {
+		mWindow.dismiss();
+	}
+	
 	public void setDismissListener (PopupWindow.OnDismissListener newListener) {
 		mWindow.setOnDismissListener(newListener);
 	}

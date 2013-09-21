@@ -189,17 +189,8 @@ public class NoteActivity extends Activity {
 	
 	@Override
 	public boolean onCreateOptionsMenu (Menu menu) {
-		Log.d("PEN", "onCreateOptionsMenu");
-		
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.note_activity_menu, menu);
-		return true;
-	}
-	
-	@Override
-	public void openOptionsMenu () {
-		Log.d("PEN", "openOptionsMenuCalled");
-		super.openOptionsMenu();
+		mActionBar.toggleHwMenu();
+		return false;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -268,8 +259,12 @@ public class NoteActivity extends Activity {
 	
 	@Override
 	public void onBackPressed() {
-		this.finish();
-		overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
+		if (mActionBar.hasOpenWindows() == true) {
+			mActionBar.closeWindows();
+		} else {
+			this.finish();
+			overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
+		}
 	}
 
 

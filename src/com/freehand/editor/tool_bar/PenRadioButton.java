@@ -164,4 +164,12 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	public float getSize() {
 		return size;
 	}
+	
+	public boolean getPenCreatorShowing () {
+		return mPenCreator.isShowing();
+	}
+	
+	public void closePenCreatorWindow() {
+		mPenCreator.dismiss();
+	}
 }
