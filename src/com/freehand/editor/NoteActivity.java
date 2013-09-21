@@ -70,6 +70,7 @@ public class NoteActivity extends Activity {
 		mPresenter.setNoteView(mNoteView);
 		
 		mActionBar.setActionBarListener(mPresenter);
+		mActionBar.setNote(mPresenter.getNote());
 	}
 	
 	private float getPressureSensitivity() {
@@ -193,70 +194,6 @@ public class NoteActivity extends Activity {
 		return false;
 	}
 	
-	@SuppressWarnings("unchecked")
-	@Override
-	public boolean onOptionsItemSelected (MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.saveItem:
-			mPresenter.saveNote();
-			return true;
-			
-		case R.id.renameItem:
-			final Dialog dialog = new Dialog(NoteActivity.this);
-	   		 dialog.setContentView(R.layout.new_note_name_dialog);
-	   		 dialog.setTitle("Title");
-
-	   		 Button button = (Button) dialog.findViewById(R.id.submit_new_note_name);
-	   		 button.setOnClickListener(new OnClickListener() {
-	   		     public void onClick(View v) {
-	   		    	 EditText edit=(EditText)dialog.findViewById(R.id.new_note_name);
-	   		         String text=edit.getText().toString();
-
-	   		         dialog.dismiss();
-	   		         mPresenter.renameNote(text);
-	   		     }
-	   		 });   
-	   		 dialog.show();
-	   		 return true;
-	   		 
-		case R.id.shareItem:
-			mPresenter.saveNote();
-			ArrayList<String> toShare = new ArrayList<String>(1);
-			toShare.add(mPresenter.getNote().getPath());
-
-			final ProgressDialog progressDialog = new ProgressDialog(this, ProgressDialog.THEME_HOLO_LIGHT);
-			progressDialog.setProgressNumberFormat(null);
-			progressDialog.setTitle("Preparing to Share");
-			progressDialog.setMessage("Large notes take longer to share, please be patient.");
-			progressDialog.setIndeterminate(false);
-			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			
-			ProgressUpdateFunction updater = new ProgressUpdateFunction() {
-				@Override
-				public void updateProgress(int percentageComplete) {
-					if (percentageComplete > 100) {
-						progressDialog.dismiss();
-					} else {
-						if (progressDialog.isShowing() == false) {
-							progressDialog.show();
-						}
-						
-						progressDialog.setProgress(percentageComplete);
-					}
-					
-				}
-			};
-			
-			new NoteSharer(updater, this).execute(toShare);
-
-			return true;
-	   		 
-	   	default:
-	   		Toast.makeText(this, "Coming Soon!", Toast.LENGTH_LONG).show();
-	   		return super.onOptionsItemSelected(item);
-		}
-	}
-	
 	@Override
 	public void onBackPressed() {
 		if (mActionBar.hasOpenWindows() == true) {
@@ -266,6 +203,4 @@ public class NoteActivity extends Activity {
 			overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
 		}
 	}
-
-
 }

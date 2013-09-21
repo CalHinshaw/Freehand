@@ -8,7 +8,7 @@
         android:id="@+id/textView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enter New Note Name"
+        android:text="Enter the note's new name"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <EditText
@@ -23,6 +23,6 @@
         android:id="@+id/submit_new_note_name"
         android:layout_width="fill_parent"
         android:layout_height="0.5in"
-        android:text="@string/new_note" />
+        android:text="Rename Note" />
  
 </LinearLayout>

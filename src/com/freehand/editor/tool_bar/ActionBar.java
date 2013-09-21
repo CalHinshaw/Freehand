@@ -1,6 +1,15 @@
 package com.freehand.editor.tool_bar;
 
+import java.util.ArrayList;
+
 import com.calhounroberthinshaw.freehand.R;
+import com.freehand.editor.NoteActivity;
+import com.freehand.editor.canvas.Note;
+import com.freehand.share.NoteSharer;
+import com.freehand.share.ProgressUpdateFunction;
+
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -10,14 +19,18 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 
 public class ActionBar extends LinearLayout {
 	private IActionBarListener mListener = null;
+	private Note mNote;
 
 	private final int buttonWidth = (int) (40 * getResources().getDisplayMetrics().density);
 	private final int buttonMargin = (int) (4 * getResources().getDisplayMetrics().density);
@@ -102,22 +115,66 @@ public class ActionBar extends LinearLayout {
 	
 	private final OnClickListener saveButtonListener = new OnClickListener () {
 		public void onClick(View v) {
-			// TODO Auto-generated method stub
-			
+			if (mNote.save() == true) {
+				Toast.makeText(getContext(), "Save successful!", Toast.LENGTH_SHORT).show();
+			} else {
+				Toast.makeText(getContext(), "Save failed, please try again.", Toast.LENGTH_LONG).show();
+			}
+			mMenuWindow.dismiss();
 		}
 	};
 	
 	private final OnClickListener shareButtonListener = new OnClickListener () {
+		@SuppressWarnings("unchecked")
 		public void onClick(View v) {
-			// TODO Auto-generated method stub
+			mNote.save();
+			ArrayList<String> toShare = new ArrayList<String>(1);
+			toShare.add(mNote.getPath());
+
+			final ProgressDialog progressDialog = new ProgressDialog(getContext(), ProgressDialog.THEME_HOLO_LIGHT);
+			progressDialog.setProgressNumberFormat(null);
+			progressDialog.setTitle("Preparing to Share");
+			progressDialog.setMessage("Large notes take longer to share, please be patient.");
+			progressDialog.setIndeterminate(false);
+			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 			
+			ProgressUpdateFunction updater = new ProgressUpdateFunction() {
+				@Override
+				public void updateProgress(int percentageComplete) {
+					if (percentageComplete > 100) {
+						progressDialog.dismiss();
+					} else {
+						if (progressDialog.isShowing() == false) {
+							progressDialog.show();
+						}
+						
+						progressDialog.setProgress(percentageComplete);
+					}
+				}
+			};
+			
+			new NoteSharer(updater, getContext()).execute(toShare);
+			mMenuWindow.dismiss();
 		}
 	};
 	
 	private final OnClickListener renameButtonListener = new OnClickListener () {
 		public void onClick(View v) {
-			// TODO Auto-generated method stub
-			
+			final Dialog dialog = new Dialog(getContext());
+	   		 dialog.setContentView(R.layout.new_note_name_dialog);
+	   		 dialog.setTitle("Rename Note");
+
+	   		 Button button = (Button) dialog.findViewById(R.id.submit_new_note_name);
+	   		 button.setOnClickListener(new OnClickListener() {
+	   		     public void onClick(View v) {
+	   		    	 EditText edit = (EditText)dialog.findViewById(R.id.new_note_name);
+	   		    	 String text = edit.getText().toString();
+	   		    	 dialog.dismiss();
+	   		    	 mNote.rename(text);
+	   		    }
+	   		});   
+	   		dialog.show();
+	   		mMenuWindow.dismiss();
 		}
 	};
 	
@@ -214,12 +271,18 @@ public class ActionBar extends LinearLayout {
 		menuLayout.setPadding(0, buttonMargin, 0, 0);
 		
 		saveButton.setText("Save");
+		saveButton.setTextSize(20);
+		saveButton.setGravity(Gravity.LEFT);
 		menuLayout.addView(saveButton);
 		
 		shareButton.setText("Share");
+		shareButton.setTextSize(20);
+		shareButton.setGravity(Gravity.LEFT);
 		menuLayout.addView(shareButton);
 		
 		renameButton.setText("Rename");
+		renameButton.setTextSize(20);
+		renameButton.setGravity(Gravity.LEFT);
 		menuLayout.addView(renameButton);
 	}
 	
@@ -239,6 +302,14 @@ public class ActionBar extends LinearLayout {
 		for (PenRadioButton b : penButtons) {
 			b.setListener(newListener);
 		}
+	}
+	
+	public void setNote (Note newNote) {
+		mNote = newNote;
+		
+		saveButton.setOnClickListener(saveButtonListener);
+		shareButton.setOnClickListener(shareButtonListener);
+		renameButton.setOnClickListener(renameButtonListener);
 	}
 	
 	public void setPens (final int colors[], final float sizes[]) {
