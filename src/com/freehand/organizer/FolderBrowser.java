@@ -14,6 +14,7 @@ import com.freehand.share.ProgressUpdateFunction;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -84,22 +85,29 @@ public class FolderBrowser extends HorizontalScrollView {
 		this.addView(mLayout);
 	}
 	
+
+	
 	@Override
-	protected void onLayout (boolean changed, int left, int top, int right, int bottom) {
-		final int screenWidth = right-left;
+	protected void onMeasure (final int width, final int height) {
+		super.onMeasure(width, height);
+		setFolderWidthFields(this.getMeasuredWidth());
+		
+		final int wSpec = MeasureSpec.makeMeasureSpec(pxPerFolder, MeasureSpec.EXACTLY);
+		final int hSpec = MeasureSpec.makeMeasureSpec(getMeasuredHeight(), MeasureSpec.EXACTLY);
+		for (int i = 0; i < mLayout.getChildCount(); i++) {
+			mLayout.getChildAt(i).getLayoutParams().width = pxPerFolder;
+			mLayout.getChildAt(i).measure(wSpec, hSpec);
+		}
+	}
+
+	private void setFolderWidthFields (final int width) {
 		final float scale = getResources().getDisplayMetrics().density;
 		final float minFolderWidthPx = MIN_FOLDER_WIDTH_DIP * scale;
-		final int numFoldersToShow = (int) (screenWidth/minFolderWidthPx);
-		final int folderWidth = (int) (screenWidth/numFoldersToShow) - dividerWidth;
+		final int numFoldersToShow = (int) (width/minFolderWidthPx);
+		final int folderWidth = (int) (width/numFoldersToShow) - dividerWidth;
 		
 		pxPerFolder = folderWidth;
 		foldersPerScreen = numFoldersToShow;
-		
-		super.onLayout(changed, left, top, right, bottom);
-		
-		for (int i = 0; i < mLayout.getChildCount(); i++) {
-			mLayout.getChildAt(i).getLayoutParams().width = pxPerFolder;
-		}
 	}
 	
 	public void setRootDirectory (File root) {
@@ -328,7 +336,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		return selections.contains(toToggle);
 	}
 	
-	public void cancleSelections () {
+	public void cancelSelections () {
 		selections.clear();
 		notifyChildrenOfDatasetChange();
 		invalidateChildren();
@@ -340,11 +348,11 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	private void selectionsChanged () {
-		if (selections.size() == 0) {
-			mActivity.setDefaultActionBarOn();
-		} else {
-			mActivity.setItemsSelectedActionBarOn();
-		}
+		mActivity.setActionBar(selections.size());
+	}
+	
+	public int getNumSelections () {
+		return selections.size();
 	}
 	
 	
@@ -367,7 +375,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 		
 		notifyChildrenOfFolderMutation();
-		cancleSelections();
+		cancelSelections();
 	}
 	
 	public void deleteSelections () {
@@ -385,7 +393,7 @@ public class FolderBrowser extends HorizontalScrollView {
 				if (numFailures > 0) {
 					Toast.makeText(getContext(), "Failed to delete " + Integer.toString(numFailures)+ " files, please try again.", Toast.LENGTH_SHORT).show();
 				}
-				cancleSelections();
+				cancelSelections();
 				notifyChildrenOfFolderMutation();
 			}
 		};
@@ -465,6 +473,23 @@ public class FolderBrowser extends HorizontalScrollView {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public void renameSelection () {
+		final File selection = selections.iterator().next();
+		String defaultInput = selection.getName().replace(".note", "");
+		final NewItemFn onFinish = new NewItemFn() {
+			@Override
+			public void function(String s) {
+				closeSelectedFolders();
+				cancelSelections();
+				selection.renameTo(new File(selection.getParentFile(), s + (selection.isDirectory()? "" : ".note")));
+				getViewDisplayingFile(selection.getParentFile()).notifyFolderMutated();
+			}
+		};
+		
+		DialogFragment d = new NewItemDialog("Rename Selected Item", "Enter the new name of the file.", defaultInput, "Rename", "Cancel", onFinish);
+		d.show(mActivity.getFragmentManager(), "Rename");
 	}
 	
 	

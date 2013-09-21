@@ -2,7 +2,6 @@
 	 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     
-    
     <CheckBoxPreference
         android:title="Draw with capacitive device"
     	android:summary="Draw with a capacative device like a finger or soft-tipped stylus instead of just an active stylus."
@@ -16,5 +15,13 @@
         android:key = "pressure_sensitivity"
         android:defaultValue = "40"
         android:persistent = "true" />
+    
+    <Preference
+        android:key="openTutorial"
+        android:title="Open Tutorial" >
+        
+        <intent android:action="open_tutorial"/> 
+        
+    </Preference>
         
 </PreferenceScreen>
