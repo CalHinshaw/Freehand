@@ -3,7 +3,6 @@ package com.freehand.editor.tool_bar;
 import java.util.ArrayList;
 
 import com.calhounroberthinshaw.freehand.R;
-import com.freehand.editor.NoteActivity;
 import com.freehand.editor.canvas.Note;
 import com.freehand.share.NoteSharer;
 import com.freehand.share.ProgressUpdateFunction;
@@ -13,13 +12,12 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.PaintDrawable;
 import android.os.Vibrator;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -266,23 +264,35 @@ public class ActionBar extends LinearLayout {
 	}
 	
 	private void initMenuButtons () {
+		final int dividerHeight = (int) (2*getResources().getDisplayMetrics().density + 1);
+		
 		menuLayout.setOrientation(LinearLayout.VERTICAL);
 		menuLayout.setBackgroundColor(Color.DKGRAY);
-		menuLayout.setPadding(0, buttonMargin, 0, 0);
+		menuLayout.setPadding(dividerHeight, 0, dividerHeight, 0);
+		
+		
+		final PaintDrawable divider = new PaintDrawable(Color.DKGRAY);
+		divider.setIntrinsicHeight(dividerHeight);
+		menuLayout.setDividerDrawable(divider);
+		menuLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING + LinearLayout.SHOW_DIVIDER_MIDDLE + LinearLayout.SHOW_DIVIDER_END);
+		
 		
 		saveButton.setText("Save");
 		saveButton.setTextSize(20);
 		saveButton.setGravity(Gravity.LEFT);
+		saveButton.setBackgroundResource(R.drawable.organizer_button);
 		menuLayout.addView(saveButton);
 		
 		shareButton.setText("Share");
 		shareButton.setTextSize(20);
 		shareButton.setGravity(Gravity.LEFT);
+		shareButton.setBackgroundResource(R.drawable.organizer_button);
 		menuLayout.addView(shareButton);
 		
 		renameButton.setText("Rename");
 		renameButton.setTextSize(20);
 		renameButton.setGravity(Gravity.LEFT);
+		renameButton.setBackgroundResource(R.drawable.organizer_button);
 		menuLayout.addView(renameButton);
 	}
 	
