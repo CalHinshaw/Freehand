@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 
@@ -88,7 +89,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 		samplePaint.setAntiAlias(true);
 		
 		selectedPaint.setColor(0xFF33B5E5);
-		selectedPaint.setStrokeWidth(6);
+		selectedPaint.setStrokeWidth(4.0f);
 		selectedPaint.setStyle(Paint.Style.STROKE);
 		selectedPaint.setStrokeJoin(Paint.Join.MITER);
 		selectedPaint.setStrokeCap(Paint.Cap.BUTT);
@@ -130,7 +131,8 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 		sampleX = (float) (w/2);
 		sampleY = (float) (h/2);
 		
-		selectedRect = new Rect(3, 3, w-3, h-3);
+		
+		selectedRect = new Rect(2, 2, w-2, h-2);
 	}
 	
 	@Override
@@ -150,7 +152,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	public void onPenChanged(int newColor, float newSize) {
 		setPen(newColor, newSize);
 		
-		if (mListener != null) {
+		if (isChecked() == true && mListener != null) {
 			mListener.setTool(IActionBarListener.Tool.PEN, size*dipScale, color);
 		}
 		
