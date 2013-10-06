@@ -205,8 +205,6 @@ public class ActionBar extends LinearLayout {
 		mMenuWindow = new PopupWindow(menuLayout, LayoutParams.WRAP_CONTENT,  LayoutParams.WRAP_CONTENT);
 		mMenuWindow.setOutsideTouchable(true);
 		mMenuWindow.setBackgroundDrawable(new BitmapDrawable());	// PopupWindow doesn't close on outside touch without background...
-		
-		penButtons[0].setChecked(true);
 	}
 	
 	private void initBarButtons () {
