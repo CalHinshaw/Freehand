@@ -7,7 +7,7 @@
     <string name="new_note">Create New Note</string>
     <string name="new_folder">Create New Folder</string>
     <string name="show_all_notes">Show All Notes</string>
-    <string name="cancel">Cancel Selection/Drag</string>
+    <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
     <string name="share_button">Share</string>
     <string name="preferences">Preferences</string>
