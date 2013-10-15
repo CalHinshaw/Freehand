@@ -1,32 +1,19 @@
 package com.freehand.editor;
 
-import java.util.ArrayList;
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.NoteEditorController;
 import com.freehand.editor.canvas.NoteView;
 import com.freehand.editor.tool_bar.ActionBar;
-import com.freehand.share.NoteSharer;
-import com.freehand.share.ProgressUpdateFunction;
-
 import android.app.Activity;
-import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
 
 public class NoteActivity extends Activity {
 	private NoteEditorController mPresenter;
