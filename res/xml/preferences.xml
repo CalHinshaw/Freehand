@@ -15,13 +15,5 @@
         android:key = "pressure_sensitivity"
         android:defaultValue = "40"
         android:persistent = "true" />
-    
-    <Preference
-        android:key="openTutorial"
-        android:title="Open Tutorial" >
-        
-        <intent android:action="open_tutorial"/> 
-        
-    </Preference>
         
 </PreferenceScreen>
