@@ -1,7 +1,10 @@
 package com.freehand.editor.tool_bar;
 
 
+import com.freehand.tutorial.TutorialPrefs;
+
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -46,7 +49,10 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
 				PenRadioButton.this.mPenCreator.show();
+				setTutorialToOff();
 			}
+			
+			triggerTutorial();
 		}
 	};
 	
@@ -56,6 +62,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			vibrator.vibrate(40);
 			PenRadioButton.this.mPenCreator.show();
+			setTutorialToOff();
 			
 			return true;
 		}
@@ -172,5 +179,25 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	
 	public void closePenCreatorWindow() {
 		mPenCreator.dismiss();
+	}
+	
+	
+	// *************************************** Tutorial Methods ************************************
+	
+	private void triggerTutorial() {
+		final SharedPreferences prefs = TutorialPrefs.getPrefs();
+		if (prefs == null) return;
+		boolean used = prefs.getBoolean("tool_dropdown_used", false);
+		if (used == false) {
+			TutorialPrefs.toast("Tap button again to display dropdown menu");
+		}
+	}
+	
+	private void setTutorialToOff() {
+		final SharedPreferences prefs = TutorialPrefs.getPrefs();
+		if (prefs == null) return;
+		if (prefs.getBoolean("tool_dropdown_used", false) == true) return;
+		TutorialPrefs.toast("The eraser also has a dropdown menu");
+		prefs.edit().putBoolean("tool_dropdown_used", true).apply();
 	}
 }

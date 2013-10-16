@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -17,6 +18,7 @@ import com.freehand.ink.MiscPolyGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
+import com.freehand.tutorial.TutorialPrefs;
 
 
 public class StrokeSelector implements ICanvasEventListener {
@@ -157,6 +159,7 @@ public class StrokeSelector implements ICanvasEventListener {
 		
 		// Calculate the AABB of selectedStrokes
 		if (selectedStrokes.size() > 0) {
+			triggerTutorial();
 			for (Integer i : selectedStrokes) {
 				if (selRect == null) {
 					selRect = new RectF(currentStrokes.get(i).getAABoundingBox());
@@ -331,6 +334,7 @@ public class StrokeSelector implements ICanvasEventListener {
 	}
 	
 	private void applyTransToNote () {
+		setTutorialToOff();
 		ArrayList<Action> actions = new ArrayList<Action>(selectedStrokes.size()*2);
 		
 		float dZoom = currentDist / initDist;
@@ -383,5 +387,26 @@ public class StrokeSelector implements ICanvasEventListener {
 		
 		currentMid = null;
 		currentDist = null;
+	}
+	
+	
+	
+	// *************************************** Tutorial Methods ************************************
+	
+	private void triggerTutorial() {
+		final SharedPreferences prefs = TutorialPrefs.getPrefs();
+		if (prefs == null) return;
+		boolean used = prefs.getBoolean("move_resize_used", false);
+		if (used == false) {
+			TutorialPrefs.toast("Pinch inside blue rectangle to move and resize selections");
+		}
+	}
+	
+	private void setTutorialToOff() {
+		final SharedPreferences prefs = TutorialPrefs.getPrefs();
+		if (prefs == null) return;
+		if (prefs.getBoolean("move_resize_used", false) == true) return;
+		TutorialPrefs.toast("Pinching outside of the rectangle pans and zooms like usual");
+		prefs.edit().putBoolean("move_resize_used", true).apply();
 	}
 }

@@ -5,6 +5,8 @@ import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.NoteEditorController;
 import com.freehand.editor.canvas.NoteView;
 import com.freehand.editor.tool_bar.ActionBar;
+import com.freehand.tutorial.TutorialPrefs;
+
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -94,6 +96,8 @@ public class NoteActivity extends Activity {
 		mActionBar.setPens(colors, sizes);
 		
 		mActionBar.setCheckedButton(checkedOnPause);
+		
+		TutorialPrefs.setContext(this);
 	}
 	
 
@@ -117,6 +121,8 @@ public class NoteActivity extends Activity {
 		savePenPrefs(mPrefs, colors, sizes);
 		
 		checkedOnPause = mActionBar.getCheckedButton();
+		
+		TutorialPrefs.clear();
 	}
 	
 	private void initPenPrefs (SharedPreferences mPrefs) {

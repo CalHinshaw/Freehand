@@ -6,6 +6,7 @@ import com.calhounroberthinshaw.freehand.R;
 
 import com.freehand.preferences.PrefActivity;
 import com.freehand.tutorial.TutorialActivity;
+import com.freehand.tutorial.TutorialPrefs;
 
 import android.os.Bundle;
 import android.os.Environment;
@@ -288,6 +289,13 @@ public class MainMenuActivity extends Activity {
     @Override
     protected void onResume() {
     	super.onResume();
+    	TutorialPrefs.setContext(this);
+    }
+    
+    @Override
+    protected void onPause() {
+    	super.onPause();
+    	TutorialPrefs.clear();
     }
 
     @Override

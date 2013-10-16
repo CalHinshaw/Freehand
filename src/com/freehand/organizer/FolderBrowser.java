@@ -11,6 +11,7 @@ import java.util.TreeSet;
 
 import com.freehand.share.NoteSharer;
 import com.freehand.share.ProgressUpdateFunction;
+import com.freehand.tutorial.TutorialPrefs;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -19,6 +20,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -42,8 +44,8 @@ public class FolderBrowser extends HorizontalScrollView {
 	private static final float MIN_FOLDER_WIDTH_DIP = 300;
 	
 	private MainMenuActivity mActivity;
-	
 	private final LinearLayout mLayout = new LinearLayout(this.getContext());
+	private File root;
 	
 	private final Set<File> selections = new TreeSet<File>();
 	private File selectedFolder;
@@ -111,6 +113,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void setRootDirectory (File root) {
+		this.root = root;
 		mLayout.removeAllViews();
 		openFolder(root);
 	}
@@ -329,9 +332,15 @@ public class FolderBrowser extends HorizontalScrollView {
 	 * @return true if the file is now selected, false if it is no longer selected
 	 */
 	public boolean toggleSelection(File toToggle) {
+		final int initSels = selections.size();
 		if (selections.remove(toToggle) == false) {
 			selections.add(toToggle);
 		}
+		
+		if (initSels == 0 && selections.size() == 1 && userHasFolder()) {
+			triggerTutorial();
+		}
+		
 		selectionsChanged();
 		return selections.contains(toToggle);
 	}
@@ -376,6 +385,7 @@ public class FolderBrowser extends HorizontalScrollView {
 		
 		notifyChildrenOfFolderMutation();
 		cancelSelections();
+		setTutorialToOff();
 	}
 	
 	public void deleteSelections () {
@@ -672,6 +682,13 @@ public class FolderBrowser extends HorizontalScrollView {
 		}
 	}
 	
+	private boolean userHasFolder () {
+		for (File f : root.listFiles()) {
+			if (f.isDirectory()) return true;
+		}
+		return false;
+	}
+	
 	
 	
 	//************************************** Persistent scrolling **********************************
@@ -706,5 +723,25 @@ public class FolderBrowser extends HorizontalScrollView {
 			scrollInProgress = false;
 			invalidate();
 		}
+	}
+	
+	
+	// *************************************** Tutorial Methods ************************************
+	
+	private void triggerTutorial() {
+		final SharedPreferences prefs = TutorialPrefs.getPrefs();
+		if (prefs == null) return;
+		boolean used = prefs.getBoolean("drag_to_move_used", false);
+		if (used == false) {
+			TutorialPrefs.toast("Drag the selected items to move them to another folder");
+		}
+	}
+	
+	private void setTutorialToOff() {
+		final SharedPreferences prefs = TutorialPrefs.getPrefs();
+		if (prefs == null) return;
+		if (prefs.getBoolean("drag_to_move_used", false) == true) return;
+		TutorialPrefs.toast("You can also drag items onto Action Bar buttons");
+		prefs.edit().putBoolean("drag_to_move_used", true).apply();
 	}
 }
