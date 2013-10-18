@@ -57,13 +57,6 @@ public class FolderView extends ListView {
 	private boolean watchingForDrag = false;
 	private PointF dragWatcherStartPos = null;
 	private boolean selectionAddedThisEvent = false;
-
-	// These store the persistent information for all of the drag gestures
-	private long actionTimeMarker = 0;
-	private int indexOfFileUnderDrag = -1;
-	private boolean drawScrollUpHighlight = false;
-	private boolean drawScrollDownHighlight = false;
-	private boolean dropHighlight = false;
 	
 	private final Timer mTimer = new Timer(true);
 	private TimerTask currentLongClick;
@@ -198,76 +191,68 @@ public class FolderView extends ListView {
 	
 	//*********************************************************** Handle drag events that are in progress **********************************************
 	
+	
+	private static final int STATE_RESTING = -4;
+	private static final int STATE_FOLDER = -3;
+	private static final int STATE_DOWN = -2;
+	private static final int STATE_UP = -1;
+	
+	private int dragState = STATE_RESTING;
+	private long timeOfLastStateTransition = System.currentTimeMillis();
+	
 	public void dragListener (float x, float y) {
 		// Wait for animations to finish before doing stuff
 		if (this.getAnimation() != null && !this.getAnimation().hasEnded()) {
-			resetDragState();
-			return;
-		}
-
-		// Watch to see if the user wants to scroll up, reset the timer and return if we do
-		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(-1)) {
-			this.smoothScrollBy(-SCROLL_DISTANCE, SCROLL_DURATION);
-			resetDragState();
-			drawScrollUpHighlight = true;
-			invalidate();
+			dragState = STATE_RESTING;
+			timeOfLastStateTransition = System.currentTimeMillis();
 			return;
 		}
 		
-		// Watch to see if user wants to scroll down, reset the timer and return if we do
-		if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(1)) {
-			this.smoothScrollBy(SCROLL_DISTANCE, SCROLL_DURATION);
-			resetDragState();
-			drawScrollDownHighlight = true;
-			invalidate();
-			return;
-		}
-		
-		// Watch to see if the user wants to open a folder
 		final int indexUnderPointer = this.pointToPosition((int) x, (int) y);
-		if (indexUnderPointer == -1 || mAdapter.getItem(indexUnderPointer).isFile()) {
-			resetDragState();
-			dropHighlight = true;
-			return;
+		int newState = STATE_RESTING;
+		
+		if (y < this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(-1)) {								// Scroll up
+			this.smoothScrollBy(-SCROLL_DISTANCE, SCROLL_DURATION);
+			newState = STATE_UP;
+		} else if (y > this.getHeight() - this.getHeight() * SCROLL_REGION_MULTIPLIER && this.canScrollVertically(1)) {		// Scroll down
+			this.smoothScrollBy(SCROLL_DISTANCE, SCROLL_DURATION);
+			newState = STATE_DOWN;
+		} else if (indexUnderPointer == -1 || mAdapter.getItem(indexUnderPointer).isFile() ||								// Drop on this view
+			mBrowser.getFileSelectionStatus(mAdapter.getItem(indexUnderPointer)) == true) {
+			newState = STATE_FOLDER;
+		} else {																											// Drop on folder under pointer
+			newState = indexUnderPointer;
 		}
 		
-		// Reset actionTimeMarker if the folder we're hovering over changes
-		if (indexOfFileUnderDrag != indexUnderPointer) {
-			resetDragState();
-			indexOfFileUnderDrag = indexUnderPointer;
-			actionTimeMarker = System.currentTimeMillis();
+		// Make state transition
+		if (newState != dragState) {
+			timeOfLastStateTransition = System.currentTimeMillis();
+			dragState = newState;
+			invalidate();
 		}
 		
-		final File fileUnderDrag = mAdapter.getItem(indexOfFileUnderDrag);
-		if (System.currentTimeMillis()-actionTimeMarker >= DRAG_ACTION_TIMER && mBrowser.getDisplayStatus(fileUnderDrag) == false) {
+		// Open folder if we've been hovering for DRAG_ACTION_TIMER milliseconds
+		if (dragState >= 0 && System.currentTimeMillis()-timeOfLastStateTransition >= DRAG_ACTION_TIMER) {
+			final File fileUnderDrag = mAdapter.getItem(dragState);
 			mBrowser.openFile(fileUnderDrag);
 			mAdapter.notifyDataSetChanged();
+			invalidate();
 		}
-		
-		this.invalidate();
 	}
 	
 	public File getDropTarget () {
-		if (indexOfFileUnderDrag == -1) {
+		if (dragState < 0) {
 			return folder;
 		} else {
-			return mAdapter.getItem(indexOfFileUnderDrag);
+			return mAdapter.getItem(dragState);
 		}
 	}
 	
-	private void resetDragState () {
-		actionTimeMarker = 0;
-		indexOfFileUnderDrag = -1;
-		
-		drawScrollUpHighlight = false;
-		drawScrollDownHighlight = false;
-		dropHighlight = false;
-	}
-	
 	public void dragExitedListener () {
-		resetDragState();
-		this.invalidate();
+		dragState = STATE_RESTING;
+		timeOfLastStateTransition = System.currentTimeMillis();
 		mAdapter.notifyDataSetChanged();
+		this.invalidate();
 	}
 	
 	// Returns null if view at wantedPosition isn't on screen or wanted position doesn't exist
@@ -298,23 +283,29 @@ public class FolderView extends ListView {
 		Paint highlightPaint = new Paint();
 		highlightPaint.setAntiAlias(true);
 		
-		if (drawScrollUpHighlight) {
+		if (dragState == STATE_UP) {
 			highlightRect = new Rect(0, 0, this.getWidth(), (int)(this.getHeight()*SCROLL_REGION_MULTIPLIER));
 			highlightShader = new LinearGradient(0, 0, 0, this.getHeight()*SCROLL_REGION_MULTIPLIER, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			highlightPaint.setShader(highlightShader);
 			highlightPaint.setStyle(Paint.Style.FILL);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (drawScrollDownHighlight) {
+		} else if (dragState == STATE_DOWN) {
 			highlightRect = new Rect(0, this.getHeight()-(int)(this.getHeight()*SCROLL_REGION_MULTIPLIER), this.getWidth(), this.getHeight());
 			highlightShader = new LinearGradient(0, this.getHeight(), 0, this.getHeight() - this.getHeight()*SCROLL_REGION_MULTIPLIER, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			highlightPaint.setShader(highlightShader);
 			highlightPaint.setStyle(Paint.Style.FILL);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (indexOfFileUnderDrag >= 0) {
-			final File fileUnderDrag = mAdapter.getItem(indexOfFileUnderDrag);
-			final View v = getViewAtPosition(indexOfFileUnderDrag);
+		} else if (dragState == STATE_FOLDER) {
+			highlightPaint.setColor(ORANGE_HIGHLIGHT);
+			highlightPaint.setStrokeWidth(6);
+			highlightPaint.setStyle(Paint.Style.STROKE);
+			highlightRect = new Rect(3, this.getScrollY()+3, getWidth()-3, this.getHeight()-3);
+			canvas.drawRect(highlightRect, highlightPaint);
+		} else if (dragState >= 0) {
+			final File fileUnderDrag = mAdapter.getItem(dragState);
+			final View v = getViewAtPosition(dragState);
 			if (mBrowser.getDisplayStatus(fileUnderDrag) == false) {
 				highlightRect = new Rect((int)(v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), v.getRight(), v.getBottom());
 				highlightShader = new LinearGradient(v.getRight(), v.getTop(), (v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
@@ -329,24 +320,9 @@ public class FolderView extends ListView {
 			highlightPaint.setStyle(Paint.Style.STROKE);
 			highlightRect = new Rect(v.getLeft()+2, v.getTop()+2, v.getRight()-2, v.getBottom()-2);
 			canvas.drawRect(highlightRect, highlightPaint);
-		} else if (dropHighlight == true) {
-			highlightPaint.setColor(ORANGE_HIGHLIGHT);
-			highlightPaint.setStrokeWidth(6);
-			highlightPaint.setStyle(Paint.Style.STROKE);
-			highlightRect = new Rect(3, this.getScrollY()+3, getWidth()-3, this.getHeight()-3);
-			canvas.drawRect(highlightRect, highlightPaint);
 		}
-	}
-	
-	public void notifyDataSetChanged () {
-		mAdapter.notifyDataSetChanged();
-	}
-	
-	public void notifyFolderMutated () {
-		mAdapter.notifyFolderMutated();
-	}
-	
-	
+	}	
+
 	
 	//****************************************** LongClick timing code ************************************
 	
@@ -379,6 +355,16 @@ public class FolderView extends ListView {
 		}
 	}
 
+	
+	//********************************************** change listeners ******************************************
+	
+	public void notifyDataSetChanged () {
+		mAdapter.notifyDataSetChanged();
+	}
+	
+	public void notifyFolderMutated () {
+		mAdapter.notifyFolderMutated();
+	}
 	
 	
 	private class FolderAdapter extends ArrayAdapter<File> {
