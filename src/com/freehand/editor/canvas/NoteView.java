@@ -1,28 +1,41 @@
 package com.freehand.editor.canvas;
 
+import com.freehand.editor.tool_bar.IActionBarListener;
+import com.freehand.editor.tool_bar.IActionBarListener.Tool;
 import com.freehand.ink.MiscGeom;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
-public class NoteView extends View {
-	private IScreenEventListener mListener;
+public class NoteView extends View implements IActionBarListener, ICanvScreenConverter {
+	private Note mNote;
+	private ITool currentTool = new Pen(mNote, mConverter, pressureSensitivity, Color.BLACK, 6.0f);
 	
-	private boolean capDrawing = true;
+	// The transformation matrix transforms the stuff drawn to the canvas as if (0, 0) is the upper left hand corner of the screen,
+	// not the View the canvas is drawing to. The offsets fix that.
+	private float canvOffsetX = -1;
+	private float canvOffsetY = -1;
 	
-	private float previousX = Float.NaN;
-	private float previousY = Float.NaN;
-	private float previousDistance = Float.NaN;
-	private RectF prevBoundingRect = null;
+	private float zoomMult = 1;
+	private float canvX = 0;
+	private float canvY = 0;
+	private Matrix transMat = new Matrix();
 	
-	private boolean currentlyPanZoom = false;
-	private boolean canDraw = true;
+	private boolean capacitiveDrawing = true;
+	
+	private float prevX = Float.NaN;
+	private float prevY = Float.NaN;
+	private float prevDist = Float.NaN;
 	
 	private float stylusPressureCutoff = 2.0f;
+	private float pressureSensitivity = 0.50f;
 	
 //************************************* Constructors ************************************************
 
@@ -49,141 +62,169 @@ public class NoteView extends View {
 		}
 	}
 
-//************************************* Outward facing methods **************************************	
-
-	public void setListener (IScreenEventListener newListener) {
-		mListener = newListener;
-	}
+//************************************* Outward facing class methods **************************************
 	
 	public void setUsingCapDrawing (boolean usingCapDrawing) {
-		capDrawing = usingCapDrawing;
+		capacitiveDrawing = usingCapDrawing;
 	}
+	
+	public void setNote (final Note note) {
+		mNote = note;
+		invalidate();
+	}
+	
+	public void setPressureSensitivity (final float sensitivity) {
+		pressureSensitivity = sensitivity;
+	}
+	
+	public void setPos (final float[] pos) {
+		canvX = pos[0];
+		canvY = pos[1];
+		zoomMult = pos[2];
+		invalidate();
+	}
+	
+	public float[] getPos () {
+		final float pos[] = {canvX, canvY, zoomMult};
+		return pos;
+	}
+	
 
 //****************************** Touch Handling Methods *********************************************
 
 	@Override
 	public boolean onTouchEvent (MotionEvent event) {
-		// If the user has lifted a finger invalidate all of the pan/zoom variables
-		if (event.getAction() == MotionEvent.ACTION_POINTER_UP || event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
-			previousX = Float.NaN;
-			previousY = Float.NaN;
-			previousDistance = Float.NaN;
-			prevBoundingRect = null;
-		}
+		// TODO doesn't filter out bad Galaxy Note stylus points
+		event.transform(transMat);
 		
-		if (event.getPointerCount() == 1 && canDraw == true) {
-			currentlyPanZoom = false;
-			processDraw(event);
-		} else if (event.getPointerCount() == 2) {
-			if (canDraw == true) {
-				mListener.canclePointerEvent();
-			}
-			
-			if (currentlyPanZoom == false) {
-				mListener.startPinchEvent();
-			}
-			
-			canDraw = false;
-			currentlyPanZoom = true;
-			processPanZoom(event);
+		if (currentTool.onMotionEvent(event)) {
+			prevX = Float.NaN;
+			prevY = Float.NaN;
+			prevDist = Float.NaN;
 		} else {
-			if (currentlyPanZoom == true) {
-				mListener.finishPinchEvent();
-			}
-			currentlyPanZoom = false;			
+			panZoom(event);
 		}
 		
-		// If a pan/zoom action has ended make sure the user can draw during the next touch event
-		if (event.getAction() == MotionEvent.ACTION_CANCEL || event.getAction() == MotionEvent.ACTION_UP) {
-			canDraw = true;
-			currentlyPanZoom = false;
-		}
-		
-		Rect dirty = mListener.getDirtyRect();
+		RectF dirty = currentTool.getDirtyRect();
 		if (dirty == null) {
 			invalidate();
 		} else {
-			invalidate(dirty);
+			invalidate(canvasRectToScreenRect(dirty));
 		}
+		
 		
 		return true;
 	}
 	
-	private void processDraw (MotionEvent e) {
-		boolean usingStylus = e.getToolType(0) == MotionEvent.TOOL_TYPE_STYLUS;
+	private void panZoom(final MotionEvent e) {
+		final float curDist = MiscGeom.distance(e.getX(0), e.getY(0), e.getX(1), e.getY(1));
+		final float curX = (e.getX(0)+e.getX(1)) / 2;
+		final float curY = (e.getY(0)+e.getY(1)) / 2;
 		
-		if (!usingStylus && !(e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER && capDrawing == true)) {
-			return;
-		}
-		
-		if (e.getAction() == MotionEvent.ACTION_DOWN) {
-			mListener.startPointerEvent();
-		}
-		
-		for(int i = 0; i < e.getHistorySize(); i++) {
-			if (usingStylus && e.getHistoricalPressure(i) < stylusPressureCutoff) {
-				continue;
-			}
+		if (!Float.isNaN(prevX) && !Float.isNaN(prevY) && !Float.isNaN(prevDist)) {
+			final float dZoom = curDist / prevDist;
+			canvX += (curX/dZoom - prevX)/zoomMult;
+			canvY += (curY/dZoom - prevY)/zoomMult;
+			zoomMult *= dZoom;
 			
-			mListener.continuePointerEvent(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), e.getHistoricalPressure(i));
-		}
-
-		
-		if (!usingStylus || e.getPressure() > stylusPressureCutoff) {
-			mListener.continuePointerEvent(e.getEventTime(), e.getX(), e.getY(), e.getPressure());
-		}
-		
-		if (e.getAction() == MotionEvent.ACTION_UP) {
-			mListener.finishPointerEvent();
-		}
-	}
-	
-	private void processPanZoom (MotionEvent event) {
-		float currentDistance = MiscGeom.distance(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
-		float currentX = (event.getX(0)+event.getX(1)) / 2;
-		float currentY = (event.getY(0)+event.getY(1)) / 2;
-		
-		RectF boundingRect = new RectF(event.getX(0), event.getY(0), event.getX(0), event.getY(0));
-		for (int i = 1; i < event.getPointerCount(); i++) {
-			boundingRect.union(event.getX(i), event.getY(i));
+			final float[] matVals = {	zoomMult,	0,			canvX*zoomMult + canvOffsetX,
+										0,			zoomMult,	canvY*zoomMult + canvOffsetY,
+										0,			0,			1							   };
+			
+			transMat.setValues(matVals);
 		}
 		
-		if (Float.isNaN(previousX) == false && Float.isNaN(previousY) == false && Float.isNaN(previousDistance) == false && prevBoundingRect != null) {
-			float dZoom = currentDistance / previousDistance;
-			float dx = currentX/dZoom - previousX;
-			float dy = currentY/dZoom - previousY;
-			mListener.continuePinchEvent(currentX, currentY, dx, dy, dZoom, currentDistance, prevBoundingRect);
-		}
-		
-		previousDistance = currentDistance;
-		previousX = currentX;
-		previousY = currentY;
-		prevBoundingRect = boundingRect;
+		prevDist = curDist;
+		prevX = curX;
+		prevY = curY;
 	}
 	
 	@Override
 	public boolean onHoverEvent (MotionEvent e) {
+		e.transform(transMat);
+		currentTool.onMotionEvent(e);
 		
-		if (e.getAction() == MotionEvent.ACTION_HOVER_ENTER) {
-			mListener.startHoverEvent();
+		RectF dirty = currentTool.getDirtyRect();
+		if (dirty == null) {
+			invalidate();
+		} else {
+			invalidate(canvasRectToScreenRect(dirty));
 		}
 		
-		for(int i = 0; i < e.getHistorySize(); i++) {
-			mListener.continueHoverEvent(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i));
-		}
+		return true;
+	}
+	
+	private Rect canvasRectToScreenRect (RectF canvRect) {
+		Rect screenRect = new Rect();
 		
-		mListener.continueHoverEvent(e.getEventTime(), e.getX(), e.getY());
+		screenRect.left = (int) ((canvRect.left + canvX) * zoomMult);
+		screenRect.right = (int) ((canvRect.right + canvX) * zoomMult) + 1;
+		screenRect.top = (int) ((canvRect.top + canvY) * zoomMult);
+		screenRect.bottom = (int) ((canvRect.bottom + canvY) * zoomMult) + 1;
 		
-		if (e.getAction() == MotionEvent.ACTION_HOVER_EXIT) {
-			mListener.finishHoverEvent();
+		return screenRect;
+	}
+	
+	
+	//************************************************** IActionBarListener Methods *******************************************************
+	
+	
+	public void setTool (Tool newTool, float size, int color) {
+		switch (newTool) {
+			case PEN:
+				currentTool = new Pen(mNote, mConverter, pressureSensitivity, color, size);
+				break;
+			case STROKE_ERASER:
+				currentTool = new StrokeEraser(mNote, mConverter, size);
+				break;
+			case STROKE_SELECTOR:
+				currentTool = new StrokeSelector(mNote, mConverter);
+				break;
 		}
 		
 		invalidate();
-		return true;
+	}
+
+	public void undo () {
+		currentTool.undo();
+		mNote.undo();
+		invalidate();
+	}
+
+	public void redo () {
+		currentTool.redo();
+		mNote.redo();
+		invalidate();
+	}
+	
+	
+	//************************************************ ICanvScreenConverter *************************************************************
+	
+	public float canvToScreenDist(final float canvDist) {
+		return canvDist*zoomMult;
+	}
+	
+	public float screenToCanvDist(final float screenDist) {
+		return screenDist/zoomMult;
+	}
+	
+	
+	//********************************************** Rendering ****************************************************************
+	
+	private void initOffsets (Canvas c) {
+		// Set the transformMatrix's offsets if they haven't been set yet
+		if (canvOffsetX < 0 || canvOffsetY < 0) {
+			float[] values = new float[9];
+			c.getMatrix().getValues(values);
+			canvOffsetX = values[2];
+			canvOffsetY = values[5];
+		}
 	}
 	
 	@Override
 	public void onDraw (Canvas c) {
-		mListener.drawNote(c);
+		initOffsets(c);
+		c.drawColor(0xffffffff);
+		currentTool.draw(c);
 	}
 }

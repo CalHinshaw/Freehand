@@ -59,14 +59,12 @@ public class Note {
 	
 	private void readV1 (DataInputStream s) throws IOException {
 		
-		DistConverter conv = new DistConverter () {
-			@Override
-			public float canvasToScreenDist(float canvasDist) {
+		ICanvScreenConverter conv = new ICanvScreenConverter () {
+			public float canvToScreenDist(final float canvasDist) {
 				return 0;
 			}
 
-			@Override
-			public float screenToCanvasDist(float screenDist) {
+			public float screenToCanvDist(final float screenDist) {
 				return 0;
 			}
 		};
@@ -214,8 +212,6 @@ public class Note {
 			}
 		}
 	}
-	
-
 	
 	public void undo() {
 		if (undoQueue.isEmpty() == true) {

@@ -2,7 +2,6 @@ package com.freehand.editor;
 
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.editor.canvas.Note;
-import com.freehand.editor.canvas.NoteEditorController;
 import com.freehand.editor.canvas.NoteView;
 import com.freehand.editor.tool_bar.ActionBar;
 import com.freehand.tutorial.TutorialPrefs;
@@ -18,9 +17,9 @@ import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 
 public class NoteActivity extends Activity {
-	private NoteEditorController mPresenter;
 	private ActionBar mActionBar;
 	private NoteView mNoteView;
+	private Note mNote;
 	
 	private int checkedOnPause = -1;
 	
@@ -32,34 +31,30 @@ public class NoteActivity extends Activity {
 		getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 		overridePendingTransition(R.anim.in_from_right, R.anim.out_to_left);
 		
-		// Load the previous object on a runtime change
-		@SuppressWarnings("deprecation")
-		final Object saved = getLastNonConfigurationInstance();
-		
-		
-		
-		if (saved == null) {
-			String notePath = getIntent().getStringExtra("note_path");
-			Note note = new Note(notePath);
-			mPresenter = new NoteEditorController(note, getPressureSensitivity());
-			
-		} else {
-			final Object[] savedArr = (Object[]) saved;
-			checkedOnPause = (Integer) savedArr[0];
-			mPresenter = (NoteEditorController) savedArr[1];
-		}
-		
 		// getting views from xml layout
 		mNoteView = (NoteView) findViewById(R.id.note);
 		mActionBar = (ActionBar) findViewById(R.id.actionBar);
 		
+		// Load the previous object on a runtime change
+		@SuppressWarnings("deprecation")
+		final Object saved = getLastNonConfigurationInstance();
 		
-		mNoteView.setListener(mPresenter);
+		if (saved == null) {
+			String notePath = getIntent().getStringExtra("note_path");
+			mNote = new Note(notePath);
+		} else {
+			final Object[] savedArr = (Object[]) saved;
+			checkedOnPause = (Integer) savedArr[0];
+			mNote = (Note) savedArr[1];
+			mNoteView.setPos((float[]) savedArr[2]);
+		}
+		
+		mNoteView.setNote(mNote);
 		mNoteView.setUsingCapDrawing(getUsingCapDrawing());
-		mPresenter.setNoteView(mNoteView);
+		mNoteView.setPressureSensitivity(getPressureSensitivity());
 		
-		mActionBar.setActionBarListener(mPresenter);
-		mActionBar.setNote(mPresenter.getNote());
+		mActionBar.setActionBarListener(mNoteView);
+		mActionBar.setNote(mNote);
 	}
 	
 	private float getPressureSensitivity() {
@@ -104,15 +99,14 @@ public class NoteActivity extends Activity {
 	
 	@Override
 	public Object onRetainNonConfigurationInstance() {
-		mPresenter.setNoteView(null);
-		final Object[] toRetain = {checkedOnPause, mPresenter};
+		final Object[] toRetain = {checkedOnPause, mNote, mNoteView.getPos()};
 		return toRetain;
 	}
 	
 	@Override
 	public void onPause() {
 		super.onPause();
-		mPresenter.saveNote();
+		mNote.save();
 		
 		final int[] colors = new int[5];
 		final float[] sizes = new float[5];
