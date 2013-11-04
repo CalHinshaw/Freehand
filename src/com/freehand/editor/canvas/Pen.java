@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.Log;
+import android.view.MotionEvent;
 
 import com.freehand.editor.canvas.Note.Action;
 import com.freehand.ink.MiscGeom;
@@ -16,11 +17,11 @@ import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import com.freehand.misc.WrapList;
 
-public class Pen implements ICanvasEventListener {
+public class Pen implements ITool {
 	private static final int ARC_RES = 20;
 	
 	private final Note mNote;
-	private final DistConverter mConverter;
+	private final ICanvScreenConverter mConverter;
 	
 	private final float pressureSensitivity;
 	
@@ -38,9 +39,11 @@ public class Pen implements ICanvasEventListener {
 	
 	private int containingIndex = -1;
 	
+	private boolean ignoringCurrentMe = false;
+	
 	private RectF dirtyRect = null;
 	
-	public Pen (Note newNote, DistConverter newConverter, float pressureSensitivity, int penColor, float penSize) {
+	public Pen (Note newNote, ICanvScreenConverter newConverter, float pressureSensitivity, int penColor, float penSize) {
 		mNote = newNote;
 		mConverter = newConverter;
 		this.pressureSensitivity = pressureSensitivity;
@@ -54,22 +57,49 @@ public class Pen implements ICanvasEventListener {
 		paint.setAntiAlias(true);
 	}
 	
-	//********************************************* ICanvasEventListener Methods *****************************************
-
-	public void startPointerEvent() {
+	//**************************** ITool stuff *****************************
+	
+	public boolean onMotionEvent(MotionEvent e) {
+		
+		if (e.getAction() == MotionEvent.ACTION_UP) {
+			addStrokeToNote();
+			clear();
+		}
+		
+		if (ignoringCurrentMe) return false;
+		if (e.getPointerCount() > 1) {
+			clear();
+			ignoringCurrentMe = true;
+			return false;
+		}
+		
+		if (e.getAction() == MotionEvent.ACTION_MOVE) {
+			for (int i = 0; i < e.getHistorySize(); i++) {
+				final Point p = new Point(e.getHistoricalX(i), e.getHistoricalY(i));
+				processPoint(p, e.getHistoricalPressure(i));
+			}
+			final Point p = new Point(e.getX(), e.getY());
+			processPoint(p, e.getPressure());
+		}
+		
+		return true;
+	}
+	
+	private void clear () {
 		points.clear();
 		sizes.clear();
 		poly.clear();
 		cap.clear();
 		containingIndex = -1;
+		ignoringCurrentMe = false;
 	}
 
-	public boolean continuePointerEvent(Point p, long time, float pressure) {
-		float newSize = baseSize * this.scalePressure(pressure);
+	private void processPoint (final Point p, final float pressure) {
+		final float newSize = baseSize * this.scalePressure(pressure);
 		
 		if (points.size() > 0 && newSize == sizes.get(sizes.size()-1) &&
-			MiscGeom.distance(p, points.get(points.size()-1)) <= mConverter.screenToCanvasDist(2.0f)) {
-			return true;
+			MiscGeom.distance(p, points.get(points.size()-1)) <= mConverter.screenToCanvDist(2.0f)) {
+			return;
 		}
 		
 		points.add(p);
@@ -80,50 +110,23 @@ public class Pen implements ICanvasEventListener {
 		} else if (points.size() > 2) {
 			addToPoly();
 		}
-		
-		return true;
 	}
 
-	public void canclePointerEvent() {
-		points.clear();
-		sizes.clear();
-		poly.clear();
-		cap.clear();
-		containingIndex = -1;
-	}
-
-	public void finishPointerEvent() {
+	private void addStrokeToNote () {
 		WrapList<Point> finalPoly = getFinalPoly();
 		if (finalPoly.size() >= 3) {
-			
 			ArrayList<Action> action = new ArrayList<Action>(1);
-			
 			action.add(new Action(new Stroke(color, finalPoly), mNote.getInkLayer().size(), true));
 			mNote.performActions(action);
 		}
-		
-		points.clear();
-		sizes.clear();
-		poly.clear();
-		cap.clear();
-		containingIndex = -1;
 	}
-
-	public void startPinchEvent() { canclePointerEvent(); }
-	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect) { return false; }
-	public void canclePinchEvent() { /* blank */ }
-	public void finishPinchEvent() { /* blank */ }
-	public void startHoverEvent() { /* blank */ }
-	public boolean continueHoverEvent(Point p, long time) { return false; }
-	public void cancleHoverEvent() { /* blank */ }
-	public void finishHoverEvent() { /* blank */ }
 
 	public RectF getDirtyRect() {
 		updateCap();
 		return dirtyRect;
 	}
 	
-	public void drawNote(Canvas c) {
+	public void draw (Canvas c) {
 		resetDirtyRect();
 		
 		for (Stroke s : mNote.getInkLayer()) {
@@ -144,8 +147,8 @@ public class Pen implements ICanvasEventListener {
 		}
 	}
 	
-	public void undoCalled() { /* blank */ }
-	public void redoCalled() { /* blank */ }
+	public void undo() { /* blank */ }
+	public void redo() { /* blank */ }
 	
 	//**************************************** Utility Methods ************************************************
 	

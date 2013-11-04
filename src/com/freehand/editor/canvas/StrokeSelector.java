@@ -3,6 +3,7 @@ package com.freehand.editor.canvas;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 import android.content.SharedPreferences;
@@ -12,6 +13,7 @@ import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.view.MotionEvent;
 
 import com.freehand.editor.canvas.Note.Action;
 import com.freehand.ink.MiscPolyGeom;
@@ -21,15 +23,16 @@ import com.freehand.misc.WrapList;
 import com.freehand.tutorial.TutorialPrefs;
 
 
-public class StrokeSelector implements ICanvasEventListener {
+public class StrokeSelector implements ITool {
 	
 	private final Note mNote;
-	private final DistConverter mConverter;
+	private final ICanvScreenConverter mConverter;
+	private final boolean allowCapDrawing;
 	
 	private List<Stroke> currentStrokes;
 	
 	// Lasso stuff
-	private final WrapList<Point> lassoPoints = new WrapList<Point>(500);
+	private WrapList<Point> lassoPoints = new WrapList<Point>(500);
 	private final Path lassoPath;
 	private final Paint lassoBorderPaint;
 	private final Paint lassoShadePaint;
@@ -55,9 +58,10 @@ public class StrokeSelector implements ICanvasEventListener {
 	
 	
 	
-	public StrokeSelector (Note note, DistConverter converter) {
+	public StrokeSelector (Note note, ICanvScreenConverter converter, final boolean allowCapDrawing) {
 		mNote = note;
 		mConverter = converter;
+		this.allowCapDrawing = allowCapDrawing;
 		
 		lassoPath = new Path();
 		lassoPath.setFillType(Path.FillType.WINDING);
@@ -92,94 +96,114 @@ public class StrokeSelector implements ICanvasEventListener {
 		currentStrokes = mNote.getInkLayer();
 	}
 	
-
 	
-	public void startPointerEvent() {
-		lassoPoints.clear();
-		if (selRect != null) {
-			setIsTransforming = true;
+	//***************************************************** dispatch *****************************************
+	
+	private boolean ignoringCurrentMe = false;
+	
+	public boolean onMotionEvent(MotionEvent e) {
+		if (selRect == null) {
+			return lassoEvent(e);
+		} else {
+			return transEvent(e);
 		}
 	}
-
-	public boolean continuePointerEvent(Point p, long time, float pressure) {
-		if (setIsTransforming == true && selRect.contains(p.x, p.y)) {
-			initMid = p;
-			initDist = Float.valueOf(1);
-			isTransforming = true;
+	
+	
+	
+	//*************************************** Lasso ***********************************************
+	
+	private boolean lassoEvent (MotionEvent e) {
+		if (e.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS && e.getToolType(0) != MotionEvent.TOOL_TYPE_FINGER && allowCapDrawing) return false;
+		if (ignoringCurrentMe) return false;
+		if (e.getPointerCount() > 1) {
+			resetLasso();
+			ignoringCurrentMe = true;
+			return false;
 		}
-		setIsTransforming = false;
 		
-		if (isTransforming == true) {
-			currentMid = p;
-			currentDist = Float.valueOf(1);
-		} else {
-			lassoPoints.add(p);
+		if (e.getAction() == MotionEvent.ACTION_DOWN) {
+			lassoPoints.add(new Point(e.getX(), e.getY()));
+		} else if (e.getAction() == MotionEvent.ACTION_MOVE) {
+			for (int i = 0; i < e.getHistorySize(); i++) {
+				lassoPoints.add(new Point(e.getHistoricalX(i), e.getHistoricalY(i)));
+			}
+			lassoPoints.add(new Point(e.getX(), e.getY()));
+		} else if (e.getAction() == MotionEvent.ACTION_UP) {
+			selectedStrokes = getContainedIndexes(lassoPoints, currentStrokes);
+			
+			if (selectedStrokes.size() > 0) {
+				triggerTransformationTutorial();
+				final float aabbBuffer = mConverter.screenToCanvDist(15.0f);
+				selRect = getAabbFromIndexes(currentStrokes, selectedStrokes, aabbBuffer);
+			}
+			
+			resetLasso();
 		}
+		
 		return true;
 	}
-
-	public void canclePointerEvent() {
+	
+	private void resetLasso () {
 		lassoPoints.clear();
-		// Removed so that transitioning from one finger to two during a translation isn't a problem.
-		// This could cause problems in the future and is worth keeping an eye on.
-		//resetTrans();
+		ignoringCurrentMe = false;
 	}
-
-	public void finishPointerEvent() {
+	
+	private static TreeSet<Integer> getContainedIndexes (final WrapList<Point> lasso, final List<Stroke> noteStrokes) {
+		final TreeSet<Integer> selectedIndexes = new TreeSet<Integer>();
 		
-		if (isTransforming == true) {
-			applyTransToNote();
-			resetTrans();
-			lassoPoints.clear();
-			currentStrokes = mNote.getInkLayer();
-			return;
-		}
-		
-		currentStrokes = mNote.getInkLayer();
-		selectedStrokes.clear();
-		selRect = null;
-		selRect = null;
-		
-		if (lassoPoints.size() < 3) {
-			lassoPoints.clear();
-			return;
-		}
-		
-		RectF lassoRect = MiscPolyGeom.calcAABoundingBox(lassoPoints);
-		selectedStrokes.clear();
-		
-		for (int i = 0; i < currentStrokes.size(); i++) {
-			Stroke s = currentStrokes.get(i);
+		final RectF lassoRect = MiscPolyGeom.calcAABoundingBox(lasso);
+		for (int i = 0; i < noteStrokes.size(); i++) {
+			Stroke s = noteStrokes.get(i);
 			if (RectF.intersects(lassoRect, s.getAABoundingBox())) {
-				if (MiscPolyGeom.checkPolyIntersection(s.getPoly(), lassoPoints) == true) {
-					selectedStrokes.add(Integer.valueOf(i));
+				if (MiscPolyGeom.checkPolyIntersection(s.getPoly(), lasso) == true) {
+					selectedIndexes.add(Integer.valueOf(i));
 				}
 			}
 		}
 		
-		// Calculate the AABB of selectedStrokes
-		if (selectedStrokes.size() > 0) {
-			triggerTutorial();
-			for (Integer i : selectedStrokes) {
-				if (selRect == null) {
-					selRect = new RectF(currentStrokes.get(i).getAABoundingBox());
-				} else {
-					selRect.union(currentStrokes.get(i).getAABoundingBox());
-				}
-			}
-			
-			float buffer = mConverter.screenToCanvasDist(15.0f);
-			selRect.left -= buffer;
-			selRect.top -= buffer;
-			selRect.right += buffer;
-			selRect.bottom += buffer;
-			
-		}
-		
-		lassoPoints.clear();
-		currentStrokes = mNote.getInkLayer();
+		return selectedIndexes;
 	}
-
+	
+	/**
+	 * Calculates the axis aligned bounding box of the noteStrokes who's indexes are in indexes.
+	 * @param buffer the buffer around the aabb
+	 * @return the aabb if indexes.size() > 0 or an empty RectF if indexes.size() <= 0
+	 */
+	private static RectF getAabbFromIndexes (final List<Stroke> noteStrokes, final Set<Integer> indexes, final float buffer) {
+		final RectF aabb = new RectF();
+		for (Integer i : indexes) {
+			aabb.union(noteStrokes.get(i).getAABoundingBox());
+		}
+		
+		aabb.left -= buffer;
+		aabb.top -= buffer;
+		aabb.right += buffer;
+		aabb.bottom += buffer;
+		
+		return aabb;
+	}
+	
+	
+	//************************************************* Transform *********************************************
+	
+	
+	private boolean transEvent (MotionEvent e) {
+		
+		
+		
+		
+		
+		
+		if (ignoringCurrentMe) return false;
+		if ((e.getAction() == MotionEvent.ACTION_DOWN || e.getAction() == MotionEvent.ACTION_POINTER_DOWN) && !selRect.contains(getAABB(e))) {
+			resetLasso();
+			ignoringCurrentMe = true;
+			return false;
+		}
+		
+		return true;
+	}
 	
 	public void startPinchEvent() {
 		lassoPoints.clear();
@@ -230,7 +254,7 @@ public class StrokeSelector implements ICanvasEventListener {
 		return null;
 	}
 	
-	public void drawNote(Canvas c) {
+	public void draw (Canvas c) {
 
 		// Draw all of the non-selected strokes in mNote
 		for (int i = 0; i < currentStrokes.size(); i++) {
@@ -241,7 +265,7 @@ public class StrokeSelector implements ICanvasEventListener {
 		
 		// Draw all of the selectedStrokes with their selection highlights as they're being transformed
 		if (selectedStrokes.isEmpty() == false && isTransforming == true) {
-			selBorderPaint.setStrokeWidth(mConverter.screenToCanvasDist(8.0f));
+			selBorderPaint.setStrokeWidth(mConverter.screenToCanvDist(8.0f));
 			float dZoom = currentDist / initDist;
 			
 			for (Integer i : selectedStrokes) {
@@ -262,8 +286,8 @@ public class StrokeSelector implements ICanvasEventListener {
 			}
 			
 			// Selection rect
-			selRectPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
-			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
+			selRectPaint.setStrokeWidth(mConverter.screenToCanvDist(3.0f));
+			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvDist(12.0f), mConverter.screenToCanvDist(7.0f)}, 0));
 			
 			if (isTransforming == true) {
 				RectF curRect = new RectF();
@@ -275,7 +299,7 @@ public class StrokeSelector implements ICanvasEventListener {
 				c.drawRect(curRect, selRectPaint);
 			}
 		} else if (selectedStrokes.isEmpty() == false) {
-			selBorderPaint.setStrokeWidth(mConverter.screenToCanvasDist(8.0f));
+			selBorderPaint.setStrokeWidth(mConverter.screenToCanvDist(8.0f));
 			
 			for (Integer i : selectedStrokes) {
 				WrapList<Point> poly = currentStrokes.get(i).getPoly();
@@ -294,16 +318,16 @@ public class StrokeSelector implements ICanvasEventListener {
 				c.drawPath(selPath, selBodyPaint);
 			}
 			
-			selRectPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
-			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
+			selRectPaint.setStrokeWidth(mConverter.screenToCanvDist(3.0f));
+			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvDist(12.0f), mConverter.screenToCanvDist(7.0f)}, 0));
 			c.drawRect(selRect, selRectPaint);
 		}
 		
 		
 		if (lassoPoints.size() > 0) {
-			lassoBorderPaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
-			lassoShadePaint.setStrokeWidth(mConverter.screenToCanvasDist(3.0f));
-			lassoBorderPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvasDist(12.0f), mConverter.screenToCanvasDist(7.0f)}, 0));
+			lassoBorderPaint.setStrokeWidth(mConverter.screenToCanvDist(3.0f));
+			lassoShadePaint.setStrokeWidth(mConverter.screenToCanvDist(3.0f));
+			lassoBorderPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvDist(12.0f), mConverter.screenToCanvDist(7.0f)}, 0));
 			
 			lassoPath.reset();
 			lassoPath.moveTo(lassoPoints.get(0).x, lassoPoints.get(0).y);
@@ -317,7 +341,7 @@ public class StrokeSelector implements ICanvasEventListener {
 		
 	}
 	
-	public void undoCalled() {
+	public void undo () {
 		currentStrokes = mNote.getInkLayer();
 		lassoPoints.clear();
 		selectedStrokes.clear();
@@ -325,7 +349,7 @@ public class StrokeSelector implements ICanvasEventListener {
 		selRect = null;
 	}
 	
-	public void redoCalled() {
+	public void redo () {
 		currentStrokes = mNote.getInkLayer();
 		lassoPoints.clear();
 		selectedStrokes.clear();
@@ -390,10 +414,17 @@ public class StrokeSelector implements ICanvasEventListener {
 	}
 	
 	
+	private static RectF getAABB (MotionEvent e) {
+		final RectF aabb = new RectF(e.getX(0), e.getY(0), e.getX(0), e.getY(0));
+		for (int i = 1; i < e.getPointerCount(); i++) aabb.union(e.getX(i), e.getY(i));
+		return aabb;
+	}
+	
+	
 	
 	// *************************************** Tutorial Methods ************************************
 	
-	private void triggerTutorial() {
+	private void triggerTransformationTutorial () {
 		final SharedPreferences prefs = TutorialPrefs.getPrefs();
 		if (prefs == null) return;
 		boolean used = prefs.getBoolean("move_resize_used", false);

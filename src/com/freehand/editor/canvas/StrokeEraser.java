@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.view.MotionEvent;
 
 import com.freehand.editor.canvas.Note.Action;
 import com.freehand.ink.MiscGeom;
@@ -15,10 +16,10 @@ import com.freehand.ink.MiscPolyGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 
-public class StrokeEraser implements ICanvasEventListener {
+public class StrokeEraser implements ITool {
 	
 	private final Note mNote;
-	private final DistConverter mConverter;
+	private final ICanvScreenConverter mConverter;
 	
 	private List<Stroke> currentStrokes;
 	private TreeSet<Integer> deletedStrokes = new TreeSet<Integer>();
@@ -34,9 +35,9 @@ public class StrokeEraser implements ICanvasEventListener {
 	private Point prevPoint = null;
 	private long prevTime = -1;
 	
-	private RectF dirtyRect = null;
+	private RectF dirtyRect = new RectF();
 	
-	public StrokeEraser (Note newNote, DistConverter newConverter, float newEraserSize) {
+	public StrokeEraser (Note newNote, ICanvScreenConverter newConverter, float newEraserSize) {
 		mNote = newNote;
 		mConverter = newConverter;
 		
@@ -49,24 +50,57 @@ public class StrokeEraser implements ICanvasEventListener {
 		currentStrokes = mNote.getInkLayer();
 	}
 	
+	private boolean ignoringCurrentMe = false;
 	
-	public void startPointerEvent() {
+	public boolean onMotionEvent(MotionEvent e) {
+		if (ignoringCurrentMe) return false;
+		if (e.getPointerCount() > 1) {
+			reset();
+			ignoringCurrentMe = true;
+			return false;
+		}
+		
+		if (e.getAction() == MotionEvent.ACTION_DOWN) {
+			reset();
+		} else if (e.getAction() == MotionEvent.ACTION_UP) {
+			addEraseToNote();
+			reset();
+		} else if (e.getAction() == MotionEvent.ACTION_MOVE) {
+			for (int i = 0; i < e.getHistorySize(); i++) {
+				final Point p = new Point(e.getHistoricalX(i), e.getHistoricalY(i));
+				processPoint(p, e.getHistoricalPressure(i), e.getHistoricalEventTime(i));
+			}
+			final Point p = new Point(e.getX(), e.getY());
+			processPoint(p, e.getPressure(), e.getEventTime());
+		}
+		
+		if (e.getAction() == MotionEvent.ACTION_HOVER_ENTER || e.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+			circlePoint = new Point(e.getX(), e.getY());
+		} else if (e.getAction() == MotionEvent.ACTION_HOVER_EXIT) {
+			reset();
+		}
+		
+		return true;
+	}
+	
+	public void reset () {
 		currentStrokes = mNote.getInkLayer();
 		deletedStrokes.clear();
-		
 		prevPoint = null;
 		prevTime = -1;
+		circlePoint = null;
+		ignoringCurrentMe = false;
 	}
 
-	public boolean continuePointerEvent(Point p, long time, float pressure) {
+	public boolean processPoint(final Point p, final float pressure, final long t) {
 		if (prevPoint == null) {
-			deleteCapsule(p, p, mConverter.screenToCanvasDist(eraserSize));
+			deleteCapsule(p, p, mConverter.screenToCanvDist(eraserSize));
 			prevPoint = p;
-			prevTime = time;
-		} else if (MiscGeom.distance(prevPoint, p) > mConverter.screenToCanvasDist(10.0f) || time-prevTime >= 100) {
-			deleteCapsule(prevPoint, p, mConverter.screenToCanvasDist(eraserSize));
+			prevTime = t;
+		} else if (MiscGeom.distance(prevPoint, p) > mConverter.screenToCanvDist(10.0f) || t-prevTime >= 100) {
+			deleteCapsule(prevPoint, p, mConverter.screenToCanvDist(eraserSize));
 			prevPoint = p;
-			prevTime = time;
+			prevTime = t;
 		}
 		
 		circlePoint = p;
@@ -74,16 +108,7 @@ public class StrokeEraser implements ICanvasEventListener {
 		return true;
 	}
 
-
-	
-	public void canclePointerEvent() {
-		currentStrokes = mNote.getInkLayer();
-		deletedStrokes.clear();
-		
-		circlePoint = null;
-	}
-
-	public void finishPointerEvent() {
+	private void addEraseToNote() {
 		if (deletedStrokes.isEmpty() == false) {
 			ArrayList<Action> action = new ArrayList<Action>(deletedStrokes.size());
 			
@@ -94,51 +119,16 @@ public class StrokeEraser implements ICanvasEventListener {
 			mNote.performActions(action);
 		}
 		
-		currentStrokes = mNote.getInkLayer();
-		deletedStrokes.clear();
-		
-		circlePoint = null;
-	}
-
-	public void startPinchEvent() {
-		circlePoint = null;
-	}
-
-	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect) {
-		return false;
+		reset();
 	}
 	
-	public void canclePinchEvent() { /* blank */ }
-	public void finishPinchEvent() { /* blank */ }
-	public void startHoverEvent() { /* blank */ }
-
-	public boolean continueHoverEvent(Point p, long time) {
-		circlePoint = p;
-		
-		dirtyRect = new RectF();
-		dirtyRect.left = p.x-eraserSize/2;
-		dirtyRect.right = p.x+eraserSize/2;
-		dirtyRect.top = p.y-eraserSize/2;
-		dirtyRect.bottom = p.y+eraserSize/2;
-		
-		return true;
-	}
-
-	public void cancleHoverEvent() {
-		circlePoint = null;
-	}
-
-	public void finishHoverEvent() {
-		circlePoint = null;
-	}
-
 	public RectF getDirtyRect() {
-		return dirtyRect;
+		RectF toReturn = dirtyRect;
+		dirtyRect = new RectF();
+		return toReturn;
 	}
 	
-	public void drawNote(Canvas c) {
-		dirtyRect = null;
-		
+	public void draw (Canvas c) {
 		for (int i = 0; i < currentStrokes.size(); i++) {
 			if (deletedStrokes.contains(i) == false) {
 				currentStrokes.get(i).draw(c);
@@ -146,10 +136,10 @@ public class StrokeEraser implements ICanvasEventListener {
 		}
 		
 		if (circlePoint != null) {
-			float scaledWidth = mConverter.screenToCanvasDist(2.0f);
+			float scaledWidth = mConverter.screenToCanvDist(2.0f);
 			circlePaint.setStrokeWidth(scaledWidth);
 			
-			float size = mConverter.screenToCanvasDist(eraserSize) - scaledWidth;
+			float size = mConverter.screenToCanvDist(eraserSize) - scaledWidth;
 			if (size < 1) {
 				size = 1;
 			}
@@ -157,8 +147,8 @@ public class StrokeEraser implements ICanvasEventListener {
 		}
 	}
 	
-	public void undoCalled() { /* blank */ }
-	public void redoCalled() { /* blank */ }
+	public void undo () { /* blank */ }
+	public void redo () { /* blank */ }
 	
 	//************************************** Utility Methods **********************************************************
 	
@@ -174,6 +164,7 @@ public class StrokeEraser implements ICanvasEventListener {
 			if (RectF.intersects(eraseBox, s.getAABoundingBox())) {
 				if (MiscPolyGeom.checkCapsulePolyIntersection(s.getPoly(), p1, p2, rad) == true) {
 					deletedStrokes.add(i);
+					dirtyRect.union(currentStrokes.get(i).getAABoundingBox());
 				}
 			}
 		}

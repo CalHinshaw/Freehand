@@ -15,7 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import android.os.Environment;
-import android.util.Log;
+import android.view.MotionEvent;
 
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
@@ -86,12 +86,14 @@ public class Note {
 			int numSubStrokes = s.readInt();
 			for (int ssNum = 0; ssNum < numSubStrokes; ssNum++) {
 				int numPointsInSubstroke = s.readInt();
-				Log.d("PEN", Integer.toString(numPointsInSubstroke));
-				pen.startPointerEvent();
-				for (int sspNum = 0; sspNum < numPointsInSubstroke; sspNum++) {
-					pen.continuePointerEvent(new Point(s.readFloat(), s.readFloat()), 1000, 1);
+				// Used a hack to get round end caps that makes strokes of length less than 2 impossible - this is just in case...
+				if (numPointsInSubstroke < 2) continue;
+				
+				pen.onMotionEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, s.readFloat(), s.readFloat(), 1, 1, 0, 1, 1, 0, 0));
+				for (int sspNum = 1; sspNum < numPointsInSubstroke-1; sspNum++) {
+					pen.onMotionEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, s.readFloat(), s.readFloat(), 1, 1, 0, 1, 1, 0, 0));
 				}
-				pen.finishPointerEvent();
+				pen.onMotionEvent(MotionEvent.obtain(0, 0, MotionEvent.ACTION_UP, s.readFloat(), s.readFloat(), 1, 1, 0, 1, 1, 0, 0));
 			}
 		}
 		
