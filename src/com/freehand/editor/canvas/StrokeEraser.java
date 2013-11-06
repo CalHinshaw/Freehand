@@ -21,12 +21,14 @@ public class StrokeEraser implements ITool {
 	private final Note mNote;
 	private final ICanvScreenConverter mConverter;
 	
+	private final boolean capDrawing;
+	
 	private List<Stroke> currentStrokes;
 	private TreeSet<Integer> deletedStrokes = new TreeSet<Integer>();
 	
 	// This is the size of the eraser given in SCREEN PIXELS - it needs to be scaled
 	// to canvas pixels to be used.
-	private final float eraserSize;
+	private final float screenEraserSize;
 	
 	private Paint circlePaint;
 	private Point circlePoint;
@@ -37,11 +39,13 @@ public class StrokeEraser implements ITool {
 	
 	private RectF dirtyRect = new RectF();
 	
-	public StrokeEraser (Note newNote, ICanvScreenConverter newConverter, float newEraserSize) {
+	public StrokeEraser (Note newNote, ICanvScreenConverter newConverter, float newEraserSize, boolean capDrawing) {
 		mNote = newNote;
 		mConverter = newConverter;
 		
-		eraserSize = newEraserSize;
+		this.capDrawing = capDrawing;
+		
+		screenEraserSize = newEraserSize;
 		
 		circlePaint = new Paint(Color.BLACK);
 		circlePaint.setStyle(Paint.Style.STROKE);
@@ -53,6 +57,18 @@ public class StrokeEraser implements ITool {
 	private boolean ignoringCurrentMe = false;
 	
 	public boolean onMotionEvent(MotionEvent e) {
+		
+		if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER && capDrawing == false) {
+			return false;
+		}
+		
+		if (e.getAction() == MotionEvent.ACTION_UP) {
+			final Point p = new Point(e.getX(), e.getY());
+			processTouchPoint(p, e.getPressure(), e.getEventTime());
+			addEraseToNote();
+			reset();
+		}
+		
 		if (ignoringCurrentMe) return false;
 		if (e.getPointerCount() > 1) {
 			reset();
@@ -62,21 +78,23 @@ public class StrokeEraser implements ITool {
 		
 		if (e.getAction() == MotionEvent.ACTION_DOWN) {
 			reset();
-		} else if (e.getAction() == MotionEvent.ACTION_UP) {
-			addEraseToNote();
-			reset();
 		} else if (e.getAction() == MotionEvent.ACTION_MOVE) {
 			for (int i = 0; i < e.getHistorySize(); i++) {
 				final Point p = new Point(e.getHistoricalX(i), e.getHistoricalY(i));
-				processPoint(p, e.getHistoricalPressure(i), e.getHistoricalEventTime(i));
+				processTouchPoint(p, e.getHistoricalPressure(i), e.getHistoricalEventTime(i));
 			}
 			final Point p = new Point(e.getX(), e.getY());
-			processPoint(p, e.getPressure(), e.getEventTime());
-		}
-		
-		if (e.getAction() == MotionEvent.ACTION_HOVER_ENTER || e.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+			processTouchPoint(p, e.getPressure(), e.getEventTime());
+		} else if (e.getActionMasked() == MotionEvent.ACTION_HOVER_ENTER || e.getActionMasked() == MotionEvent.ACTION_HOVER_MOVE) {
+			if (circlePoint != null) {
+				dirtyRect.union(getCircleAABB(circlePoint, mConverter.screenToCanvDist(screenEraserSize)));
+			}
 			circlePoint = new Point(e.getX(), e.getY());
+			dirtyRect.union(getCircleAABB(circlePoint, mConverter.screenToCanvDist(screenEraserSize)));
 		} else if (e.getAction() == MotionEvent.ACTION_HOVER_EXIT) {
+			if (circlePoint != null) {
+				dirtyRect.union(getCircleAABB(circlePoint, mConverter.screenToCanvDist(screenEraserSize)));
+			}
 			reset();
 		}
 		
@@ -92,18 +110,22 @@ public class StrokeEraser implements ITool {
 		ignoringCurrentMe = false;
 	}
 
-	public boolean processPoint(final Point p, final float pressure, final long t) {
+	public boolean processTouchPoint(final Point p, final float pressure, final long t) {
 		if (prevPoint == null) {
-			deleteCapsule(p, p, mConverter.screenToCanvDist(eraserSize));
+			deleteCapsule(p, p, mConverter.screenToCanvDist(screenEraserSize));
 			prevPoint = p;
 			prevTime = t;
 		} else if (MiscGeom.distance(prevPoint, p) > mConverter.screenToCanvDist(10.0f) || t-prevTime >= 100) {
-			deleteCapsule(prevPoint, p, mConverter.screenToCanvDist(eraserSize));
+			deleteCapsule(prevPoint, p, mConverter.screenToCanvDist(screenEraserSize));
 			prevPoint = p;
 			prevTime = t;
 		}
 		
+		if (circlePoint != null) {
+			dirtyRect.union(getCircleAABB(circlePoint, mConverter.screenToCanvDist(screenEraserSize)));
+		}
 		circlePoint = p;
+		dirtyRect.union(getCircleAABB(circlePoint, mConverter.screenToCanvDist(screenEraserSize)));
 		
 		return true;
 	}
@@ -139,7 +161,7 @@ public class StrokeEraser implements ITool {
 			float scaledWidth = mConverter.screenToCanvDist(2.0f);
 			circlePaint.setStrokeWidth(scaledWidth);
 			
-			float size = mConverter.screenToCanvDist(eraserSize) - scaledWidth;
+			float size = mConverter.screenToCanvDist(screenEraserSize) - scaledWidth;
 			if (size < 1) {
 				size = 1;
 			}
@@ -168,5 +190,14 @@ public class StrokeEraser implements ITool {
 				}
 			}
 		}
+	}
+	
+	private static RectF getCircleAABB (final Point c, final float r) {
+		final RectF aabb = new RectF();
+		aabb.left = c.x-r;
+		aabb.right = c.x+r;
+		aabb.top = c.y-r;
+		aabb.bottom = c.y+r;
+		return aabb;
 	}
 }

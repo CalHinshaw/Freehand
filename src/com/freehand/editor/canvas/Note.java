@@ -19,7 +19,6 @@ import android.view.MotionEvent;
 
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
-import com.freehand.misc.WrapList;
 
 public class Note {
 	private File noteFile;
@@ -81,7 +80,7 @@ public class Note {
 			s.readBoolean();
 			s.readBoolean();
 			
-			Pen pen = new Pen(this, conv, 0, color, size);
+			Pen pen = new Pen(this, conv, 0, color, size, true);
 			
 			int numSubStrokes = s.readInt();
 			for (int ssNum = 0; ssNum < numSubStrokes; ssNum++) {
@@ -106,7 +105,7 @@ public class Note {
 		for (int i = 0; i < numStrokes; i++) {
 			int color = s.readInt();
 			int numPoints = s.readInt();
-			WrapList<Point> poly = new WrapList<Point>(numPoints);
+			List<Point> poly = new ArrayList<Point>(numPoints);
 			for (int j = 0; j < numPoints; j++) {
 				poly.add(new Point(s.readFloat(), s.readFloat()));
 			}

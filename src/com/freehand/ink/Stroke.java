@@ -1,6 +1,6 @@
 package com.freehand.ink;
 
-import com.freehand.misc.WrapList;
+import java.util.List;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -8,7 +8,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 
 public class Stroke {
-	private final WrapList<Point> mPoly;
+	private final List<Point> mPoly;
 	
 	private final Paint mPaint = new Paint();
 	private final Path mPath = new Path();
@@ -22,7 +22,7 @@ public class Stroke {
 	 * @param color The polygon's color
 	 * @param polygon The points that define the polygon.
 	 */
-	public Stroke (int color, WrapList<Point> poly) {
+	public Stroke (int color, List<Point> poly) {
 		mPoly = poly;
 		
 		mPaint.setColor(color);
@@ -59,7 +59,7 @@ public class Stroke {
 		return aabb;
 	}
 	
-	public WrapList<Point> getPoly () {
+	public List<Point> getPoly () {
 		return mPoly;
 	}
 	

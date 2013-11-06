@@ -1,9 +1,7 @@
 package com.freehand.ink;
 
 import java.util.Comparator;
-
-import com.freehand.misc.WrapList;
-
+import java.util.List;
 
 /**
  * A Vertex is the node of the embedded planar graph used to perform boolean operations on polygons. The graphs are entirely linked data structures because
@@ -28,8 +26,8 @@ public class Vertex {
 	public Vertex prev1 = null;
 	public Vertex prev2 = null;
 	
-	public WrapList<Point> poly1;
-	public WrapList<Point> poly2;
+	public List<Point> poly1;
+	public List<Point> poly2;
 	
 	
 	public Vertex (Point intersection, float distIn1, float distIn2) {
@@ -70,7 +68,7 @@ public class Vertex {
 		}
 	}
 	
-	public WrapList<Point> getPoly (boolean poly) {
+	public List<Point> getPoly (boolean poly) {
 		if (poly == true) {
 			return poly1;
 		} else {

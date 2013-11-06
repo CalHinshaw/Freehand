@@ -20,17 +20,16 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	private Matrix screenToCanvMat = new Matrix();
 	private Matrix canvToScreenMat = new Matrix();
 	
-	private boolean capacitiveDrawing = true;
-	
 	private float prevScreenX = Float.NaN;
 	private float prevScreenY = Float.NaN;
 	private float prevScreenDist = Float.NaN;
 	
 	private float stylusPressureCutoff = 2.0f;
 	private float pressureSensitivity = 0.50f;
+	private boolean capacitiveDrawing = true;
 	
 	private Note mNote;
-	private ITool currentTool = new Pen(mNote, this, pressureSensitivity, Color.BLACK, 6.0f);
+	private ITool currentTool = new Pen(mNote, this, pressureSensitivity, Color.BLACK, 6.0f, true);
 	
 //************************************* Constructors ************************************************
 
@@ -91,17 +90,27 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	public boolean onTouchEvent (MotionEvent event) {
 		// TODO doesn't filter out bad Galaxy Note stylus points
 		event.transform(screenToCanvMat);
+		RectF dirty = null;
 		
 		if (currentTool.onMotionEvent(event)) {
+			dirty = currentTool.getDirtyRect();
 			prevScreenX = Float.NaN;
 			prevScreenY = Float.NaN;
 			prevScreenDist = Float.NaN;
 		} else if (event.getPointerCount() >= 2) {
 			event.transform(canvToScreenMat);
 			panZoom(event);
+			
 		}
 		
-		RectF dirty = currentTool.getDirtyRect();
+		if (event.getActionMasked() == MotionEvent.ACTION_UP ||
+			event.getActionMasked() == MotionEvent.ACTION_CANCEL ||
+			event.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
+			prevScreenX = Float.NaN;
+			prevScreenY = Float.NaN;
+			prevScreenDist = Float.NaN;
+		}
+		
 		if (dirty == null) {
 			invalidate();
 		} else {
@@ -147,7 +156,6 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		if (dirty == null) {
 			invalidate();
 		} else {
-			
 			invalidate(canvasRectToScreenRect(dirty));
 		}
 		
@@ -172,10 +180,10 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	public void setTool (Tool newTool, float size, int color) {
 		switch (newTool) {
 			case PEN:
-				currentTool = new Pen(mNote, this, pressureSensitivity, color, size);
+				currentTool = new Pen(mNote, this, pressureSensitivity, color, size, capacitiveDrawing);
 				break;
 			case STROKE_ERASER:
-				currentTool = new StrokeEraser(mNote, this, size);
+				currentTool = new StrokeEraser(mNote, this, size, capacitiveDrawing);
 				break;
 			case STROKE_SELECTOR:
 				currentTool = new StrokeSelector(mNote, this, capacitiveDrawing);

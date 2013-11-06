@@ -1,14 +1,10 @@
 package com.freehand.ink;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import android.graphics.RectF;
-import android.util.Log;
-
-import com.freehand.misc.WrapList;
 
 public class MiscGeom {
 	private static final float SG0 = 17.0f / 35.0f;
@@ -196,7 +192,6 @@ public class MiscGeom {
 			new Point((float) Math.cos(18 * Math.PI / 10), (float) Math.sin(18 * Math.PI / 10)),
 			new Point((float) Math.cos(19 * Math.PI / 10), (float) Math.sin(19 * Math.PI / 10)),
 	};
-	private static final double STEP_SIZE = (2 * Math.PI) / CIRCLE.length;
 
 	
 	public static LinkedList<Point> getLinkedCircularPoly(Point center, float radius) {
@@ -207,8 +202,8 @@ public class MiscGeom {
 		return toReturn;
 	}
 	
-	public static WrapList<Point> getWrapCircularPoly(Point center, float radius) {
-		WrapList<Point> toReturn = new WrapList<Point>(CIRCLE.length);
+	public static List<Point> getWrapCircularPoly(Point center, float radius) {
+		List<Point> toReturn = new ArrayList<Point>(CIRCLE.length);
 		for (int i = CIRCLE.length - 1; i >= 0; i--) {
 			toReturn.add(new Point(CIRCLE[i].x * radius + center.x, CIRCLE[i].y * radius + center.y));
 		}

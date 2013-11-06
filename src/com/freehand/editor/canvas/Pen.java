@@ -15,7 +15,6 @@ import com.freehand.editor.canvas.Note.Action;
 import com.freehand.ink.MiscGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
-import com.freehand.misc.WrapList;
 
 public class Pen implements ITool {
 	private static final int ARC_RES = 20;
@@ -24,6 +23,7 @@ public class Pen implements ITool {
 	private final ICanvScreenConverter mConverter;
 	
 	private final float pressureSensitivity;
+	private final boolean capDrawing;
 	
 	private final float baseSize;
 	private final int color;
@@ -43,10 +43,11 @@ public class Pen implements ITool {
 	
 	private RectF dirtyRect = null;
 	
-	public Pen (Note newNote, ICanvScreenConverter newConverter, float pressureSensitivity, int penColor, float penSize) {
+	public Pen (Note newNote, ICanvScreenConverter newConverter, float pressureSensitivity, int penColor, float penSize, boolean capDrawing) {
 		mNote = newNote;
 		mConverter = newConverter;
 		this.pressureSensitivity = pressureSensitivity;
+		this.capDrawing = capDrawing;
 		color = penColor;
 		baseSize = penSize;
 		
@@ -61,9 +62,16 @@ public class Pen implements ITool {
 	
 	public boolean onMotionEvent(MotionEvent e) {
 		
+		if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER && capDrawing == false) {
+			return false;
+		}
+		
 		if (e.getAction() == MotionEvent.ACTION_UP) {
+			final Point p = new Point(e.getX(), e.getY());
+			processPoint(p, e.getPressure());
 			addStrokeToNote();
 			clear();
+			return true;
 		}
 		
 		if (ignoringCurrentMe) return false;
@@ -113,7 +121,7 @@ public class Pen implements ITool {
 	}
 
 	private void addStrokeToNote () {
-		WrapList<Point> finalPoly = getFinalPoly();
+		List<Point> finalPoly = getFinalPoly();
 		if (finalPoly.size() >= 3) {
 			ArrayList<Action> action = new ArrayList<Action>(1);
 			action.add(new Action(new Stroke(color, finalPoly), mNote.getInkLayer().size(), true));
@@ -123,12 +131,18 @@ public class Pen implements ITool {
 
 	public RectF getDirtyRect() {
 		updateCap();
-		return dirtyRect;
+		RectF toReturn = dirtyRect;
+		dirtyRect = new RectF();
+		
+		if (poly.size() >= 1) {
+			addPointToDirtyRect(poly.getFirst());
+			addPointToDirtyRect(poly.getLast());
+		}
+		
+		return toReturn;
 	}
 	
 	public void draw (Canvas c) {
-		resetDirtyRect();
-		
 		for (Stroke s : mNote.getInkLayer()) {
 			s.draw(c);
 		}
@@ -152,20 +166,20 @@ public class Pen implements ITool {
 	
 	//**************************************** Utility Methods ************************************************
 	
-	private void resetDirtyRect () {
-		dirtyRect = null;
-		
-		if (poly.size() >= 1) {
-			addPointToDirtyRect(poly.getFirst());
-			addPointToDirtyRect(poly.getLast());
-		}
-	}
+//	private void resetDirtyRect () {
+//		dirtyRect = null;
+//		
+//		if (poly.size() >= 1) {
+//			addPointToDirtyRect(poly.getFirst());
+//			addPointToDirtyRect(poly.getLast());
+//		}
+//	}
 	
 	
 	
-	private WrapList<Point> getFinalPoly () {
+	private List<Point> getFinalPoly () {
 		updateCap();
-		WrapList<Point> finalPoly = new WrapList<Point>(poly.size()+cap.size());
+		List<Point> finalPoly = new ArrayList<Point>(poly.size()+cap.size());
 		
 		for (Point p : poly) {
 			finalPoly.add(p);
