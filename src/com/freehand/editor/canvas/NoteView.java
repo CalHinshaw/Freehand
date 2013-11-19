@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Debug;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -92,6 +93,13 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		event.transform(screenToCanvMat);
 		RectF dirty = null;
 		
+//		if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+//			Debug.startMethodTracing("freehand");
+//		}
+		
+		
+		
+		
 		if (currentTool.onMotionEvent(event)) {
 			dirty = currentTool.getDirtyRect();
 			prevScreenX = Float.NaN;
@@ -100,7 +108,6 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		} else if (event.getPointerCount() >= 2) {
 			event.transform(canvToScreenMat);
 			panZoom(event);
-			
 		}
 		
 		if (event.getActionMasked() == MotionEvent.ACTION_UP ||
@@ -116,6 +123,15 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		} else {
 			invalidate(canvasRectToScreenRect(dirty));
 		}
+		
+		
+		
+//		if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+//			Debug.stopMethodTracing();
+//		}
+		
+		
+		
 		
 		return true;
 	}

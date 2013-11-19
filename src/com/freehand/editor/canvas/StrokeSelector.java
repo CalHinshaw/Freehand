@@ -1,10 +1,7 @@
 package com.freehand.editor.canvas;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
@@ -12,10 +9,13 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.RectF;
+import android.util.Log;
 import android.view.MotionEvent;
 
 import com.freehand.editor.canvas.Note.Action;
+import com.freehand.ink.MiscGeom;
 import com.freehand.ink.MiscPolyGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
@@ -37,7 +37,7 @@ public class StrokeSelector implements ITool {
 	private final Paint lassoShadePaint;
 	
 	// Selection stuff
-	private TreeSet<WorkingStroke> selectedStrokes = new TreeSet<WorkingStroke>();
+	private List<WorkingStroke> selectedStrokes = new ArrayList<WorkingStroke>();
 	private Paint selBorderPaint;
 	private Paint selBodyPaint;
 	private Path selPath;
@@ -45,16 +45,8 @@ public class StrokeSelector implements ITool {
 	private Paint selRectPaint;
 	private RectF selRect = null;
 	
-	// Translation flags
-	private boolean isTransforming = false;
-	private boolean setIsTransforming = false;
-	
-	// Translation variables
-	private Point initMid = null;
-	private Float initDist = null;
-	private Point currentMid = null;
-	private Float currentDist = null;
-	
+	private boolean eventInSelRect = false;
+	private boolean eventIsMultiTouch = false;
 	
 	
 	public StrokeSelector (Note note, ICanvScreenConverter converter, final boolean allowCapDrawing) {
@@ -81,6 +73,7 @@ public class StrokeSelector implements ITool {
 		selBorderPaint = new Paint();
 		selBorderPaint.setColor(Color.BLACK);
 		selBorderPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+		selBorderPaint.setStrokeJoin(Paint.Join.ROUND);
 		selBorderPaint.setAntiAlias(true);
 		
 		selBodyPaint = new Paint();
@@ -101,11 +94,45 @@ public class StrokeSelector implements ITool {
 	private boolean ignoringCurrentMe = false;
 	
 	public boolean onMotionEvent(MotionEvent e) {
-		if (selRect == null) {
-			return lassoEvent(e);
-		} else {
-			return transEvent(e);
+		
+		if (e.getActionMasked() == MotionEvent.ACTION_HOVER_ENTER ||
+			e.getActionMasked() == MotionEvent.ACTION_HOVER_MOVE ||
+			e.getActionMasked() == MotionEvent.ACTION_HOVER_EXIT) {
+			return false;
 		}
+		
+		if (e.getActionMasked() == MotionEvent.ACTION_DOWN) {
+			
+			final RectF eventBox = new RectF(e.getX(0), e.getY(0), e.getX(0), e.getY(0));
+			if (e.getPointerCount() > 1) {
+				Log.d("PEN", "down has more than 1 ptr");
+				eventBox.union(e.getX(1), e.getY(1));
+			}
+			
+			if (selRect != null && selRect.contains(eventBox)) {
+				eventInSelRect = true;
+			}
+		}
+		
+		if (e.getPointerCount() > 1) {
+			eventIsMultiTouch = true;
+			resetLasso();
+		}
+		
+		boolean returnVar = false;
+		if (eventInSelRect == true) {
+			returnVar = transEvent(e);
+		} else if (eventIsMultiTouch == false) {
+			returnVar = lassoEvent(e);
+		}
+		
+		
+		if (e.getActionMasked() == MotionEvent.ACTION_UP) {
+			eventInSelRect = false;
+			eventIsMultiTouch = false;
+		}
+		
+		return returnVar;
 	}
 	
 	
@@ -129,12 +156,14 @@ public class StrokeSelector implements ITool {
 			}
 			lassoPoints.add(new Point(e.getX(), e.getY()));
 		} else if (e.getAction() == MotionEvent.ACTION_UP) {
-			selectedStrokes = getContainedIndexes(lassoPoints, currentStrokes);
-			
-			if (selectedStrokes.size() > 0) {
-				triggerTransformationTutorial();
-				final float aabbBuffer = mConverter.screenToCanvDist(15.0f);
-				selRect = getAabbFromIndexes(selectedStrokes, aabbBuffer);
+			if (lassoPoints.size() >= 1) {
+				resetTrans();
+				selectedStrokes = getContainedIndexes(lassoPoints, currentStrokes);
+				if (selectedStrokes.size() > 0) {
+					triggerTransformationTutorial();
+					final float aabbBuffer = mConverter.screenToCanvDist(15.0f);
+					selRect = getAabbFromIndexes(selectedStrokes, aabbBuffer);
+				}
 			}
 			
 			resetLasso();
@@ -148,8 +177,8 @@ public class StrokeSelector implements ITool {
 		ignoringCurrentMe = false;
 	}
 	
-	private static TreeSet<WorkingStroke> getContainedIndexes (final List<Point> lasso, final List<Stroke> noteStrokes) {
-		final TreeSet<WorkingStroke> selectedIndexes = new TreeSet<WorkingStroke>();
+	private static List<WorkingStroke> getContainedIndexes (final List<Point> lasso, final List<Stroke> noteStrokes) {
+		final List<WorkingStroke> selectedIndexes = new ArrayList<WorkingStroke>();
 		
 		final RectF lassoRect = MiscPolyGeom.calcAABoundingBox(lasso);
 		for (int i = 0; i < noteStrokes.size(); i++) {
@@ -170,12 +199,12 @@ public class StrokeSelector implements ITool {
 	 * @param buffer the buffer around the aabb
 	 * @return the aabb if indexes.size() > 0 or an empty RectF if indexes.size() <= 0
 	 */
-	private static RectF getAabbFromIndexes (final Set<WorkingStroke> strokes, final float buffer) {
+	private static RectF getAabbFromIndexes (final List<WorkingStroke> strokes, final float buffer) {
 		final RectF aabb = new RectF();
 		for (WorkingStroke ws : strokes) {
-			aabb.union(MiscPolyGeom.calcAABoundingBox(ws.poly));
+			aabb.union(calcAABoundingBox(ws.poly));
 		}
-		
+		//
 		aabb.left -= buffer;
 		aabb.top -= buffer;
 		aabb.right += buffer;
@@ -187,145 +216,128 @@ public class StrokeSelector implements ITool {
 	
 	//************************************************* Transform *********************************************
 	
+	private MotionEvent prevEvent = null;
 	
-	private boolean transEvent (MotionEvent e) {
+	private boolean transEvent (MotionEvent curEvent) {
+		if (prevEvent != null && curEvent.getPointerCount() == prevEvent.getPointerCount()) {
+			if (curEvent.getPointerCount() == 1) {
+				onePointTransform(selectedStrokes, selRect, prevEvent, curEvent);
+			} else {
+				twoPointTransform(selectedStrokes, selRect, prevEvent, curEvent);
+			}
+		}
 		
+		prevEvent = MotionEvent.obtain(curEvent);
 		
-		
-		
-		
-		
-		if (ignoringCurrentMe) return false;
-		if ((e.getAction() == MotionEvent.ACTION_DOWN || e.getAction() == MotionEvent.ACTION_POINTER_DOWN) && !selRect.contains(getAABB(e))) {
-			resetLasso();
-			ignoringCurrentMe = true;
-			return false;
+		if (curEvent.getActionMasked() == MotionEvent.ACTION_UP) {
+			applyTransToNote();
+			prevEvent = null;
 		}
 		
 		return true;
 	}
 	
-	public void startPinchEvent() {
-		lassoPoints.clear();
-		if (selRect != null) {
-			setIsTransforming = true;
-		}
-	}
 
-	public boolean continuePinchEvent(Point mid, Point dMid, float dZoom, float dist, RectF startBoundingRect) {
+	
+	private static void onePointTransform (final List<WorkingStroke> w, final RectF boundingRect, final MotionEvent prevEvent, final MotionEvent curEvent) {
+		final float dx = curEvent.getX() - prevEvent.getX();
+		final float dy = curEvent.getY() - prevEvent.getY();
 		
-		if (setIsTransforming == true && isTransforming == true) {
-			initDist = dist;
-			initMid = new Point(initMid.x + (mid.x - currentMid.x), initMid.y + (mid.y - currentMid.y));
-		} else if (setIsTransforming == true && selRect.contains(startBoundingRect)) {
-			initMid = mid;
-			initDist = dist;
-			isTransforming = true;
-		}
-		setIsTransforming = false;
-		
-		if (isTransforming == true) {
-			currentMid = mid;
-			currentDist = dist;
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	public void canclePinchEvent() {
-		resetTrans();
-	}
-
-	public void finishPinchEvent() {
-		if (isTransforming == true) {
-			applyTransToNote();
+		for (WorkingStroke s : w) {
+			for (PointF p : s.poly) {
+				p.x += dx;
+				p.y += dy;
+			}
 		}
 		
-		resetTrans();
+		boundingRect.offset(dx, dy);
+	}
+	
+	private static void twoPointTransform (final List<WorkingStroke> w, final RectF boundingRect, final MotionEvent prevEvent, final MotionEvent curEvent) {
+		final float prevX = (prevEvent.getX(0)+prevEvent.getX(1))/2;
+		final float prevY = (prevEvent.getY(0)+prevEvent.getY(1))/2;
+		final float curX = (curEvent.getX(0)+curEvent.getX(1))/2;
+		final float curY = (curEvent.getY(0)+curEvent.getY(1))/2;
+		
+		final float prevDist = MiscGeom.distance(prevEvent.getX(0), prevEvent.getY(0), prevEvent.getX(1), prevEvent.getY(1));
+		final float curDist = MiscGeom.distance(curEvent.getX(0), curEvent.getY(0), curEvent.getX(1), curEvent.getY(1));
+		final float dStretch = curDist / prevDist;
+		
+		for (WorkingStroke s : w) {
+			for (PointF p : s.poly) {
+				p.x = (p.x-prevX) * dStretch + curX;
+				p.y = (p.y-prevY) * dStretch + curY;
+			}
+		}
+		
+		boundingRect.left = (boundingRect.left - prevX) * dStretch + curX;
+		boundingRect.right = (boundingRect.right - prevX) * dStretch + curX;
+		boundingRect.top = (boundingRect.top - prevY) * dStretch + curY;
+		boundingRect.bottom = (boundingRect.bottom - prevY) * dStretch + curY;
 	}
 
-	public void startHoverEvent() { /* blank */	}
-	public boolean continueHoverEvent(Point p, long time) {	return false; }
-	public void cancleHoverEvent() { /* blank */ }
-	public void finishHoverEvent() { /* blank */ }
+	
+	private void resetTrans () {
+		selRect = null;
+		prevEvent = null;
+		selectedStrokes.clear();
+	}
 
 	public RectF getDirtyRect() {
 		return null;
 	}
 	
 	public void draw (Canvas c) {
-//
-//		// Draw all of the non-selected strokes in mNote
-//		for (int i = 0; i < currentStrokes.size(); i++) {
-//			if (selectedStrokes == null || selectedStrokes.contains(i) == false) {
-//				currentStrokes.get(i).draw(c);
-//			}
-//		}
-//		
-//		// Draw all of the selectedStrokes with their selection highlights as they're being transformed
-//		if (selectedStrokes.isEmpty() == false && isTransforming == true) {
-//			selBorderPaint.setStrokeWidth(mConverter.screenToCanvDist(8.0f));
-//			float dZoom = currentDist / initDist;
-//			
-//			for (Integer i : selectedStrokes) {
-//				List<Point> poly = currentStrokes.get(i).getPoly();
-//				
-//				selPath.reset();
-//				selPath.moveTo((poly.get(0).x-initMid.x) * dZoom + currentMid.x, (poly.get(0).y-initMid.y) * dZoom + currentMid.y);
-//				for (Point p : poly) {
-//					selPath.lineTo((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y);
-//				}
-//				selPath.lineTo((poly.get(0).x-initMid.x) * dZoom + currentMid.x, (poly.get(0).y-initMid.y) * dZoom + currentMid.y);
-//				
-//				c.drawPath(selPath, selBorderPaint);
-//				selBodyPaint.setColor(Color.WHITE);
-//				c.drawPath(selPath, selBodyPaint);
-//				selBodyPaint.setColor(currentStrokes.get(i).getColor());
-//				c.drawPath(selPath, selBodyPaint);
-//			}
-//			
-//			// Selection rect
-//			selRectPaint.setStrokeWidth(mConverter.screenToCanvDist(3.0f));
-//			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvDist(12.0f), mConverter.screenToCanvDist(7.0f)}, 0));
-//			
-//			if (isTransforming == true) {
-//				RectF curRect = new RectF();
-//				curRect.left = (selRect.left - initMid.x) * dZoom + currentMid.x;
-//				curRect.right = (selRect.right - initMid.x) * dZoom + currentMid.x;
-//				curRect.top = (selRect.top - initMid.y) * dZoom + currentMid.y;
-//				curRect.bottom = (selRect.bottom - initMid.y) * dZoom + currentMid.y;
-//				
-//				c.drawRect(curRect, selRectPaint);
-//			}
-//		} else if (selectedStrokes.isEmpty() == false) {
-//			selBorderPaint.setStrokeWidth(mConverter.screenToCanvDist(8.0f));
-//			
-//			for (Integer i : selectedStrokes) {
-//				List<Point> poly = currentStrokes.get(i).getPoly();
-//				
-//				selPath.reset();
-//				selPath.moveTo(poly.get(0).x, poly.get(0).y);
-//				for (Point p : poly) {
-//					selPath.lineTo(p.x, p.y);
-//				}
-//				selPath.lineTo(poly.get(0).x, poly.get(0).y);
-//				
-//				c.drawPath(selPath, selBorderPaint);
-//				selBodyPaint.setColor(Color.WHITE);
-//				c.drawPath(selPath, selBodyPaint);
-//				selBodyPaint.setColor(currentStrokes.get(i).getColor());
-//				c.drawPath(selPath, selBodyPaint);
-//			}
-//			
-//			selRectPaint.setStrokeWidth(mConverter.screenToCanvDist(3.0f));
-//			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvDist(12.0f), mConverter.screenToCanvDist(7.0f)}, 0));
-//			c.drawRect(selRect, selRectPaint);
-//		}
-//		
-//		
-//		drawLasso(c);
-//		
+		drawNotSelectedStrokes(c);
+		drawSelectedStrokes(c);
+		drawSelectionRect(c);
+		drawLasso(c);
+	}
+	
+	private void drawNotSelectedStrokes (final Canvas c) {
+		if (selectedStrokes.size() > 0) {
+			int prevIndex = -1;
+			
+			for (WorkingStroke curStroke : selectedStrokes) {
+				for (int i = prevIndex+1; i < curStroke.index; i++) {
+					currentStrokes.get(i).draw(c);
+				}
+				prevIndex = curStroke.index;
+			}
+			
+			for (int i = prevIndex+1; i < currentStrokes.size(); i++) {
+				currentStrokes.get(i).draw(c);
+			}
+		} else {
+			for (Stroke s : currentStrokes) {
+				s.draw(c);
+			}
+		}
+	}
+	
+	private void drawSelectedStrokes (final Canvas c) {
+		selBorderPaint.setStrokeWidth(mConverter.screenToCanvDist(8.0f));
+		
+		for (WorkingStroke s : selectedStrokes) {
+			selPath.reset();
+			selPath.moveTo(s.poly.get(0).x, s.poly.get(0).y);
+			for (PointF p : s.poly) {
+				selPath.lineTo(p.x, p.y);
+			}
+			selPath.lineTo(s.poly.get(0).x, s.poly.get(0).y);
+			
+			c.drawPath(selPath, selBorderPaint);
+			selBodyPaint.setColor(s.color | 0xFF000000);
+			c.drawPath(selPath, selBodyPaint);
+		}
+	}
+	
+	private void drawSelectionRect (final Canvas c) {
+		if (selRect != null) {
+			selRectPaint.setStrokeWidth(mConverter.screenToCanvDist(3.0f));
+			selRectPaint.setPathEffect(new DashPathEffect(new float[] {mConverter.screenToCanvDist(12.0f), mConverter.screenToCanvDist(7.0f)}, 0));
+			c.drawRect(selRect, selRectPaint);
+		}
 	}
 	
 	private void drawLasso (final Canvas c) {
@@ -350,7 +362,6 @@ public class StrokeSelector implements ITool {
 		lassoPoints.clear();
 		selectedStrokes.clear();
 		selRect = null;
-		selRect = null;
 	}
 	
 	public void redo () {
@@ -358,72 +369,63 @@ public class StrokeSelector implements ITool {
 		lassoPoints.clear();
 		selectedStrokes.clear();
 		selRect = null;
-		selRect = null;
 	}
 	
 	private void applyTransToNote () {
-//		setTutorialToOff();
-//		ArrayList<Action> actions = new ArrayList<Action>(selectedStrokes.size()*2);
-//		
-//		float dZoom = currentDist / initDist;
-//		
-//		int offsetCounter = 0;
-//		for (Integer i : selectedStrokes) {
-//			WrapList<Point> poly = currentStrokes.get(i).getPoly();
-//			
-//			WrapList<Point> transPoly = new WrapList<Point>(poly.size());
-//			
-//			for (Point p : poly) {
-//				transPoly.add(new Point((p.x-initMid.x) * dZoom + currentMid.x, (p.y-initMid.y) * dZoom + currentMid.y));
-//			}
-//			
-//			Stroke transStroke = new Stroke(currentStrokes.get(i).getColor(), transPoly);
-//			actions.add(new Action(transStroke, currentStrokes.size()+offsetCounter, true));
-//			offsetCounter++;
-//		}
-//		
-//		Iterator<Integer> iter = selectedStrokes.descendingIterator();
-//		
-//		while (iter.hasNext()) {
-//			int index = iter.next().intValue();
-//			
-//			actions.add(new Action(currentStrokes.get(index), index, false));
-//		}
-//		
-//		int numSelections = selectedStrokes.size();
-//		selectedStrokes.clear();
-//		for (int index = currentStrokes.size()-numSelections; index < currentStrokes.size(); index++) {
-//			selectedStrokes.add(index);
-//		}
-//		
-//		mNote.performActions(actions);
-//		
-//		RectF curRect = new RectF();
-//		curRect.left = (selRect.left - initMid.x) * dZoom + currentMid.x;
-//		curRect.right = (selRect.right - initMid.x) * dZoom + currentMid.x;
-//		curRect.top = (selRect.top - initMid.y) * dZoom + currentMid.y;
-//		curRect.bottom = (selRect.bottom - initMid.y) * dZoom + currentMid.y;
-//		selRect = curRect;
-	}
-	
-	private void resetTrans() {
-		isTransforming = false;
-		setIsTransforming = false;
+		if (selectedStrokes.size() == 0) return;
 		
-		initMid = null;
-		initDist = null;
+		setTutorialToOff();
+		ArrayList<Note.Action> actions = new ArrayList<Note.Action>(selectedStrokes.size()*2);
 		
-		currentMid = null;
-		currentDist = null;
+		// Add the moved strokes to the front
+		int offsetCounter = 0;
+		for (WorkingStroke s : selectedStrokes) {
+			ArrayList<Point> finalPoly = new ArrayList<Point>(s.poly.size());
+			
+			for (PointF p : s.poly) {
+				finalPoly.add(new Point(p.x, p.y));
+			}
+			
+			Stroke transStroke = new Stroke(s.color, finalPoly);
+			actions.add(new Action(transStroke, currentStrokes.size()+offsetCounter, true));
+			offsetCounter++;
+		}
+		
+		// Delete the strokes from where they were
+		for (int i = selectedStrokes.size()-1; i >= 0; i--) {
+			final int index = selectedStrokes.get(i).index;
+			actions.add(new Action(currentStrokes.get(index), index, false));
+		}
+
+		// Update the indexes of selectedStrokes
+		for (int i = 0; i < selectedStrokes.size(); i++) {
+			final int newIndex = currentStrokes.size()-selectedStrokes.size()+i;
+			selectedStrokes.get(i).index = newIndex;
+		}
+		
+		mNote.performActions(actions);
 	}
 	
 	
-	private static RectF getAABB (MotionEvent e) {
-		final RectF aabb = new RectF(e.getX(0), e.getY(0), e.getX(0), e.getY(0));
-		for (int i = 1; i < e.getPointerCount(); i++) aabb.union(e.getX(i), e.getY(i));
-		return aabb;
+	private static RectF calcAABoundingBox (List<PointF> points) {
+		RectF box = new RectF(points.get(0).x, points.get(0).y, points.get(0).x, points.get(0).y);
+		
+		for (PointF p : points) {
+			if (p.x < box.left) {
+				box.left = p.x;
+			} else if (p.x > box.right) {
+				box.right = p.x;
+			}
+			
+			if (p.y < box.top) {
+				box.top = p.y;
+			} else if (p.y > box.bottom) {
+				box.bottom = p.y;
+			}
+		}
+		
+		return box;
 	}
-	
 	
 	
 	// *************************************** Tutorial Methods ************************************
@@ -448,14 +450,18 @@ public class StrokeSelector implements ITool {
 	
 	
 	private static class WorkingStroke {
-		public final int index;
-		public List<Point> poly;
+		public int index;
+		public List<PointF> poly;
 		public final int color;
 		
 		public WorkingStroke (final int index, final List<Point> poly, final int color) {
 			this.index = index;
-			this.poly = poly;
 			this.color = color;
+			
+			this.poly = new ArrayList<PointF>(poly.size());
+			for (Point p : poly) {
+				this.poly.add(new PointF(p.x, p.y));
+			}
 		}
 	}
 }
