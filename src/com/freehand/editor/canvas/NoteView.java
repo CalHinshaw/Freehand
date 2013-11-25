@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.Debug;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,13 +20,19 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	private Matrix screenToCanvMat = new Matrix();
 	private Matrix canvToScreenMat = new Matrix();
 	
-	private float prevScreenX = Float.NaN;
-	private float prevScreenY = Float.NaN;
-	private float prevScreenDist = Float.NaN;
+	private float prevScreenPinchMidpointX = Float.NaN;
+	private float prevScreenPinchMidpointY = Float.NaN;
+	private float prevScreenPinchDist = Float.NaN;
 	
 	private float stylusPressureCutoff = 2.0f;
 	private float pressureSensitivity = 0.50f;
 	private boolean capacitiveDrawing = true;
+	
+	private boolean ignoreCurrentMotionEvent = false;
+	private float prevCanvStylusX = Float.NaN;
+	private float prevCanvStylusY = Float.NaN;
+	private float prevStylusPressure = Float.NaN;
+	private long prevStylusTime = Long.MIN_VALUE;
 	
 	private Note mNote;
 	private ITool currentTool = new Pen(mNote, this, pressureSensitivity, Color.BLACK, 6.0f, true);
@@ -89,22 +94,17 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 
 	@Override
 	public boolean onTouchEvent (MotionEvent event) {
-		// TODO doesn't filter out bad Galaxy Note stylus points
 		event.transform(screenToCanvMat);
+		event = filterMotionEvent(event);
+		if (event == null) return true;
+		
 		RectF dirty = null;
-		
-//		if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
-//			Debug.startMethodTracing("freehand");
-//		}
-		
-		
-		
 		
 		if (currentTool.onMotionEvent(event)) {
 			dirty = currentTool.getDirtyRect();
-			prevScreenX = Float.NaN;
-			prevScreenY = Float.NaN;
-			prevScreenDist = Float.NaN;
+			prevScreenPinchMidpointX = Float.NaN;
+			prevScreenPinchMidpointY = Float.NaN;
+			prevScreenPinchDist = Float.NaN;
 		} else if (event.getPointerCount() >= 2) {
 			event.transform(canvToScreenMat);
 			panZoom(event);
@@ -113,9 +113,9 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		if (event.getActionMasked() == MotionEvent.ACTION_UP ||
 			event.getActionMasked() == MotionEvent.ACTION_CANCEL ||
 			event.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
-			prevScreenX = Float.NaN;
-			prevScreenY = Float.NaN;
-			prevScreenDist = Float.NaN;
+			prevScreenPinchMidpointX = Float.NaN;
+			prevScreenPinchMidpointY = Float.NaN;
+			prevScreenPinchDist = Float.NaN;
 		}
 		
 		if (dirty == null) {
@@ -124,27 +124,95 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 			invalidate(canvasRectToScreenRect(dirty));
 		}
 		
-		
-		
-//		if (event.getActionMasked() == MotionEvent.ACTION_UP) {
-//			Debug.stopMethodTracing();
-//		}
-		
-		
-		
-		
 		return true;
 	}
+	
+	
+	private MotionEvent filterMotionEvent(final MotionEvent event) {
+		if (event.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) return event;
+		
+		if (ignoreCurrentMotionEvent == true && event.getActionMasked() == MotionEvent.ACTION_UP) {
+			ignoreCurrentMotionEvent = false;
+			clearPrevStylusFields();
+			return null;
+		} else if (ignoreCurrentMotionEvent == true) {
+			return null;
+		}
+		
+		MotionEvent toReturn = event;
+		
+		for (int i = 0; i < event.getHistorySize(); i++) {
+			if (event.getHistoricalPressure(i) < stylusPressureCutoff) {
+				toReturn = stripLowPressures(event);
+				ignoreCurrentMotionEvent = true;
+			}
+		}
+		
+		if (event.getPressure() < stylusPressureCutoff) {
+			toReturn = stripLowPressures(event);
+			ignoreCurrentMotionEvent = true;
+		}
+		
+		if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+			ignoreCurrentMotionEvent = false;
+			clearPrevStylusFields();
+		} else {
+			prevCanvStylusX = event.getX();
+			prevCanvStylusY = event.getY();
+			prevStylusPressure = event.getPressure();
+			prevStylusTime = event.getEventTime();
+		}
+		
+		return toReturn;
+	}
+	
+	private MotionEvent stripLowPressures (final MotionEvent e) {
+		MotionEvent newEvent = null;
+		
+		// non-historical pointer must be below threshold because once you're below you never go up and this
+		// method is only called if we're sure there's at least one low pressure, so we're ignoring
+		
+		for (int i = e.getHistorySize()-1; i >=0; i--) {
+			if (e.getHistoricalPressure(i) >= stylusPressureCutoff) {
+				if (newEvent == null) {
+					newEvent = MotionEvent.obtain(e.getDownTime(), e.getHistoricalEventTime(i), MotionEvent.ACTION_UP, e.getHistoricalX(i),
+						e.getHistoricalY(i), e.getHistoricalPressure(i), e.getHistoricalSize(i), e.getMetaState(), e.getXPrecision(),
+						e.getYPrecision(), e.getDeviceId(), e.getEdgeFlags());
+				} else {
+					newEvent.addBatch(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), e.getHistoricalPressure(i),
+						e.getHistoricalSize(i), e.getMetaState());
+				}
+			}
+		}
+		
+		if (newEvent == null) {
+			newEvent = MotionEvent.obtain(e.getDownTime(), prevStylusTime, MotionEvent.ACTION_UP, prevCanvStylusX,
+				prevCanvStylusY, prevStylusPressure, e.getSize(), e.getMetaState(), e.getXPrecision(),
+				e.getYPrecision(), e.getDeviceId(), e.getEdgeFlags());
+			
+		}
+		
+		return newEvent;
+	}
+	
+	
+	private void clearPrevStylusFields () {
+		prevCanvStylusX = Float.NaN;
+		prevCanvStylusY = Float.NaN;
+		prevStylusPressure = Float.NaN;
+		prevStylusTime = Long.MIN_VALUE;
+	}
+	
 	
 	private void panZoom(final MotionEvent e) {
 		final float curScreenDist = MiscGeom.distance(e.getX(0), e.getY(0), e.getX(1), e.getY(1));
 		final float curScreenX = (e.getX(0)+e.getX(1)) / 2;
 		final float curScreenY = (e.getY(0)+e.getY(1)) / 2;
 		
-		if (!Float.isNaN(prevScreenX) && !Float.isNaN(prevScreenY) && !Float.isNaN(prevScreenDist)) {
-			final float dZoom = curScreenDist / prevScreenDist;
-			canvX += (curScreenX/dZoom - prevScreenX)/zoomMult;
-			canvY += (curScreenY/dZoom - prevScreenY)/zoomMult;
+		if (!Float.isNaN(prevScreenPinchMidpointX) && !Float.isNaN(prevScreenPinchMidpointY) && !Float.isNaN(prevScreenPinchDist)) {
+			final float dZoom = curScreenDist / prevScreenPinchDist;
+			canvX += (curScreenX/dZoom - prevScreenPinchMidpointX)/zoomMult;
+			canvY += (curScreenY/dZoom - prevScreenPinchMidpointY)/zoomMult;
 			zoomMult *= dZoom;
 			
 			final float[] canvToScreenVals = {	zoomMult,	0,			canvX*zoomMult,
@@ -158,9 +226,9 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 			screenToCanvMat.setValues(screenToCanvVals);
 		}
 		
-		prevScreenDist = curScreenDist;
-		prevScreenX = curScreenX;
-		prevScreenY = curScreenY;
+		prevScreenPinchDist = curScreenDist;
+		prevScreenPinchMidpointX = curScreenX;
+		prevScreenPinchMidpointY = curScreenY;
 	}
 	
 	@Override

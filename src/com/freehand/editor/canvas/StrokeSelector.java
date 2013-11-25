@@ -140,7 +140,7 @@ public class StrokeSelector implements ITool {
 	//*************************************** Lasso ***********************************************
 	
 	private boolean lassoEvent (MotionEvent e) {
-		if (e.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS && e.getToolType(0) != MotionEvent.TOOL_TYPE_FINGER && allowCapDrawing) return false;
+		if (e.getToolType(0) == MotionEvent.TOOL_TYPE_FINGER && allowCapDrawing == false) return false;
 		if (ignoringCurrentMe) return false;
 		if (e.getPointerCount() > 1) {
 			resetLasso();
