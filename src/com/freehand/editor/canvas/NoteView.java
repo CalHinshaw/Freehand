@@ -24,6 +24,8 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	private float prevScreenPinchMidpointY = Float.NaN;
 	private float prevScreenPinchDist = Float.NaN;
 	
+	private ZoomNotifier mZoomNotifier;
+	
 	private float stylusPressureCutoff = 2.0f;
 	private float pressureSensitivity = 0.50f;
 	private boolean capacitiveDrawing = true;
@@ -42,16 +44,19 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	public NoteView(Context context) {
 		super(context);
 		setDeviceSpecificPressureCutoffs();
+		mZoomNotifier = new ZoomNotifier(this);
 	}
 	
 	public NoteView (Context context, AttributeSet attrs) {
 		super (context, attrs);
 		setDeviceSpecificPressureCutoffs();
+		mZoomNotifier = new ZoomNotifier(this);
 	}
 	
 	public NoteView (Context context, AttributeSet attrs, int defStyle) {
 		super (context, attrs, defStyle);
 		setDeviceSpecificPressureCutoffs();
+		mZoomNotifier = new ZoomNotifier(this);
 	}
 	
 	public void setDeviceSpecificPressureCutoffs() {
@@ -61,6 +66,7 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 			stylusPressureCutoff = 1.0f / 1020.0f;
 		}
 	}
+	
 
 //************************************* Outward facing class methods **************************************
 	
@@ -108,6 +114,7 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		} else if (event.getPointerCount() >= 2) {
 			event.transform(canvToScreenMat);
 			panZoom(event);
+			mZoomNotifier.update(this.zoomMult);
 		}
 		
 		if (event.getActionMasked() == MotionEvent.ACTION_UP ||
