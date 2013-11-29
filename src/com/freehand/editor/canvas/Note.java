@@ -14,6 +14,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Environment;
 import android.view.MotionEvent;
 
@@ -65,6 +68,10 @@ public class Note {
 
 			public float screenToCanvDist(final float screenDist) {
 				return 0;
+			}
+
+			public Rect canvRectToScreenRect(RectF canvRect) {
+				return null;
 			}
 		};
 		

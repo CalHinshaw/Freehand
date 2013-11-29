@@ -1,30 +1,18 @@
 package com.freehand.editor.canvas;
 
 import com.freehand.editor.tool_bar.IActionBarListener;
-import com.freehand.ink.MiscGeom;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-public class NoteView extends View implements IActionBarListener, ICanvScreenConverter {
+public class NoteView extends View implements IActionBarListener {
 	
-	private float zoomMult = 1;
-	private float canvX = 0;
-	private float canvY = 0;
-	private Matrix screenToCanvMat = new Matrix();
-	private Matrix canvToScreenMat = new Matrix();
-	
-	private float prevScreenPinchMidpointX = Float.NaN;
-	private float prevScreenPinchMidpointY = Float.NaN;
-	private float prevScreenPinchDist = Float.NaN;
-	
-	private ZoomNotifier mZoomNotifier;
+	private final CanvPosTracker canvPosTracker = new CanvPosTracker();
+	private final ZoomNotifier mZoomNotifier;
 	
 	private float stylusPressureCutoff = 2.0f;
 	private float pressureSensitivity = 0.50f;
@@ -37,7 +25,7 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	private long prevStylusTime = Long.MIN_VALUE;
 	
 	private Note mNote;
-	private ITool currentTool = new Pen(mNote, this, pressureSensitivity, Color.BLACK, 6.0f, true);
+	private ITool currentTool = new Pen(mNote, canvPosTracker, pressureSensitivity, Color.BLACK, 6.0f, true);
 	
 //************************************* Constructors ************************************************
 
@@ -84,14 +72,12 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	}
 	
 	public void setPos (final float[] pos) {
-		canvX = pos[0];
-		canvY = pos[1];
-		zoomMult = pos[2];
+		canvPosTracker.setPos(pos[0], pos[1], pos[2]);
 		invalidate();
 	}
 	
 	public float[] getPos () {
-		final float pos[] = {canvX, canvY, zoomMult};
+		final float pos[] = {canvPosTracker.getCanvX(), canvPosTracker.getCanvY(), canvPosTracker.getZoomMult()};
 		return pos;
 	}
 	
@@ -100,7 +86,7 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 
 	@Override
 	public boolean onTouchEvent (MotionEvent event) {
-		event.transform(screenToCanvMat);
+		event.transform(canvPosTracker.getScreenToCanvMat());
 		event = filterMotionEvent(event);
 		if (event == null) return true;
 		
@@ -108,27 +94,23 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		
 		if (currentTool.onMotionEvent(event)) {
 			dirty = currentTool.getDirtyRect();
-			prevScreenPinchMidpointX = Float.NaN;
-			prevScreenPinchMidpointY = Float.NaN;
-			prevScreenPinchDist = Float.NaN;
+			canvPosTracker.clearPinchState();
 		} else if (event.getPointerCount() >= 2) {
-			event.transform(canvToScreenMat);
-			panZoom(event);
-			mZoomNotifier.update(this.zoomMult);
+			event.transform(canvPosTracker.getCanvToScreenMat());
+			canvPosTracker.update(event);
+			mZoomNotifier.update(canvPosTracker.getZoomMult());
 		}
 		
 		if (event.getActionMasked() == MotionEvent.ACTION_UP ||
 			event.getActionMasked() == MotionEvent.ACTION_CANCEL ||
 			event.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
-			prevScreenPinchMidpointX = Float.NaN;
-			prevScreenPinchMidpointY = Float.NaN;
-			prevScreenPinchDist = Float.NaN;
+			canvPosTracker.clearPinchState();
 		}
 		
 		if (dirty == null) {
 			invalidate();
 		} else {
-			invalidate(canvasRectToScreenRect(dirty));
+			invalidate(canvPosTracker.canvRectToScreenRect(dirty));
 		}
 		
 		return true;
@@ -211,57 +193,19 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	}
 	
 	
-	private void panZoom(final MotionEvent e) {
-		final float curScreenDist = MiscGeom.distance(e.getX(0), e.getY(0), e.getX(1), e.getY(1));
-		final float curScreenX = (e.getX(0)+e.getX(1)) / 2;
-		final float curScreenY = (e.getY(0)+e.getY(1)) / 2;
-		
-		if (!Float.isNaN(prevScreenPinchMidpointX) && !Float.isNaN(prevScreenPinchMidpointY) && !Float.isNaN(prevScreenPinchDist)) {
-			final float dZoom = curScreenDist / prevScreenPinchDist;
-			canvX += (curScreenX/dZoom - prevScreenPinchMidpointX)/zoomMult;
-			canvY += (curScreenY/dZoom - prevScreenPinchMidpointY)/zoomMult;
-			zoomMult *= dZoom;
-			
-			final float[] canvToScreenVals = {	zoomMult,	0,			canvX*zoomMult,
-												0,			zoomMult,	canvY*zoomMult,
-												0,			0,			1				};
-			canvToScreenMat.setValues(canvToScreenVals);
-			
-			final float[] screenToCanvVals = {	1.0f/zoomMult,	0,				-canvX,
-												0,				1.0f/zoomMult,	-canvY,
-												0,				0,				1			};
-			screenToCanvMat.setValues(screenToCanvVals);
-		}
-		
-		prevScreenPinchDist = curScreenDist;
-		prevScreenPinchMidpointX = curScreenX;
-		prevScreenPinchMidpointY = curScreenY;
-	}
-	
 	@Override
 	public boolean onHoverEvent (MotionEvent e) {
-		e.transform(screenToCanvMat);
+		e.transform(canvPosTracker.getScreenToCanvMat());
 		currentTool.onMotionEvent(e);
 		
 		RectF dirty = currentTool.getDirtyRect();
 		if (dirty == null) {
 			invalidate();
 		} else {
-			invalidate(canvasRectToScreenRect(dirty));
+			invalidate(canvPosTracker.canvRectToScreenRect(dirty));
 		}
 		
 		return true;
-	}
-	
-	private Rect canvasRectToScreenRect (RectF canvRect) {
-		Rect screenRect = new Rect();
-		
-		screenRect.left = (int) ((canvRect.left + canvX) * zoomMult);
-		screenRect.right = (int) ((canvRect.right + canvX) * zoomMult) + 1;
-		screenRect.top = (int) ((canvRect.top + canvY) * zoomMult);
-		screenRect.bottom = (int) ((canvRect.bottom + canvY) * zoomMult) + 1;
-		
-		return screenRect;
 	}
 	
 	
@@ -271,13 +215,13 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 	public void setTool (Tool newTool, float size, int color) {
 		switch (newTool) {
 			case PEN:
-				currentTool = new Pen(mNote, this, pressureSensitivity, color, size, capacitiveDrawing);
+				currentTool = new Pen(mNote, canvPosTracker, pressureSensitivity, color, size, capacitiveDrawing);
 				break;
 			case STROKE_ERASER:
-				currentTool = new StrokeEraser(mNote, this, size, capacitiveDrawing);
+				currentTool = new StrokeEraser(mNote, canvPosTracker, size, capacitiveDrawing);
 				break;
 			case STROKE_SELECTOR:
-				currentTool = new StrokeSelector(mNote, this, capacitiveDrawing);
+				currentTool = new StrokeSelector(mNote, canvPosTracker, capacitiveDrawing);
 				break;
 		}
 		
@@ -296,24 +240,12 @@ public class NoteView extends View implements IActionBarListener, ICanvScreenCon
 		invalidate();
 	}
 	
-	
-	//************************************************ ICanvScreenConverter *************************************************************
-	
-	public float canvToScreenDist(final float canvDist) {
-		return canvDist*zoomMult;
-	}
-	
-	public float screenToCanvDist(final float screenDist) {
-		return screenDist/zoomMult;
-	}
-	
-	
 	//********************************************** Rendering ****************************************************************
 	
 	@Override
 	public void onDraw (Canvas c) {
 		c.drawColor(Color.WHITE);
-		c.concat(canvToScreenMat);
+		c.concat(canvPosTracker.getCanvToScreenMat());
 		currentTool.draw(c);
 	}
 }
