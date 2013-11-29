@@ -1,7 +1,11 @@
 package com.freehand.editor.canvas;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import com.calhounroberthinshaw.freehand.R;
 
+import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
@@ -17,6 +21,9 @@ class ZoomNotifier {
 	private PopupWindow mWindow;
 	private TextView mView;
 	
+	private final Timer hideTimer = new Timer(true);
+	private TimerTask hideTask = null;
+	
 	public ZoomNotifier (final View parentView) {
 		mParentView = parentView;
 		LinearLayout layout = (LinearLayout) LayoutInflater.from(mParentView.getContext()).inflate(R.layout.pan_zoom_notifier_layout, null);
@@ -30,8 +37,32 @@ class ZoomNotifier {
 	}
 	
 	public void update (final float newZoom) {
+		final float density = mParentView.getResources().getDisplayMetrics().density;
+		
+		int[] location = new int[2];
+		mParentView.getLocationOnScreen(location);
+		
 		mView.setText(Integer.toString((int) (newZoom*100.0)));
-		mWindow.showAtLocation(mParentView, Gravity.CENTER_HORIZONTAL + Gravity.TOP, 0,
-			(int) (mParentView.getTop() + 10*mParentView.getResources().getDisplayMetrics().density));
+		mWindow.showAtLocation(mParentView, Gravity.CENTER_HORIZONTAL + Gravity.TOP, 0, location[1] + (int) (10*density));
+		
+		
+		if (hideTask != null) {
+			hideTask.cancel();
+		}
+		
+		hideTask = new TimerTask() {
+			@Override
+			public void run() {
+				if (mParentView.getContext() instanceof Activity) {
+					((Activity) mParentView.getContext()).runOnUiThread(new Runnable() {
+						public void run() {
+							mWindow.dismiss();
+						}
+					});
+				}
+			}
+		};
+		
+		hideTimer.schedule(hideTask, 2000);
 	}
 }
