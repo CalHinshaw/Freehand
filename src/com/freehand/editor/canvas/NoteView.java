@@ -65,6 +65,9 @@ public class NoteView extends View implements IActionBarListener {
 		return pos;
 	}
 	
+	public void finish () {
+		mZoomNotifier.finish();
+	}
 
 //****************************** Touch Handling Methods *********************************************
 

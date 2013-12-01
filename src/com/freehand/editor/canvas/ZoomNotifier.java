@@ -65,4 +65,9 @@ class ZoomNotifier {
 		
 		hideTimer.schedule(hideTask, 2000);
 	}
+	
+	public void finish () {
+		mWindow.dismiss();
+		hideTimer.cancel();
+	}
 }

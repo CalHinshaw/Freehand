@@ -190,4 +190,11 @@ public class NoteActivity extends Activity {
 			overridePendingTransition(R.anim.in_from_left, R.anim.out_to_right);
 		}
 	}
+	
+	@Override
+	public void onStop () {
+		mNoteView.finish();
+		super.onStop();
+	}
+	
 }
