@@ -18,8 +18,6 @@ class CanvPosTracker implements ICanvScreenConverter {
 	
 	private boolean thresholdPassed = false;
 	private float thresholdDZoom = 1.0f;
-	private float thresholdCanvDx = 0;
-	private float thresholdCanvDy = 0;
 	
 	private float prevScreenPinchMidpointX = Float.NaN;
 	private float prevScreenPinchMidpointY = Float.NaN;
@@ -32,11 +30,6 @@ class CanvPosTracker implements ICanvScreenConverter {
 		zoomMult = newZoomMult;
 	}
 	
-	public void clearPinchState () {
-		prevScreenPinchMidpointX = Float.NaN;
-		prevScreenPinchMidpointY = Float.NaN;
-		prevScreenPinchDist = Float.NaN;
-	}
 	
 	public void update (MotionEvent e) {
 		final float curScreenDist = MiscGeom.distance(e.getX(0), e.getY(0), e.getX(1), e.getY(1));
@@ -44,20 +37,21 @@ class CanvPosTracker implements ICanvScreenConverter {
 		final float curScreenY = (e.getY(0)+e.getY(1)) / 2;
 		
 		if (!Float.isNaN(prevScreenPinchMidpointX) && !Float.isNaN(prevScreenPinchMidpointY) && !Float.isNaN(prevScreenPinchDist)) {
-			final float dZoom = curScreenDist / prevScreenPinchDist;
+			float dZoom = 1.0f;
+			if (!thresholdPassed && !(thresholdDZoom > 1.25f || thresholdDZoom < 0.75f)) {
+				thresholdDZoom *= curScreenDist / prevScreenPinchDist;
+			} else if (!thresholdPassed && (thresholdDZoom > 1.25f || thresholdDZoom < 0.75f)) {
+				thresholdPassed = true;
+				dZoom = thresholdDZoom * (curScreenDist / prevScreenPinchDist);
+			} else {
+				dZoom = curScreenDist / prevScreenPinchDist;
+			}
+			
 			canvX += (curScreenX/dZoom - prevScreenPinchMidpointX)/zoomMult;
 			canvY += (curScreenY/dZoom - prevScreenPinchMidpointY)/zoomMult;
 			zoomMult *= dZoom;
 			
-			final float[] canvToScreenVals = {	zoomMult,	0,			canvX*zoomMult,
-												0,			zoomMult,	canvY*zoomMult,
-												0,			0,			1				};
-			canvToScreenMat.setValues(canvToScreenVals);
-			
-			final float[] screenToCanvVals = {	1.0f/zoomMult,	0,				-canvX,
-												0,				1.0f/zoomMult,	-canvY,
-												0,				0,				1			};
-			screenToCanvMat.setValues(screenToCanvVals);
+			updateMats();
 		}
 		
 		prevScreenPinchDist = curScreenDist;
@@ -65,17 +59,44 @@ class CanvPosTracker implements ICanvScreenConverter {
 		prevScreenPinchMidpointY = curScreenY;
 	}
 	
+	
+	private void updateMats () {
+		final float[] canvToScreenVals = {	zoomMult,	0,			canvX*zoomMult,
+											0,			zoomMult,	canvY*zoomMult,
+											0,			0,			1				};
+		canvToScreenMat.setValues(canvToScreenVals);
+
+		final float[] screenToCanvVals = {	1.0f/zoomMult,	0,				-canvX,
+											0,				1.0f/zoomMult,	-canvY,
+											0,				0,				1			};
+		screenToCanvMat.setValues(screenToCanvVals);
+	}
+	
+	
+	public void clearPinchState () {
+		prevScreenPinchMidpointX = Float.NaN;
+		prevScreenPinchMidpointY = Float.NaN;
+		prevScreenPinchDist = Float.NaN;
+		
+		thresholdPassed = false;
+		thresholdDZoom = 1.0f;
+	}
+	
+	
 	public float getCanvX () {
 		return canvX;
 	}
+	
 	
 	public float getCanvY () {
 		return canvY;
 	}
 	
+	
 	public float getZoomMult () {
 		return zoomMult;
 	}
+	
 	
 	/**
 	 * @return the actual mutable screenToCanvMat this class uses for performance reasons. If you modify it you might break everything.
@@ -83,6 +104,7 @@ class CanvPosTracker implements ICanvScreenConverter {
 	public Matrix getScreenToCanvMat () {
 		return screenToCanvMat;
 	}
+	
 	
 	/**
 	 * @return the actual mutable canvToScreenMat this class uses for performance reasons. If you modify it you might break everything.
@@ -96,9 +118,11 @@ class CanvPosTracker implements ICanvScreenConverter {
 		return canvDist*zoomMult;
 	}
 	
+	
 	public float screenToCanvDist(final float screenDist) {
 		return screenDist/zoomMult;
 	}
+	
 	
 	public Rect canvRectToScreenRect (RectF canvRect) {
 		Rect screenRect = new Rect();
