@@ -52,6 +52,7 @@ public class NoteActivity extends Activity {
 		mNoteView.setNote(mNote);
 		mNoteView.setUsingCapDrawing(getUsingCapDrawing());
 		mNoteView.setPressureSensitivity(getPressureSensitivity());
+		mNoteView.setZoomThreshold(getZoomThreshold());
 		
 		mActionBar.setActionBarListener(mNoteView);
 		mActionBar.setNote(mNote);
@@ -75,6 +76,18 @@ public class NoteActivity extends Activity {
 	private boolean getUsingCapDrawing () {
 		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		return mPrefs.getBoolean("capacitive_drawing", true);
+	}
+	
+	private float getZoomThreshold () {
+		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String psString = mPrefs.getString("zoom_threshold", "20");
+		int thresholdInt = Integer.parseInt(psString);
+		
+		if (thresholdInt < 0) {
+			thresholdInt = 0;
+		}
+		
+		return thresholdInt / 100.0f;
 	}
 	
 	@Override

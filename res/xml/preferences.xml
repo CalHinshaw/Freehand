@@ -10,10 +10,17 @@
     	android:persistent = "true" />
     
     <EditTextPreference
-        android:title = "Pressure sensitivity"
+        android:title = "Pressure Sensitivity"
         android:dialogMessage="Set the stylus's pressure sensitivity - 0 is off and 100 is all the way on."
         android:key = "pressure_sensitivity"
         android:defaultValue = "40"
         android:persistent = "true" />
-        
+
+    <EditTextPreference
+        android:title = "Zoom Threshold"
+        android:dialogMessage="Set the ammount zoom needs to change by before the zoom change is applied - 0 means pinch actions will zoom imediately, and 100 means the pinching fingers need to be twice as far apart as they started to zoom in"
+        android:key = "zoom_threshold"
+        android:defaultValue = "20"
+        android:persistent = "true" />
+    
 </PreferenceScreen>

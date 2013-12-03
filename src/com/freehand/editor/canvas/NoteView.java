@@ -60,6 +60,10 @@ public class NoteView extends View implements IActionBarListener {
 		invalidate();
 	}
 	
+	public void setZoomThreshold(final float threshold) {
+		canvPosTracker.setZoomThreshold(threshold);
+	}
+	
 	public float[] getPos () {
 		final float pos[] = {canvPosTracker.getCanvX(), canvPosTracker.getCanvY(), canvPosTracker.getZoomMult()};
 		return pos;

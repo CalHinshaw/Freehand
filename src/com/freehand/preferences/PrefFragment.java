@@ -13,7 +13,10 @@ public class PrefFragment extends PreferenceFragment {
     	super.onCreate(savedInstanceState);
     	addPreferencesFromResource(R.xml.preferences);
     	
-    	EditTextPreference pref = (EditTextPreference)findPreference("pressure_sensitivity");
-    	pref.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+    	EditTextPreference pressure = (EditTextPreference)findPreference("pressure_sensitivity");
+    	pressure.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+    	
+    	EditTextPreference zoom = (EditTextPreference)findPreference("zoom_threshold");
+    	zoom.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
     }
 }

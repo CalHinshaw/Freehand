@@ -16,6 +16,8 @@ class CanvPosTracker implements ICanvScreenConverter {
 	private Matrix screenToCanvMat = new Matrix();
 	private Matrix canvToScreenMat = new Matrix();
 	
+	private float zoomThreshold = 0.20f;
+	
 	private boolean thresholdPassed = false;
 	private float thresholdDZoom = 1.0f;
 	
@@ -31,6 +33,11 @@ class CanvPosTracker implements ICanvScreenConverter {
 	}
 	
 	
+	public void setZoomThreshold (final float newThreshold) {
+		zoomThreshold = newThreshold;
+	}
+	
+	
 	public void update (MotionEvent e) {
 		final float curScreenDist = MiscGeom.distance(e.getX(0), e.getY(0), e.getX(1), e.getY(1));
 		final float curScreenX = (e.getX(0)+e.getX(1)) / 2;
@@ -38,9 +45,9 @@ class CanvPosTracker implements ICanvScreenConverter {
 		
 		if (!Float.isNaN(prevScreenPinchMidpointX) && !Float.isNaN(prevScreenPinchMidpointY) && !Float.isNaN(prevScreenPinchDist)) {
 			float dZoom = 1.0f;
-			if (!thresholdPassed && !(thresholdDZoom > 1.25f || thresholdDZoom < 0.75f)) {
+			if (!thresholdPassed && !(thresholdDZoom > (1.0f + zoomThreshold) || thresholdDZoom < (1.0f - zoomThreshold))) {
 				thresholdDZoom *= curScreenDist / prevScreenPinchDist;
-			} else if (!thresholdPassed && (thresholdDZoom > 1.25f || thresholdDZoom < 0.75f)) {
+			} else if (!thresholdPassed && (thresholdDZoom > (1.0f + zoomThreshold) || thresholdDZoom < (1.0f - zoomThreshold))) {
 				thresholdPassed = true;
 				dZoom = thresholdDZoom * (curScreenDist / prevScreenPinchDist);
 			} else {
