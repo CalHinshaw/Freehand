@@ -19,7 +19,7 @@ public class NoteView extends View implements IActionBarListener {
 	private final CanvPosTracker canvPosTracker = new CanvPosTracker();
 	private final ZoomNotifier mZoomNotifier;
 	
-	private ITool currentTool = new Pen(mNote, canvPosTracker, pressureSensitivity, Color.BLACK, 6.0f, true);
+	private ITool currentTool = new Pen(mNote, canvPosTracker, this, pressureSensitivity, Color.BLACK, 6.0f, true);
 
 	
 //************************************* Constructors ************************************************
@@ -129,7 +129,7 @@ public class NoteView extends View implements IActionBarListener {
 	public void setTool (Tool newTool, float size, int color) {
 		switch (newTool) {
 			case PEN:
-				currentTool = new Pen(mNote, canvPosTracker, pressureSensitivity, color, size, capacitiveDrawing);
+				currentTool = new Pen(mNote, canvPosTracker, this, pressureSensitivity, color, size, capacitiveDrawing);
 				break;
 			case STROKE_ERASER:
 				currentTool = new StrokeEraser(mNote, canvPosTracker, size, capacitiveDrawing);

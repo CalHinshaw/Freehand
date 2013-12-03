@@ -19,6 +19,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Environment;
 import android.view.MotionEvent;
+import android.view.View;
 
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
@@ -87,7 +88,7 @@ public class Note {
 			s.readBoolean();
 			s.readBoolean();
 			
-			Pen pen = new Pen(this, conv, 0, color, size, true);
+			Pen pen = new Pen(this, conv, null, 0, color, size, true);
 			
 			int numSubStrokes = s.readInt();
 			for (int ssNum = 0; ssNum < numSubStrokes; ssNum++) {

@@ -10,6 +10,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.View;
 
 import com.freehand.editor.canvas.Note.Action;
 import com.freehand.ink.MiscGeom;
@@ -21,6 +22,7 @@ public class Pen implements ITool {
 	
 	private final Note mNote;
 	private final ICanvScreenConverter mConverter;
+	private View invalidator;
 	
 	private final float pressureSensitivity;
 	private final boolean capDrawing;
@@ -43,9 +45,11 @@ public class Pen implements ITool {
 	
 	private RectF dirtyRect = null;
 	
-	public Pen (Note newNote, ICanvScreenConverter newConverter, float pressureSensitivity, int penColor, float penSize, boolean capDrawing) {
+	
+	public Pen (Note newNote, ICanvScreenConverter newConverter, View invalidator, float pressureSensitivity, int penColor, float penSize, boolean capDrawing) {
 		mNote = newNote;
 		mConverter = newConverter;
+		this.invalidator = invalidator;
 		this.pressureSensitivity = pressureSensitivity;
 		this.capDrawing = capDrawing;
 		color = penColor;
@@ -69,6 +73,9 @@ public class Pen implements ITool {
 		if (e.getAction() == MotionEvent.ACTION_UP) {
 			final Point p = new Point(e.getX(), e.getY());
 			processPoint(p, e.getPressure());
+			if (invalidator != null) {
+				invalidator.invalidate(mConverter.canvRectToScreenRect(getDirtyRect()));
+			}
 			addStrokeToNote();
 			clear();
 			return true;
@@ -165,16 +172,6 @@ public class Pen implements ITool {
 	public void redo() { /* blank */ }
 	
 	//**************************************** Utility Methods ************************************************
-	
-//	private void resetDirtyRect () {
-//		dirtyRect = null;
-//		
-//		if (poly.size() >= 1) {
-//			addPointToDirtyRect(poly.getFirst());
-//			addPointToDirtyRect(poly.getLast());
-//		}
-//	}
-	
 	
 	
 	private List<Point> getFinalPoly () {
