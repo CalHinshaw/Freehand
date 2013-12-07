@@ -37,20 +37,21 @@ public class Note {
 		noteFile = new File(notePath);
 		
 		if (!notePath.endsWith(".note") || !noteFile.exists() || noteFile.isDirectory()) {
-			backingFileVersion = 2;
+			backingFileVersion = 3;
 			return;
 		}
 		
 		try {
 			DataInputStream s = new DataInputStream(new BufferedInputStream(new FileInputStream(noteFile)));
 			
-			int formatVersion = s.readInt();
-			backingFileVersion = formatVersion;
+			backingFileVersion = s.readInt();
 			
-			if (formatVersion == 1) {
+			if (backingFileVersion == 1) {
 				readV1(s);
-			} else if (formatVersion == 2) {
+			} else if (backingFileVersion == 2) {
 				readV2(s);
+			} else if (backingFileVersion == 3) {
+				readV3(s);
 			}
 			
 			s.close();
@@ -106,7 +107,7 @@ public class Note {
 		undoQueue.clear();
 	}
 	
-	private void readV2 (DataInputStream s) throws IOException {
+	private void readV2 (final DataInputStream s) throws IOException {
 		int numStrokes = s.readInt();
 		
 		for (int i = 0; i < numStrokes; i++) {
@@ -121,6 +122,13 @@ public class Note {
 		}
 	}
 	
+	private void readV3 (final DataInputStream s) throws IOException {
+		paperType = PaperType.values()[s.readInt()];
+		s.readInt();	// This is the background place holder
+		
+		readV2(s);
+	}
+	
 	public boolean save () {
 		if (noteFile.getPath().endsWith(".note") == false) { return false; }
 		if (noteFile.isDirectory() == true) { return false; }
@@ -128,7 +136,10 @@ public class Note {
 		try {
 			File temp = new File(noteFile.getParentFile(), "temp_"+noteFile.getName());
 			DataOutputStream s = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(temp)));
-			s.writeInt(2);
+			s.writeInt(3);						// Version of .note file format
+			s.writeInt(paperType.ordinal());	// PaperType
+			s.writeInt(0);						// Background if it's ever used
+			
 			s.writeInt(inkLayer.size());
 			
 			for (Stroke stroke : inkLayer) {
@@ -141,9 +152,11 @@ public class Note {
 				}
 			}
 			
+			s.writeInt(0);						// Objects like images and text boxes will go here if I ever add them
+			
 			s.close();
 			
-			if (backingFileVersion == 2) {
+			if (backingFileVersion == 3) {
 				temp.renameTo(noteFile);
 			} else {
 				File rootDir = Environment.getExternalStorageDirectory();
