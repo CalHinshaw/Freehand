@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.widget.EditText;
+import android.widget.RadioGroup;
 
 public class NewNoteDialog extends DialogFragment {
 	private final String mDefaultNoteName;
@@ -34,7 +35,14 @@ public class NewNoteDialog extends DialogFragment {
 		// Create onClickListener for the positive button
 		OnClickListener positiveListener = new OnClickListener () {
 			public void onClick(DialogInterface dialog, int which) {
-				mOnConfirmFunction.function(input.getText().toString(), Note.PaperType.WHITEBOARD);
+				final RadioGroup g = (RadioGroup) contentView.findViewById(R.id.paper_type);
+				Note.PaperType paperType = Note.PaperType.WHITEBOARD;
+				
+				if (g.getCheckedRadioButtonId() == R.id.vert_85x11) {
+					paperType = Note.PaperType.VERTICAL_85X11;
+				}
+				
+				mOnConfirmFunction.function(input.getText().toString(), paperType);
 			}
 		};
 		

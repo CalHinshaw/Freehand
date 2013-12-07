@@ -176,7 +176,7 @@ public class MainMenuActivity extends Activity {
 					} else {
 						newNoteName = s + ".note";
 					}
-					mBrowser.createNewFile(newNoteName, false);
+					mBrowser.createNewNote(newNoteName, t);
 				}
 			};
 			
@@ -207,7 +207,7 @@ public class MainMenuActivity extends Activity {
 					} else {
 						newNoteName = s;
 					}
-					mBrowser.createNewFile(newNoteName, true);
+					mBrowser.createNewFolder(newNoteName);
 				}
 			};
 			

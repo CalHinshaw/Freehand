@@ -18,6 +18,7 @@ import java.util.ListIterator;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Environment;
+import android.util.Log;
 import android.view.MotionEvent;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
@@ -33,7 +34,8 @@ public class Note {
 	private LinkedList<List<Action>> undoQueue = new LinkedList<List<Action>>();
 	private LinkedList<List<Action>> redoQueue = new LinkedList<List<Action>>();
 	
-	public Note (String notePath) {
+	
+	public Note (final String notePath) {
 		noteFile = new File(notePath);
 		
 		if (!notePath.endsWith(".note") || !noteFile.exists() || noteFile.isDirectory()) {
@@ -124,6 +126,9 @@ public class Note {
 	
 	private void readV3 (final DataInputStream s) throws IOException {
 		paperType = PaperType.values()[s.readInt()];
+		
+		Log.d("PEN", paperType.toString());
+		
 		s.readInt();	// This is the background place holder
 		
 		readV2(s);
@@ -259,6 +264,27 @@ public class Note {
 		undoQueue.push(toRedo);
 	}
 	
+	
+	public static boolean createEmptyNote (final File noteFile, final PaperType paperType) {
+		noteFile.getParentFile().mkdirs();
+		try {
+			DataOutputStream s = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(noteFile)));
+			
+			s.writeInt(3);						// Version of .note file format
+			s.writeInt(paperType.ordinal());	// PaperType
+			s.writeInt(0);						// Background if it's ever used
+			
+			s.writeInt(0);						// The ink layer doesn't exist, so it's size is zero
+			s.writeInt(0);						// We also don't have any objects
+			
+			s.close();
+			
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 	
 	
 	public static class Action {

@@ -9,6 +9,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
+import com.freehand.editor.canvas.Note;
+import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.share.NoteSharer;
 import com.freehand.share.ProgressUpdateFunction;
 import com.freehand.tutorial.TutorialPrefs;
@@ -455,34 +457,33 @@ public class FolderBrowser extends HorizontalScrollView {
 		new NoteSharer(updater, getContext()).execute(new ArrayList<String>(toShare));
 	}
 	
-	public void createNewFile (String name, boolean isFolder) {
-		if (isFolder == true) {
-			File newFolder = new File(selectedFolder, name);
-			if (newFolder.mkdirs()) {
-				this.getViewDisplayingFile(selectedFolder).notifyFolderMutated();
-				openFile(newFolder);
-			} else {
-				Toast.makeText(getContext(), "Failed to create new folder, please try again.", Toast.LENGTH_SHORT).show();
-			}
+	public void createNewFolder (final String name) {
+		File newFolder = new File(selectedFolder, name);
+		if (newFolder.mkdirs()) {
+			this.getViewDisplayingFile(selectedFolder).notifyFolderMutated();
+			openFile(newFolder);
 		} else {
-			File newNote = new File(selectedFolder, name);
-			try {
-				
-				if (newNote.getParentFile().isDirectory() == false) {
-					if (newNote.getParentFile().mkdirs() == false) {
-						Toast.makeText(getContext(), "Unable to create folder, please make sure your sd card is mounted and try again.", Toast.LENGTH_SHORT).show();
-						return;
-					}
-				}
-				
-				newNote.createNewFile();
-				this.getViewDisplayingFile(selectedFolder).notifyFolderMutated();
-				openFile(newNote);
-			} catch (IOException e) {
-				Toast.makeText(getContext(), "Failed to create new note, please try again.", Toast.LENGTH_SHORT).show();
-				e.printStackTrace();
+			Toast.makeText(getContext(), "Failed to create new folder, please try again.", Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	public void createNewNote (final String name, final PaperType paperType) {
+		final File newNote = new File(selectedFolder, name);
+		
+		if (newNote.getParentFile().isDirectory() == false) {
+			if (newNote.getParentFile().mkdirs() == false) {
+				Toast.makeText(getContext(), "Unable to create folder, please make sure your sd card is mounted and try again.", Toast.LENGTH_SHORT).show();
+				return;
 			}
 		}
+		
+		if (Note.createEmptyNote(newNote, paperType) == false) {
+			Toast.makeText(getContext(), "Failed to create new note, please try again.", Toast.LENGTH_SHORT).show();
+			return;
+		}
+		
+		this.getViewDisplayingFile(selectedFolder).notifyFolderMutated();
+		openFile(newNote);
 	}
 	
 	public void renameSelection () {
