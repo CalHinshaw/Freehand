@@ -488,7 +488,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	public void renameSelection () {
 		final File selection = selections.iterator().next();
 		String defaultInput = selection.getName().replace(".note", "");
-		final NewItemFn onFinish = new NewItemFn() {
+		final TextInputDialog.onConfirmFn onFinish = new TextInputDialog.onConfirmFn () {
 			@Override
 			public void function(String s) {
 				closeSelectedFolders();
@@ -498,7 +498,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			}
 		};
 		
-		DialogFragment d = new NewItemDialog("Rename Selected Item", "Enter the new name of the file.", defaultInput, "Rename", "Cancel", onFinish);
+		DialogFragment d = new TextInputDialog("Rename Selected Item", "Enter the new name of the file.", defaultInput, "Rename", "Cancel", onFinish);
 		d.show(mActivity.getFragmentManager(), "Rename");
 	}
 	

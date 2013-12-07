@@ -4,6 +4,7 @@ import java.io.File;
 
 import com.calhounroberthinshaw.freehand.R;
 
+import com.freehand.editor.canvas.Note;
 import com.freehand.preferences.PrefActivity;
 import com.freehand.tutorial.TutorialPrefs;
 
@@ -162,9 +163,9 @@ public class MainMenuActivity extends Activity {
 			}
 			final String defaultInput = "unnamed note " + Integer.toString(i);
 			
-			final NewItemFn onFinish = new NewItemFn() {
+			final NewNoteDialog.onConfirmFn onConfirm = new NewNoteDialog.onConfirmFn () {
 				@Override
-				public void function(String s) {
+				public void function(String s, Note.PaperType t) {
 					String newNoteName;
 					if (directoryContainsName(targetDir, s+".note")) {
 						int j = 1;
@@ -179,7 +180,7 @@ public class MainMenuActivity extends Activity {
 				}
 			};
 			
-			DialogFragment d = new NewItemDialog("Create New Note", "Enter the name of the note you want to create.", defaultInput, "Create Note", "Cancel", onFinish);
+			DialogFragment d = new NewNoteDialog(defaultInput, onConfirm);
 			d.show(MainMenuActivity.this.getFragmentManager(), "New Note");
 		}
 	};
@@ -193,7 +194,7 @@ public class MainMenuActivity extends Activity {
 			}
 			final String defaultInput = "unnamed folder " + Integer.toString(i);
 			
-			final NewItemFn onFinish = new NewItemFn() {
+			final TextInputDialog.onConfirmFn onFinish = new TextInputDialog.onConfirmFn () {
 				@Override
 				public void function(String s) {
 					String newNoteName;
@@ -210,7 +211,7 @@ public class MainMenuActivity extends Activity {
 				}
 			};
 			
-			DialogFragment d = new NewItemDialog("Create New Folder", "Enter the name of the folder you want to create.", defaultInput, "Create Folder", "Cancel", onFinish);
+			DialogFragment d = new TextInputDialog("Create New Folder", "Enter the name of the folder you want to create.", defaultInput, "Create Folder", "Cancel", onFinish);
 			d.show(MainMenuActivity.this.getFragmentManager(), "New Note");
 		}
 	};

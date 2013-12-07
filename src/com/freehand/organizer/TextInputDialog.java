@@ -14,16 +14,16 @@ import android.view.WindowManager.LayoutParams;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class NewItemDialog extends DialogFragment {
+public class TextInputDialog extends DialogFragment {
 	private final String mTitleText;
 	private final String mMessageText;
 	private final String mDefaultInput;
 	private final String mPositiveButtonText;
 	private final String mNegativeButtonText;
 	
-	private final NewItemFn mOnConfirmFunction;
+	private final onConfirmFn mOnConfirmFunction;
 	
-	public NewItemDialog (String newTitleText, String newMessageText, String newDefaultInput, String newPositiveButtonText, String newNegativeButtonText, NewItemFn newOnConfirmFunction) {
+	public TextInputDialog (String newTitleText, String newMessageText, String newDefaultInput, String newPositiveButtonText, String newNegativeButtonText, onConfirmFn newOnConfirmFunction) {
 		mTitleText = newTitleText;
 		mMessageText = newMessageText;
 		mDefaultInput = newDefaultInput;
@@ -58,5 +58,9 @@ public class NewItemDialog extends DialogFragment {
 		final AlertDialog d = builder.create();
 		d.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);	// Show soft keyboard automatically
 		return d;
+	}
+	
+	public static abstract class onConfirmFn {
+		abstract public void function(String s);
 	}
 }

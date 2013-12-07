@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+    
+    <TextView
+        android:id="@+id/new_note_message"
+        android:text="Create a new note!"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+    
+	<EditText
+	    android:id="@+id/input_dialog_EditText"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:inputType="text"
+	    android:text="Note Name"
+	    android:selectAllOnFocus="true" />
+	
+	<RadioGroup
+	    android:id="@+id/paper_type"
+	    android:orientation="vertical"
+	    android:layout_height="wrap_content"
+	    android:layout_width="fill_parent" >
+	    
+	    <RadioButton
+	        android:id="@+id/whiteboard"
+	        android:checked="true"
+	        android:text="Whiteboard (almost endless)"/>
+	    
+	    <RadioButton 
+	        android:id="@+id/vert_85x11"
+	        android:checked="false"
+	        android:text="8.5&quot; x 11&quot; Vertical" />
+	    
+   
+	</RadioGroup>
+	
+    
+</LinearLayout>

@@ -19,8 +19,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Environment;
 import android.view.MotionEvent;
-import android.view.View;
-
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 
@@ -28,6 +26,7 @@ public class Note {
 	private File noteFile;
 	private int backingFileVersion;
 	
+	private PaperType paperType = PaperType.WHITEBOARD;
 	
 	private ArrayList<Stroke> inkLayer = new ArrayList<Stroke>(5000);
 	
@@ -192,6 +191,10 @@ public class Note {
 		return Collections.unmodifiableList(inkLayer);
 	}
 	
+	public PaperType getPaperType () {
+		return paperType;
+	}
+	
 	public void performActions (List<Action> actions) {
 		doActions(actions);
 		undoQueue.push(actions);
@@ -254,6 +257,18 @@ public class Note {
 			this.stroke = stroke;
 			this.index = index;
 			this.isAddition = isAddition;
+		}
+	}
+	
+	public enum PaperType {
+		WHITEBOARD		(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
+		VERTICAL_85X11	(8.3f, 10.8f);
+		
+		public final float width;
+		public final float height;
+		PaperType(float width, float height) {
+			this.width = width;
+			this.height = height;
 		}
 	}
 	
