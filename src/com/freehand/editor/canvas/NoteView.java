@@ -15,10 +15,15 @@ import android.view.MotionEvent;
 import android.view.View;
 
 public class NoteView extends View implements IActionBarListener {
+	private static final float Y_MAX = 500000.0f;
+	
 	private Note mNote;
 	
 	private final Path paperPath = new Path();
-	private final Paint paperPaint = new Paint();
+	private final Paint paperSidePaint = new Paint();
+	private float paperSideX;
+	private float paperHeight;
+	private final Paint paperDividerPaint = new Paint();
 	
 	private float pressureSensitivity = 0.50f;
 	private boolean capacitiveDrawing = true;
@@ -48,12 +53,16 @@ public class NoteView extends View implements IActionBarListener {
 	}
 	
 	private void init () {
-		canvPosTracker.setPos(-getResources().getDisplayMetrics().widthPixels/2.0f, 0, 1);
-		
-		paperPaint.setColor(0xaacccccc);
-		paperPaint.setStyle(Style.FILL);
-		paperPaint.setAntiAlias(true);
+		paperSidePaint.setColor(0xaacccccc);
+		paperSidePaint.setStyle(Style.FILL);
+		paperSidePaint.setAntiAlias(true);
 		paperPath.setFillType(Path.FillType.INVERSE_WINDING);
+		
+		paperDividerPaint.setColor(0xaacccccc);
+		paperDividerPaint.setStyle(Style.STROKE);
+		paperDividerPaint.setStrokeWidth(3.0f);
+		paperDividerPaint.setStrokeCap(Paint.Cap.BUTT);
+		paperDividerPaint.setAntiAlias(true);
 		
 		invalidate();
 	}
@@ -70,12 +79,13 @@ public class NoteView extends View implements IActionBarListener {
 		paperPath.rewind();
 		if (mNote.getPaperType() != Note.PaperType.WHITEBOARD) {
 			PaperType t = mNote.getPaperType();
-			final RectF r = new RectF(-t.width/2.0f, -1000000.0f, t.width/2.0f, 1000000.0f);
-			Log.d("PEN", r.toString());
+			paperHeight = mNote.getPaperType().height;
+			paperSideX = t.width/2.0f;
+			final RectF r = new RectF(-paperSideX, -Y_MAX, paperSideX, Y_MAX);
 			paperPath.moveTo(r.left, r.top);
 			paperPath.addRect(r, Path.Direction.CW);
 			
-			canvPosTracker.setPos(getResources().getDisplayMetrics().widthPixels/2.0f, 1000000.0f, 1);
+			canvPosTracker.setPos(getResources().getDisplayMetrics().widthPixels/2.0f, Y_MAX, 1);
 		}
 		
 		invalidate();
@@ -192,6 +202,15 @@ public class NoteView extends View implements IActionBarListener {
 		c.concat(canvPosTracker.getCanvToScreenMat());
 		currentTool.draw(c);
 		
-		c.drawPath(paperPath, paperPaint);
+		c.drawPath(paperPath, paperSidePaint);
+		
+		
+		int topDivider = (int) ((Y_MAX-canvPosTracker.getCanvY())/paperHeight + 1.0f);
+		if (topDivider == 0) topDivider++;
+		int botDivider = (int) (((Y_MAX-canvPosTracker.getCanvY()) + this.getHeight() / canvPosTracker.getZoomMult()) / paperHeight);
+		for (int i = topDivider; i <= botDivider; i++) {
+			Log.d("PEN", Integer.toString(i));
+			c.drawLine(-paperSideX, i*paperHeight-Y_MAX, paperSideX, i*paperHeight-Y_MAX, paperDividerPaint);
+		}
 	}
 }
