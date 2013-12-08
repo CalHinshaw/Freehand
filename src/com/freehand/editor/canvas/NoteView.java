@@ -10,7 +10,6 @@ import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -202,15 +201,15 @@ public class NoteView extends View implements IActionBarListener {
 		c.concat(canvPosTracker.getCanvToScreenMat());
 		currentTool.draw(c);
 		
-		c.drawPath(paperPath, paperSidePaint);
-		
-		
-		int topDivider = (int) ((Y_MAX-canvPosTracker.getCanvY())/paperHeight + 1.0f);
-		if (topDivider == 0) topDivider++;
-		int botDivider = (int) (((Y_MAX-canvPosTracker.getCanvY()) + this.getHeight() / canvPosTracker.getZoomMult()) / paperHeight);
-		for (int i = topDivider; i <= botDivider; i++) {
-			Log.d("PEN", Integer.toString(i));
-			c.drawLine(-paperSideX, i*paperHeight-Y_MAX, paperSideX, i*paperHeight-Y_MAX, paperDividerPaint);
+		if (paperPath.isEmpty() == false) {
+			c.drawPath(paperPath, paperSidePaint);
+
+			int topDivider = (int) ((Y_MAX-canvPosTracker.getCanvY())/paperHeight + 1.0f);
+			if (topDivider == 0) topDivider++;
+			int botDivider = (int) (((Y_MAX-canvPosTracker.getCanvY()) + this.getHeight() / canvPosTracker.getZoomMult()) / paperHeight);
+			for (int i = topDivider; i <= botDivider; i++) {
+				c.drawLine(-paperSideX, i*paperHeight-Y_MAX, paperSideX, i*paperHeight-Y_MAX, paperDividerPaint);
+			}
 		}
 	}
 }
