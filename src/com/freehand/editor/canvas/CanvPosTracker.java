@@ -30,6 +30,8 @@ class CanvPosTracker implements ICanvScreenConverter {
 		canvX = newX;
 		canvY = newY;
 		zoomMult = newZoomMult;
+		
+		updateMats();
 	}
 	
 	

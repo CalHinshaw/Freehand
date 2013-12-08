@@ -1,23 +1,31 @@
 package com.freehand.editor.canvas;
 
+import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.editor.tool_bar.IActionBarListener;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.Style;
+import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 public class NoteView extends View implements IActionBarListener {
 	private Note mNote;
 	
+	private final Path paperPath = new Path();
+	private final Paint paperPaint = new Paint();
+	
 	private float pressureSensitivity = 0.50f;
 	private boolean capacitiveDrawing = true;
 	
 	private final MotionEventFilter motionEventFilter = new MotionEventFilter();
 	private final CanvPosTracker canvPosTracker = new CanvPosTracker();
-	private final ZoomNotifier mZoomNotifier;
+	private final ZoomNotifier mZoomNotifier = new ZoomNotifier(this);
 	
 	private ITool currentTool = new Pen(mNote, canvPosTracker, this, pressureSensitivity, Color.BLACK, 6.0f, true);
 
@@ -26,19 +34,29 @@ public class NoteView extends View implements IActionBarListener {
 
 	public NoteView(Context context) {
 		super(context);
-		mZoomNotifier = new ZoomNotifier(this);
+		init();
 	}
 	
 	public NoteView (Context context, AttributeSet attrs) {
 		super (context, attrs);
-		mZoomNotifier = new ZoomNotifier(this);
+		init();
 	}
 	
 	public NoteView (Context context, AttributeSet attrs, int defStyle) {
 		super (context, attrs, defStyle);
-		mZoomNotifier = new ZoomNotifier(this);
+		init();
 	}
 	
+	private void init () {
+		canvPosTracker.setPos(-getResources().getDisplayMetrics().widthPixels/2.0f, 0, 1);
+		
+		paperPaint.setColor(0xaacccccc);
+		paperPaint.setStyle(Style.FILL);
+		paperPaint.setAntiAlias(true);
+		paperPath.setFillType(Path.FillType.INVERSE_WINDING);
+		
+		invalidate();
+	}
 
 //************************************* Outward facing class methods **************************************
 	
@@ -48,6 +66,18 @@ public class NoteView extends View implements IActionBarListener {
 	
 	public void setNote (final Note note) {
 		mNote = note;
+		
+		paperPath.rewind();
+		if (mNote.getPaperType() != Note.PaperType.WHITEBOARD) {
+			PaperType t = mNote.getPaperType();
+			final RectF r = new RectF(-t.width/2.0f, -1000000.0f, t.width/2.0f, 1000000.0f);
+			Log.d("PEN", r.toString());
+			paperPath.moveTo(r.left, r.top);
+			paperPath.addRect(r, Path.Direction.CW);
+			
+			canvPosTracker.setPos(getResources().getDisplayMetrics().widthPixels/2.0f, 1000000.0f, 1);
+		}
+		
 		invalidate();
 	}
 	
@@ -161,5 +191,7 @@ public class NoteView extends View implements IActionBarListener {
 		c.drawColor(Color.WHITE);
 		c.concat(canvPosTracker.getCanvToScreenMat());
 		currentTool.draw(c);
+		
+		c.drawPath(paperPath, paperPaint);
 	}
 }

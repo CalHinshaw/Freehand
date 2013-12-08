@@ -300,12 +300,12 @@ public class Note {
 	}
 	
 	public enum PaperType {
-		WHITEBOARD		(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
-		VERTICAL_85X11	(8.3f, 10.8f);
+		WHITEBOARD		(Integer.MAX_VALUE, Integer.MIN_VALUE),
+		VERTICAL_85X11	(830, 1080);
 		
-		public final float width;
-		public final float height;
-		PaperType(float width, float height) {
+		public final int width;
+		public final int height;
+		PaperType(final int width, final int height) {
 			this.width = width;
 			this.height = height;
 		}
