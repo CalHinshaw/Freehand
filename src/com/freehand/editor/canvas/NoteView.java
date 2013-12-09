@@ -14,7 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 public class NoteView extends View implements IActionBarListener {
-	private static final float Y_MAX = 500000.0f;
+	private static final float Y_MAX = 250000.0f;
 	
 	private Note mNote;
 	
@@ -22,7 +22,10 @@ public class NoteView extends View implements IActionBarListener {
 	private final Paint paperSidePaint = new Paint();
 	private float paperSideX;
 	private float paperHeight;
+	private float yMax;
+	private int numPages;
 	private final Paint paperDividerPaint = new Paint();
+	private final Paint pageNumberPaint = new Paint();
 	
 	private float pressureSensitivity = 0.50f;
 	private boolean capacitiveDrawing = true;
@@ -63,6 +66,11 @@ public class NoteView extends View implements IActionBarListener {
 		paperDividerPaint.setStrokeCap(Paint.Cap.BUTT);
 		paperDividerPaint.setAntiAlias(true);
 		
+		pageNumberPaint.setColor(Color.DKGRAY);
+		pageNumberPaint.setTextSize(22.0f);
+		pageNumberPaint.setTextAlign(Paint.Align.RIGHT);
+		pageNumberPaint.setAntiAlias(true);
+		
 		invalidate();
 	}
 
@@ -79,12 +87,14 @@ public class NoteView extends View implements IActionBarListener {
 		if (mNote.getPaperType() != Note.PaperType.WHITEBOARD) {
 			PaperType t = mNote.getPaperType();
 			paperHeight = mNote.getPaperType().height;
+			numPages = (int) (2*Y_MAX / paperHeight);
+			yMax = numPages*paperHeight / 2.0f;
 			paperSideX = t.width/2.0f;
-			final RectF r = new RectF(-paperSideX, -Y_MAX, paperSideX, Y_MAX);
+			final RectF r = new RectF(-paperSideX, -yMax, paperSideX, yMax);
 			paperPath.moveTo(r.left, r.top);
 			paperPath.addRect(r, Path.Direction.CW);
 			
-			canvPosTracker.setPos(getResources().getDisplayMetrics().widthPixels/2.0f, Y_MAX, 1);
+			canvPosTracker.setPos(getResources().getDisplayMetrics().widthPixels/2.0f, yMax, 1);
 		}
 		
 		invalidate();
@@ -204,11 +214,13 @@ public class NoteView extends View implements IActionBarListener {
 		if (paperPath.isEmpty() == false) {
 			c.drawPath(paperPath, paperSidePaint);
 
-			int topDivider = (int) ((Y_MAX-canvPosTracker.getCanvY())/paperHeight + 1.0f);
-			if (topDivider == 0) topDivider++;
-			int botDivider = (int) (((Y_MAX-canvPosTracker.getCanvY()) + this.getHeight() / canvPosTracker.getZoomMult()) / paperHeight);
+			int topDivider = (int) ((yMax-canvPosTracker.getCanvY())/paperHeight + 1.0f);
+			if (topDivider < 1) topDivider = 1;
+			int botDivider = (int) (((yMax-canvPosTracker.getCanvY()) + this.getHeight() / canvPosTracker.getZoomMult()) / paperHeight);
+			if (botDivider > numPages) botDivider = numPages;
 			for (int i = topDivider; i <= botDivider; i++) {
-				c.drawLine(-paperSideX, i*paperHeight-Y_MAX, paperSideX, i*paperHeight-Y_MAX, paperDividerPaint);
+				if (i != numPages) c.drawLine(-paperSideX, i*paperHeight-yMax, paperSideX, i*paperHeight-yMax, paperDividerPaint);
+				c.drawText(Integer.toString(i), paperSideX-15, i*paperHeight-yMax-20, pageNumberPaint);
 			}
 		}
 	}
