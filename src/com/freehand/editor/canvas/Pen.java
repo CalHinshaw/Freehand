@@ -71,8 +71,11 @@ public class Pen implements ITool {
 		}
 		
 		if (e.getAction() == MotionEvent.ACTION_UP) {
-			final Point p = new Point(e.getX(), e.getY());
-			processPoint(p, e.getPressure());
+			if (ignoringCurrentMe == false) {
+				final Point p = new Point(e.getX(), e.getY());
+				processPoint(p, e.getPressure());
+			}
+			
 			if (invalidator != null) {
 				invalidator.invalidate(mConverter.canvRectToScreenRect(getDirtyRect()));
 			}
