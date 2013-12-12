@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.freehand.editor.canvas.Note;
+import com.freehand.ink.MiscPolyGeom;
+import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +20,7 @@ import android.graphics.RectF;
 import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Debug;
 import android.os.Environment;
 import android.widget.Toast;
 
@@ -58,10 +61,14 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 			progressIncrement = (int) (100/notePaths.size());
 		}
 		
+		Debug.startMethodTracing("share");
+		
 		for (int i = 0; i < notePaths.size(); i++) {
 			imageUris.addAll(saveNoteAsPNGs(notePaths.get(i), rootDirectory));
 			this.publishProgress((i+1)*progressIncrement);
 		}
+		
+		Debug.stopMethodTracing();
 		
 		if (imageUris.isEmpty()) {
 			return null;
@@ -103,20 +110,13 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 			return new ArrayList<Uri>(0);
 		}
 		
-		RectF aabb = strokes.get(0).getAABoundingBox();
-		for (int i = 1; i < strokes.size(); i++) {
-			aabb.union(strokes.get(i).getAABoundingBox());
+		List<Rect> rects;
+		if (current.getPaperType() == Note.PaperType.VERTICAL_85X11) {
+			rects = get85x11VertRects(strokes);
+		} else {
+			rects = getWhiteboardRects(strokes);
 		}
-		aabb.left -= 150;
-		aabb.right += 150;
-		aabb.top -= 150;
-		aabb.bottom += 150;
 		
-		long maxMemory = (long) (Runtime.getRuntime().maxMemory() * 0.5f);			// Eighty percent of the maximum continuous memory the VM will try to allocate in bytes
-		long noteMemory = (long) (2 * (aabb.width()+1) * (aabb.height()+1));		// The size of the bitmap required to display the entire note in bytes
-		int numPngs = (int) ((noteMemory/maxMemory) + 1);							// The number of images we're going to save
-		
-		ArrayList<Rect> rects = getSubRects(rectfToRect(aabb), numPngs);
 		Bitmap bmp = Bitmap.createBitmap(rects.get(0).width(), rects.get(0).height(), Bitmap.Config.RGB_565);
 		
 		ArrayList<Uri> uris = new ArrayList<Uri>(rects.size());
@@ -144,7 +144,58 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 	}
 	
 	
-	private static ArrayList<Rect> getSubRects (Rect boundingRect, int numJpegs) {
+	private static List<Rect> get85x11VertRects (final List<Stroke> strokes) {
+		final Note.PaperType t = Note.PaperType.VERTICAL_85X11;
+		
+		final int w = Note.PaperType.VERTICAL_85X11.width / 2;
+		final int h = Note.PaperType.VERTICAL_85X11.height;
+		
+		int lastPage = 0;
+		
+		pageLoop:
+		for (int i = t.numPages; i > 0; i--) {
+			ArrayList<Point> r = new ArrayList<Point>(4);
+			r.add(new Point(-w, -t.yMax + (i-1)*h));
+			r.add(new Point(w, -t.yMax + (i-1)*h));
+			r.add(new Point(w, -t.yMax + i*h));
+			r.add(new Point(-w, -t.yMax + i*h));
+			
+			for (Stroke s : strokes) {
+				if (MiscPolyGeom.checkPolyIntersection(r, s.getPoly())) {
+					lastPage = i;
+					break pageLoop;
+				}
+			}
+		}
+		
+		ArrayList<Rect> pageRects = new ArrayList<Rect>(lastPage);
+		for (int i = 0; i < lastPage; i++) {
+			pageRects.add(new Rect(-w, (int)-t.yMax + i*h, w, (int)-t.yMax + (i+1)*h));
+		}
+		
+		return pageRects;
+	}
+	
+	
+	private static List<Rect> getWhiteboardRects (final List<Stroke> strokes) {
+		RectF aabb = strokes.get(0).getAABoundingBox();
+		for (int i = 1; i < strokes.size(); i++) {
+			aabb.union(strokes.get(i).getAABoundingBox());
+		}
+		aabb.left -= 150;
+		aabb.right += 150;
+		aabb.top -= 150;
+		aabb.bottom += 150;
+		
+		long maxMemory = (long) (Runtime.getRuntime().maxMemory() * 0.5f);			// Fifty percent of the maximum continuous memory the VM will try to allocate in bytes
+		long noteMemory = (long) (2 * (aabb.width()+1) * (aabb.height()+1));		// The size of the bitmap required to display the entire note in bytes
+		int numPngs = (int) ((noteMemory/maxMemory) + 1);							// The number of images we're going to save
+		
+		return getTiledRects(rectfToRect(aabb), numPngs);
+	}
+	
+	
+	private static ArrayList<Rect> getTiledRects (Rect boundingRect, int numJpegs) {
 		int hCells = 1;
 		int vCells = 1;
 		

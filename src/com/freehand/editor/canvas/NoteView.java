@@ -10,12 +10,11 @@ import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 public class NoteView extends View implements IActionBarListener {
-	private static final float Y_MAX = 250000.0f;
-	
 	private Note mNote;
 	
 	private final Path paperPath = new Path();
@@ -86,9 +85,9 @@ public class NoteView extends View implements IActionBarListener {
 		paperPath.rewind();
 		if (mNote.getPaperType() != Note.PaperType.WHITEBOARD) {
 			PaperType t = mNote.getPaperType();
-			paperHeight = mNote.getPaperType().height;
-			numPages = (int) (2*Y_MAX / paperHeight);
-			yMax = numPages*paperHeight / 2.0f;
+			paperHeight = t.height;
+			numPages = t.numPages;
+			yMax = t.yMax;
 			paperSideX = t.width/2.0f;
 			final RectF r = new RectF(-paperSideX, -yMax, paperSideX, yMax);
 			paperPath.moveTo(r.left, r.top);

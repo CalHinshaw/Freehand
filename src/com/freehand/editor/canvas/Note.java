@@ -303,11 +303,17 @@ public class Note {
 		WHITEBOARD		(Integer.MAX_VALUE, Integer.MIN_VALUE),
 		VERTICAL_85X11	(830, 1080);
 		
+		private static final float Y_MAX = 250000.0f;
+		
 		public final int width;
 		public final int height;
+		public final float yMax;
+		public final int numPages;
 		PaperType(final int width, final int height) {
 			this.width = width;
 			this.height = height;
+			this.numPages = (int) (2*Y_MAX / height);
+			yMax = numPages*height / 2.0f;
 		}
 	}
 	
