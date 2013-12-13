@@ -22,9 +22,10 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Debug;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
-public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
+public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
 	private static final float TARGET_RATIO = 11.0f/8.5f;
 	
 	private ProgressUpdateFunction mUpdater;
@@ -42,33 +43,41 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 	}
 	
 	@Override
-	protected Intent doInBackground(List<String>... params) {
+	protected Intent doInBackground(List<Object>... notes) {
 		
 		// Make sure we have a list file paths
-		if (params.length < 1) {
+		if (notes.length < 1) {
 			return null;
 		}
 		
-		File rootDirectory = new File(Environment.getExternalStorageDirectory().getAbsolutePath().concat("/temp/Freehand"));
-		rootDirectory.mkdirs();
-		
-		// Convert all of the Notes to PNG images and put the file Uris into imageUris
-		ArrayList<Uri> imageUris = new ArrayList<Uri>();
-		List<String> notePaths = params[0];
-		
-		int progressIncrement = 100;
-		if (notePaths.size() > 0) {
-			progressIncrement = (int) (100/notePaths.size());
+		final List<Object> noteList = notes[0];
+		if (noteList.size() < 1) {
+			return null;
 		}
 		
-		Debug.startMethodTracing("share");
+		final File rootDirectory = new File(Environment.getExternalStorageDirectory().getAbsolutePath().concat("/temp/Freehand"));
+		rootDirectory.mkdirs();
 		
-		for (int i = 0; i < notePaths.size(); i++) {
-			imageUris.addAll(saveNoteAsPNGs(notePaths.get(i), rootDirectory));
+		final int progressIncrement = (int) (100/noteList.size());
+		
+		//Debug.startMethodTracing("share");
+		
+		final ArrayList<Uri> imageUris = new ArrayList<Uri>();
+		for (int i = 0; i < noteList.size(); i++) {
+			Note toShare;
+			if (noteList.get(i) instanceof Note) {
+				toShare = (Note) notes[i];
+			} else if (noteList.get(i) instanceof String) {
+				toShare = new Note((String) noteList.get(i));
+			} else {
+				continue;
+			}
+			
+			imageUris.addAll(saveNoteAsPNGs(toShare, rootDirectory));
 			this.publishProgress((i+1)*progressIncrement);
 		}
 		
-		Debug.stopMethodTracing();
+		//Debug.stopMethodTracing();
 		
 		if (imageUris.isEmpty()) {
 			return null;
@@ -102,16 +111,15 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 	}
 
 	
-	private static List<Uri> saveNoteAsPNGs (String notePath, File rootDir) {
-		Note current = new Note(notePath);
-		List<Stroke> strokes = current.getInkLayer();
+	private static List<Uri> saveNoteAsPNGs (final Note note, final File rootDir) {
+		List<Stroke> strokes = note.getInkLayer();
 		
 		if (strokes.isEmpty()) {
 			return new ArrayList<Uri>(0);
 		}
 		
 		List<Rect> rects;
-		if (current.getPaperType() == Note.PaperType.VERTICAL_85X11) {
+		if (note.getPaperType() == Note.PaperType.VERTICAL_85X11) {
 			rects = get85x11VertRects(strokes);
 		} else {
 			rects = getWhiteboardRects(strokes);
@@ -129,7 +137,7 @@ public class NoteSharer extends AsyncTask<List<String>, Integer, Intent> {
 					s.draw(c);
 				}
 				
-				String noteName = (new File(notePath).getName()).replace(".note", "");
+				String noteName = (new File(note.getPath()).getName()).replace(".note", "");
 				
 				File target = new File(rootDir, noteName + " " + Integer.toString(i+1) + ".png");
 				FileOutputStream outStream = new FileOutputStream(target);

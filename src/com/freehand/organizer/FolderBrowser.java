@@ -1,7 +1,6 @@
 package com.freehand.organizer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -454,7 +453,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			}
 		};
 		
-		new NoteSharer(updater, getContext()).execute(new ArrayList<String>(toShare));
+		new NoteSharer(updater, getContext()).execute(new ArrayList<Object>(toShare));
 	}
 	
 	public void createNewFolder (final String name) {

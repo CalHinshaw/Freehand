@@ -126,7 +126,7 @@ public class ActionBar extends LinearLayout {
 		@SuppressWarnings("unchecked")
 		public void onClick(View v) {
 			mNote.save();
-			ArrayList<String> toShare = new ArrayList<String>(1);
+			ArrayList<Object> toShare = new ArrayList<Object>(1);
 			toShare.add(mNote.getPath());
 
 			final ProgressDialog progressDialog = new ProgressDialog(getContext(), ProgressDialog.THEME_HOLO_LIGHT);
