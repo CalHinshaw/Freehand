@@ -21,7 +21,7 @@ class ZoomNotifier {
 	private PopupWindow mWindow;
 	private TextView mView;
 	
-	private final Timer hideTimer = new Timer(true);
+	private Timer hideTimer;
 	private TimerTask hideTask = null;
 	
 	public ZoomNotifier (final View parentView) {
@@ -37,6 +37,8 @@ class ZoomNotifier {
 	}
 	
 	public void update (final float newZoom) {
+		if (hideTimer == null) return;
+		
 		final float density = mParentView.getResources().getDisplayMetrics().density;
 		
 		int[] location = new int[2];
@@ -64,6 +66,13 @@ class ZoomNotifier {
 		};
 		
 		hideTimer.schedule(hideTask, 2000);
+	}
+	
+	public void start () {
+		if (hideTimer != null) {
+			hideTimer.cancel();
+		}
+		hideTimer = new Timer(true);
 	}
 	
 	public void finish () {

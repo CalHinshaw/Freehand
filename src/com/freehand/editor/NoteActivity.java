@@ -210,4 +210,10 @@ public class NoteActivity extends Activity {
 		super.onStop();
 	}
 	
+	@Override
+	public void onStart () {
+		super.onStart();
+		mNoteView.start();
+	}
+	
 }

@@ -117,6 +117,10 @@ public class NoteView extends View implements IActionBarListener {
 		return pos;
 	}
 	
+	public void start () {
+		mZoomNotifier.start();
+	}
+	
 	public void finish () {
 		mZoomNotifier.finish();
 	}
