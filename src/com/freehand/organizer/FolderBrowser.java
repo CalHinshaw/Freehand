@@ -11,13 +11,11 @@ import java.util.TreeSet;
 import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.share.NoteSharer;
-import com.freehand.share.ProgressUpdateFunction;
 import com.freehand.tutorial.TutorialPrefs;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -419,8 +417,7 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	@SuppressWarnings("unchecked")
 	public void shareSelections () {
-		// toShare is a set so we avoid duplicates when traversing the file tree
-		Set<String> toShare = new TreeSet<String>();
+		final Set<String> toShare = new TreeSet<String>();
 		for (File f : selections) {
 			this.getNonDirectoryFilePaths(f, toShare);
 		}
@@ -430,30 +427,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			return;
 		}
 		
-		final ProgressDialog progressDialog = new ProgressDialog(getContext(), ProgressDialog.THEME_HOLO_LIGHT);
-		progressDialog.setProgressNumberFormat(null);
-		progressDialog.setTitle("Preparing to Share");
-		progressDialog.setMessage("Large notes take longer to share, please be patient.");
-		progressDialog.setIndeterminate(false);
-		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		
-		ProgressUpdateFunction updater = new ProgressUpdateFunction() {
-			@Override
-			public void updateProgress(int percentageComplete) {
-				if (percentageComplete > 100) {
-					progressDialog.dismiss();
-				} else {
-					if (progressDialog.isShowing() == false) {
-						progressDialog.show();
-					}
-					
-					progressDialog.setProgress(percentageComplete);
-				}
-				
-			}
-		};
-		
-		new NoteSharer(updater, getContext()).execute(new ArrayList<Object>(toShare));
+		new NoteSharer(getContext()).execute(new ArrayList<Object>(toShare));
 	}
 	
 	public void createNewFolder (final String name) {

@@ -7,45 +7,73 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.freehand.editor.canvas.Note;
-import com.freehand.ink.MiscPolyGeom;
 import com.freehand.ink.Point;
 import com.freehand.ink.Stroke;
+
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Debug;
 import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
-public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
+public class NoteSharer extends AsyncTask<List<Object>, Object, Intent> {
 	private static final float TARGET_RATIO = 11.0f/8.5f;
 	
-	private ProgressUpdateFunction mUpdater;
 	private Context mContext;
+	private ProgressDialog mDialog;
 	
-	public NoteSharer (ProgressUpdateFunction newUpdater, Context newContext) {
-		mUpdater = newUpdater;
+	public NoteSharer (final Context newContext) {
 		mContext = newContext;
 	}
 	
 	@Override
 	protected void onPreExecute() {
 		super.onPreExecute();
-		mUpdater.updateProgress(0);
+		
+		mDialog = new ProgressDialog(this.mContext, ProgressDialog.THEME_HOLO_LIGHT);
+		mDialog.setProgressNumberFormat(null);
+		mDialog.setTitle("Preparing to Share");
+		mDialog.setMessage("Preparing notes for sharing.");
+		mDialog.setIndeterminate(false);
+		mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		mDialog.setCancelable(true);
+		mDialog.setCanceledOnTouchOutside(true);
+		mDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel Sharing", new DialogInterface.OnClickListener () {
+			public void onClick(DialogInterface dialog, int which) {
+				mDialog.cancel();
+			}
+		});
+		
+		mDialog.setOnCancelListener(new OnCancelListener () {
+			public void onCancel(DialogInterface dialog) {
+				cancel(true);
+			}
+		});
+		
+		mDialog.show();
+		mDialog.setProgress(0);
 	}
 	
 	@Override
 	protected Intent doInBackground(List<Object>... notes) {
+		if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+			Log.d("PEN", "Media not mounted");
+			return null;
+		}
 		
-		// Make sure we have a list file paths
+		// Make sure we have a list of notes
 		if (notes.length < 1) {
 			return null;
 		}
@@ -58,7 +86,7 @@ public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
 		final File rootDirectory = new File(Environment.getExternalStorageDirectory().getAbsolutePath().concat("/temp/Freehand"));
 		rootDirectory.mkdirs();
 		
-		final int progressIncrement = (int) (100/noteList.size());
+		final float progressIncrement = 100.0f/noteList.size();
 		
 		//Debug.startMethodTracing("share");
 		
@@ -73,8 +101,7 @@ public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
 				continue;
 			}
 			
-			imageUris.addAll(saveNoteAsPNGs(toShare, rootDirectory));
-			this.publishProgress((i+1)*progressIncrement);
+			imageUris.addAll(saveNoteAsPNGs(toShare, rootDirectory, progressIncrement*i, progressIncrement));
 		}
 		
 		//Debug.stopMethodTracing();
@@ -93,25 +120,29 @@ public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
 	}
 	
 	@Override
-	protected void onProgressUpdate(Integer... values) {
+	protected void onProgressUpdate(Object... values) {
 		if (values.length > 0) {
-			mUpdater.updateProgress(values[0]);
+			if (values[0] instanceof Float) {
+				mDialog.setProgress(((Float) values[0]).intValue());
+			} else if (values[0] instanceof String) {
+				mDialog.setMessage((String) values[0]);
+			}
 		}
 	}
 	
 	@Override
 	protected void onPostExecute (Intent shareIntent) {
 		if (shareIntent == null) {
-			Toast.makeText(mContext, "Share failed.", Toast.LENGTH_LONG).show();
+			Toast.makeText(mContext, "Share failed. Please make sure your external storage is mounted and try again.", Toast.LENGTH_LONG).show();
 		} else {
 			mContext.startActivity(Intent.createChooser(shareIntent, "Share notes with..."));
 		}
 		
-		mUpdater.updateProgress(1000);
+		mDialog.dismiss();
 	}
 
 	
-	private static List<Uri> saveNoteAsPNGs (final Note note, final File rootDir) {
+	private List<Uri> saveNoteAsPNGs (final Note note, final File rootDir, final float startProgress, final float progressShare) {
 		List<Stroke> strokes = note.getInkLayer();
 		
 		if (strokes.isEmpty()) {
@@ -119,19 +150,41 @@ public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
 		}
 		
 		List<Rect> rects;
+		Bitmap bmp;
+		Canvas c;
+		float canvasScale = 1.0f;
 		if (note.getPaperType() == Note.PaperType.VERTICAL_85X11) {
 			rects = get85x11VertRects(strokes);
+			bmp = Bitmap.createBitmap(rects.get(0).width()*2, rects.get(0).height()*2, Bitmap.Config.ARGB_8888);
+			c = new Canvas(bmp);
+			canvasScale = 2.0f;
 		} else {
 			rects = getWhiteboardRects(strokes);
+			bmp = Bitmap.createBitmap(rects.get(0).width(), rects.get(0).height(), Bitmap.Config.RGB_565);
+			c = new Canvas(bmp);
 		}
 		
-		Bitmap bmp = Bitmap.createBitmap(rects.get(0).width(), rects.get(0).height(), Bitmap.Config.RGB_565);
+		if (rects.size() > 200) {
+			final String baseMessage = "Sorry, but " + new File(note.getPath()).getName().replace(".note", "") +
+				" is probably too large to share. We'll try, but it might take hours to convert the whole thing to PNGs.";
+			final String suggestionMessage = "Notes are easier to share if they're small and all of the content is close together.";
+			this.publishProgress(baseMessage + "\n\n" + suggestionMessage);
+		} else if (rects.size() > 20) {
+			final String baseMessage = new File(note.getPath()).getName().replace(".note", "") + " is very large and may take a while to share. Please be patient.";
+			final String sizeMessage = "It's being broken up into " + Integer.toString(rects.size()) + " PNGs.";
+			this.publishProgress(baseMessage + "\n\n" + sizeMessage);
+		}
+		
+		final float progressIncrement = progressShare/rects.size();
 		
 		ArrayList<Uri> uris = new ArrayList<Uri>(rects.size());
 		try {
+			final Matrix m = new Matrix();
 			for (int i = 0; i < rects.size(); i++) {
-				Canvas c = new Canvas(bmp);
-				c.translate(-rects.get(i).left, -rects.get(i).top);
+				m.setTranslate(-rects.get(i).left, -rects.get(i).top);
+				m.postScale(canvasScale, canvasScale);
+				c.setMatrix(m);
+				
 				c.drawColor(Color.WHITE);
 				for (Stroke s : strokes) {
 					s.draw(c);
@@ -143,11 +196,14 @@ public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
 				FileOutputStream outStream = new FileOutputStream(target);
 				bmp.compress(CompressFormat.PNG, 100, outStream);
 				uris.add(Uri.fromFile(target));
+				
+				this.publishProgress(startProgress + (i+1)*progressIncrement);
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		
+		bmp.recycle();
+		this.publishProgress("Preparing notes for sharing.");
 		return uris;
 	}
 	
@@ -158,23 +214,17 @@ public class NoteSharer extends AsyncTask<List<Object>, Integer, Intent> {
 		final int w = Note.PaperType.VERTICAL_85X11.width / 2;
 		final int h = Note.PaperType.VERTICAL_85X11.height;
 		
-		int lastPage = 0;
-		
-		pageLoop:
-		for (int i = t.numPages; i > 0; i--) {
-			ArrayList<Point> r = new ArrayList<Point>(4);
-			r.add(new Point(-w, -t.yMax + (i-1)*h));
-			r.add(new Point(w, -t.yMax + (i-1)*h));
-			r.add(new Point(w, -t.yMax + i*h));
-			r.add(new Point(-w, -t.yMax + i*h));
-			
-			for (Stroke s : strokes) {
-				if (MiscPolyGeom.checkPolyIntersection(r, s.getPoly())) {
-					lastPage = i;
-					break pageLoop;
+		float maxY = -t.yMax-1000;
+		Log.d("PEN", Float.toString(maxY));
+		for (Stroke s : strokes) {
+			for (Point p : s.getPoly()) {
+				if (p.y > maxY && p.x >= -w && p.x <= w) {
+					maxY = p.y;
 				}
 			}
 		}
+		
+		int lastPage = (int) ((maxY+t.yMax)/t.height + 1.0f);
 		
 		ArrayList<Rect> pageRects = new ArrayList<Rect>(lastPage);
 		for (int i = 0; i < lastPage; i++) {

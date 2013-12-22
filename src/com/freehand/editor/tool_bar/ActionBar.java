@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.editor.canvas.Note;
 import com.freehand.share.NoteSharer;
-import com.freehand.share.ProgressUpdateFunction;
 
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -128,30 +126,7 @@ public class ActionBar extends LinearLayout {
 			mNote.save();
 			ArrayList<Object> toShare = new ArrayList<Object>(1);
 			toShare.add(mNote.getPath());
-
-			final ProgressDialog progressDialog = new ProgressDialog(getContext(), ProgressDialog.THEME_HOLO_LIGHT);
-			progressDialog.setProgressNumberFormat(null);
-			progressDialog.setTitle("Preparing to Share");
-			progressDialog.setMessage("Large notes take longer to share, please be patient.");
-			progressDialog.setIndeterminate(false);
-			progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-			
-			ProgressUpdateFunction updater = new ProgressUpdateFunction() {
-				@Override
-				public void updateProgress(int percentageComplete) {
-					if (percentageComplete > 100) {
-						progressDialog.dismiss();
-					} else {
-						if (progressDialog.isShowing() == false) {
-							progressDialog.show();
-						}
-						
-						progressDialog.setProgress(percentageComplete);
-					}
-				}
-			};
-			
-			new NoteSharer(updater, getContext()).execute(toShare);
+			new NoteSharer(getContext()).execute(toShare);
 			mMenuWindow.dismiss();
 		}
 	};
