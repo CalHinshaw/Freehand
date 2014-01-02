@@ -62,6 +62,10 @@ public class Note {
 		}
 	}
 	
+	public Note () {
+		noteFile = new File("/empty");
+	}
+	
 	private void readV1 (DataInputStream s) throws IOException {
 		
 		ICanvScreenConverter conv = new ICanvScreenConverter () {
