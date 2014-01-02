@@ -2,6 +2,8 @@ package com.freehand.editor.canvas;
 
 import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.editor.tool_bar.IActionBarListener;
+import com.freehand.test.VisualTests;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -226,5 +228,7 @@ public class NoteView extends View implements IActionBarListener {
 				c.drawText(Integer.toString(i), paperSideX-15, i*paperHeight-yMax-20, pageNumberPaint);
 			}
 		}
+		
+//		VisualTests.penBacktrackTests(c);
 	}
 }

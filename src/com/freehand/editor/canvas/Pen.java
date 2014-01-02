@@ -36,7 +36,7 @@ public class Pen implements ITool {
 	private Path path = new Path();
 	private Paint paint = new Paint();
 	
-	private LinkedList<Point> poly = new LinkedList<Point>();
+	
 	private List<Point> cap = new ArrayList<Point>();
 	
 	private int containingIndex = -1;
@@ -44,6 +44,25 @@ public class Pen implements ITool {
 	private boolean ignoringCurrentMe = false;
 	
 	private RectF dirtyRect = null;
+	
+	private LinkedList<Point> poly = new LinkedList<Point>() {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 2622708965156041658L;
+
+		@Override
+		public void addFirst(Point toAdd) {
+			addPointToDirtyRect(toAdd);
+			super.addFirst(toAdd);
+		}
+		
+		@Override
+		public void addLast(Point toAdd) {
+			addPointToDirtyRect(toAdd);
+			super.addLast(toAdd);
+		}
+	};
 	
 	
 	public Pen (Note newNote, ICanvScreenConverter newConverter, View invalidator, float pressureSensitivity, int penColor, float penSize, boolean capDrawing) {
@@ -61,6 +80,7 @@ public class Pen implements ITool {
 		paint.setStyle(Paint.Style.FILL);
 		paint.setAntiAlias(true);
 	}
+	
 	
 	//**************************** ITool stuff *****************************
 	
@@ -202,7 +222,7 @@ public class Pen implements ITool {
 				containingIndex = 0;
 				LinkedList<Point> start = MiscGeom.getLinkedCircularPoly(points.get(0), sizes.get(0));
 				for (int i = 0; i < start.size()/2; i++) {
-					addFirst(start.get(i));
+					poly.addFirst(start.get(i));
 				}
 			} else {
 				// second contains first
@@ -225,57 +245,34 @@ public class Pen implements ITool {
 		if (tangentPoints != null) {
 			addToLhs(tangentPoints[0], tangentPoints[1], points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
 			addToRhs(tangentPoints[2], tangentPoints[3], points.get(points.size()-2), sizes.get(sizes.size()-2), points.get(points.size()-1), sizes.get(sizes.size()-1));
-		} else {
-			if (sizes.get(sizes.size()-1) <= sizes.get(sizes.size()-2)) {	// new contained by old -> Start containment
-				containingIndex = sizes.size()-2;
-			} else {														// old contained by new -> backtrack
-				backtrack();
-			}
+		} else if (sizes.get(sizes.size()-1) <= sizes.get(sizes.size()-2)) {	// new contained by old -> Start containment
+			containingIndex = sizes.size()-2;
+		} else {														// old contained by new -> backtrack
+			oldCircleContainedByNewCircle(poly, points, sizes);
 		}
 	}
 	
-	private void backtrack () {
-		// calculate the points to trace the circle to
-		Point[] offsets = MiscGeom.calcPerpOffset(points.get(points.size()-1), points.get(points.size()-2), sizes.get(sizes.size()-1));
-		
-		while (poly.size() >= 2) {
-			Point[] pts = MiscGeom.circleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(poly.size()-1), poly.get(poly.size()-2));
-			poly.removeLast();
-			if (pts[0] != null) {
-				addLast(pts[0]);
-
-				List<Point> right = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), false, poly.getLast(), offsets[1], ARC_RES);
-				for (Point p : right) {
-					addLast(p);
-				}
-				
+	private static void oldCircleContainedByNewCircle (final LinkedList<Point> poly, final List<Point> points, final List<Float> sizes) {
+		Point[] offsets = null;
+		for (int i = points.size()-1; i >= 0; i--) {
+			if (points.get(points.size()-1).equals(points.get(i)) == false) {
+				offsets = MiscGeom.calcPerpOffset(points.get(points.size()-1), points.get(i), sizes.get(sizes.size()-1)*2);
 				break;
 			}
 		}
+		if (offsets == null) return;
 		
-		while (poly.size() >= 2) {
-			Point[] pts = MiscGeom.circleSegmentIntersection(points.get(points.size()-1), sizes.get(sizes.size()-1), poly.get(0), poly.get(1));
-			poly.removeFirst();
-			if (pts[0] != null) {
-				addFirst(pts[0]);
-				
-				List<Point> left = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), true, poly.getFirst(), offsets[0], ARC_RES);
-				for (Point p : left) {
-					addFirst(p);
-				}
-				
-				break;
-			}
+		poly.addFirst(poly.getLast());
+		poly.addLast(poly.get(1));
+		
+		List<Point> arc = MiscGeom.approximateCircularArc(points.get(points.size()-1), sizes.get(sizes.size()-1), true, offsets[1], offsets[0], ARC_RES);
+		
+		for (int i = arc.size()/2 - 1; i < arc.size(); i++) {
+			poly.addFirst(arc.get(i));
 		}
 		
-		if (poly.size() < 2) {
-			Point tempPoint = points.get(points.size()-1);
-			float tempSize = sizes.get(sizes.size()-1);
-			poly.clear();
-			points.clear();
-			sizes.clear();
-			points.add(tempPoint);
-			sizes.add(tempSize);
+		for (int i = arc.size()/2; i >= 0; i--) {
+			poly.addLast(arc.get(i));
 		}
 	}
 	
@@ -296,16 +293,16 @@ public class Pen implements ITool {
 		if (tanIntPts[0] != null) {
 			List<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), tanIntPts[0], ARC_RES);
 			for (Point p : left) {
-				addFirst(p);
+				poly.addFirst(p);
 			}
-			addFirst(tanIntPts[0]);
-			addFirst(tanPts[1]);
+			poly.addFirst(tanIntPts[0]);
+			poly.addFirst(tanPts[1]);
 		} else if (circIntPts != null) {
 			List<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[0], ARC_RES);
 			for (Point p : left) {
-				addFirst(p);
+				poly.addFirst(p);
 			}
-			addFirst(circIntPts[0]);
+			poly.addFirst(circIntPts[0]);
 		} else {
 			Log.d("PEN", "containment broken but no left handed intersections");
 			return;
@@ -315,16 +312,16 @@ public class Pen implements ITool {
 		if (tanIntPts[1] != null) {
 			List<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), tanIntPts[1], ARC_RES);
 			for (Point p : right) {
-				addLast(p);
+				poly.addLast(p);
 			}
-			addLast(tanIntPts[1]);
-			addLast(tanPts[3]);
+			poly.addLast(tanIntPts[1]);
+			poly.addLast(tanPts[3]);
 		} else if (circIntPts != null) {
 			List<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[1], ARC_RES);
 			for (Point p : right) {
-				addLast(p);
+				poly.addLast(p);
 			}
-			addLast(circIntPts[1]);
+			poly.addLast(circIntPts[1]);
 		} else {
 			Log.d("PEN", "containment broken but no right handed intersections");
 			return;
@@ -354,13 +351,13 @@ public class Pen implements ITool {
 	private void startNewStroke (Point[] tangentPoints, Point prevPoint, float prevSize) {
 		List<Point> frontCap = MiscGeom.approximateCircularArc(prevPoint, prevSize, false, tangentPoints[0], tangentPoints[2], ARC_RES);
 		for (Point p : frontCap) {
-			addLast(p);
+			poly.addLast(p);
 		}
 		
-		addFirst(tangentPoints[0]);
-		addFirst(tangentPoints[1]);
-		addLast(tangentPoints[2]);
-		addLast(tangentPoints[3]);
+		poly.addFirst(tangentPoints[0]);
+		poly.addFirst(tangentPoints[1]);
+		poly.addLast(tangentPoints[2]);
+		poly.addLast(tangentPoints[3]);
 	}
 	
 	private void addToLhs (Point tail, Point head, Point joinCenter, float joinRad, Point newCenter, float newRad) {
@@ -368,19 +365,19 @@ public class Pen implements ITool {
 		if (handedness <= 0) {
 			List<Point> join = MiscGeom.approximateCircularArc(joinCenter, joinRad, true, poly.getFirst(), tail, ARC_RES);
 			for (Point p : join) {
-				addFirst(p);
+				poly.addFirst(p);
 			}
-			addFirst(tail);
-			addFirst(head);
+			poly.addFirst(tail);
+			poly.addFirst(head);
 		} else {
 			Point intersection = MiscGeom.calcIntersection(poly.get(0), poly.get(1), head, tail);
 			if (intersection != null) {
 				poly.removeFirst();
-				addFirst(intersection);
-				addFirst(head);
+				poly.addFirst(intersection);
+				poly.addFirst(head);
 			} else {
-				addFirst(tail);
-				addFirst(head);
+				poly.addFirst(tail);
+				poly.addFirst(head);
 			}
 		}
 	}
@@ -390,20 +387,20 @@ public class Pen implements ITool {
 		if (handedness >= 0) {
 			List<Point> join = MiscGeom.approximateCircularArc(joinCenter, joinRad, false, poly.getLast(), tail, ARC_RES);
 			for (Point p : join) {
-				addLast(p);
+				poly.addLast(p);
 			}
-			addLast(tail);
-			addLast(head);
+			poly.addLast(tail);
+			poly.addLast(head);
 		} else {
 			Point intersection = MiscGeom.calcIntersection(poly.get(poly.size()-1), poly.get(poly.size()-2), head, tail);
 			
 			if (intersection != null) {
 				poly.removeLast();
-				addLast(intersection);
-				addLast(head);
+				poly.addLast(intersection);
+				poly.addLast(head);
 			} else {
-				addLast(tail);
-				addLast(head);
+				poly.addLast(tail);
+				poly.addLast(head);
 			}
 		}
 	}
@@ -411,16 +408,7 @@ public class Pen implements ITool {
 	private float scalePressure (float pressure) {
 		return 1.0f - pressureSensitivity + pressure*pressureSensitivity;
 	}
-	
-	private void addLast (Point p) {
-		addPointToDirtyRect(p);
-		poly.addLast(p);
-	}
-	
-	private void addFirst (Point p) {
-		addPointToDirtyRect(p);
-		poly.addFirst(p);
-	}
+
 	
 	private void addPointToDirtyRect (Point p) {
 		if (dirtyRect != null) {
