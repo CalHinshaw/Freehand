@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.graphics.RectF;
+import android.util.Log;
 
 public class MiscGeom {
 	private static final float SG0 = 17.0f / 35.0f;
@@ -32,6 +33,7 @@ public class MiscGeom {
 		double dy = p1.y - p2.y;
 		return dx*dx + dy*dy;
 	}
+
 	
 	/**
 	 * Calculates the intersection of the two line segments. The line segments are considered closed.
@@ -213,12 +215,17 @@ public class MiscGeom {
 	
 
 
-	public static ArrayList<Point> approximateCircularArc (final Point center, final float radius, final boolean clockwise, final Point from, final Point to, final int resolution) {
+	public static List<Point> approximateCircularArc (final Point center, final float radius, final boolean clockwise, final Point from, final Point to, final int resolution) {
 		// Calculate the angles we're starting and stopping the approximation at
 		final double startAng = findAngleFromHorizontal(from, center);
 		final double finishAng = findAngleFromHorizontal(to, center);
 		final double deltaAng = findDirectionalAngularDist(startAng, finishAng, clockwise);
 
+		return MiscGeom.approximateCircularArc(center, radius, clockwise, from, deltaAng, resolution);
+	}
+	
+	
+	public static List<Point> approximateCircularArc (final Point center, final float radius, final boolean clockwise, final Point from, final double deltaAng, final int resolution) {
 		// Calculate the number and size of steps to take during approximation
 		final int steps = (int) (deltaAng * resolution / (2*Math.PI));
 		if (steps < 1) { return new ArrayList<Point>(0); }
@@ -242,6 +249,9 @@ public class MiscGeom {
 		
 		return arc;
 	}
+	
+	
+	
 	
 	public static double findAngleFromHorizontal (Point p, Point c) {
 		final double angle = Math.atan2(p.y-c.y, p.x-c.x);
@@ -312,6 +322,28 @@ public class MiscGeom {
 		
 		return tangentPoints;
 	}
+	
+	
+	public static Point[] calcPtCircTangentPts (final Point p, final float r, final Point c) {
+		final double d_c = MiscGeom.distance(p, c);
+		if (d_c <= r) return null;
+		final double d_t = Math.sqrt(d_c*d_c - r*r);
+		final double cx = (c.x-p.x)/d_c;
+		final double cy = (c.y-p.y)/d_c;
+		final double S = d_t/d_c;
+		final double C = r/d_c;
+		
+		final double L_x = r*(cx*C - cy*S);				// The vector orthogonal to the left-handed tangent line
+		final double L_y = r*(cx*S + cy*C);
+		final double R_x = r*(cx*C + cy*S);				// The vector orthogonal to the right-handed tangent line
+		final double R_y = r*(-cx*S + cy*C);
+		
+		final Point[] tanPts = new Point[2];
+		tanPts[0] = new Point(c.x+L_x, c.y+L_y);
+		tanPts[1] = new Point(c.x+R_x, c.y+R_y);
+		return tanPts;
+	}
+	
 	
 	public static Point[] circleSegmentIntersection (Point c, float r, Point T, Point H) {
 		
