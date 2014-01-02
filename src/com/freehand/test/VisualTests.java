@@ -1,9 +1,19 @@
 package com.freehand.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.view.MotionEvent;
+import android.view.View;
 
+import com.freehand.editor.canvas.ICanvScreenConverter;
+import com.freehand.editor.canvas.Note;
+import com.freehand.editor.canvas.Pen;
 import com.freehand.ink.MiscGeom;
 import com.freehand.ink.Point;
 
@@ -43,6 +53,60 @@ public class VisualTests {
 			c.drawCircle(intersections[0].x, intersections[0].y, 3, p);
 			c.drawCircle(intersections[1].x, intersections[1].y, 3, p);
 		}
+	}
+	
+	
+	public static void penBacktrackTests (final Canvas c) {
+		c.drawColor(Color.WHITE);
+		
+		List<Point> pts = new ArrayList<Point>();
+		List<Float> sizes = new ArrayList<Float>();
+		
+		pts.add(new Point(100, 300));
+		sizes.add(0.2f);
+		
+		pts.add(new Point(198, 300));
+		sizes.add(0.2f);
+		
+		pts.add(new Point(202, 300));
+		sizes.add(1.0f);
+		
+
+		
+		pts.add(new Point(300, 300));
+		sizes.add(1.0f);
+		
+		
+		final Pen pen = new Pen(new Note(), new testCSConv(), null, 1.0f, Color.BLACK, 10.0f, true);
+		final MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, pts.get(0).x, pts.get(0).y, sizes.get(0), 0, 0, 1, 1, 1, 0);
+		for (int i = 1; i < pts.size(); i++) {
+			event.addBatch(0, pts.get(i).x, pts.get(i).y, sizes.get(i), 0, 0);
+		}
+		
+		drawCircles(c, pts, sizes, 10.0f);
+		
+		pen.onMotionEvent(event);
+		pen.draw(c);
+	}
+	
+	public static void drawCircles (final Canvas c, final List<Point> pts, final List<Float> sizes, final float sizeScalar) {
+		final Paint paint = new Paint();
+		paint.setColor(Color.RED);
+		paint.setAntiAlias(true);
+		paint.setStyle(Paint.Style.STROKE);
+		paint.setStrokeWidth(0);
+		
+		for (int i = 0; i < pts.size(); i++) {
+			c.drawCircle(pts.get(i).x, pts.get(i).y, sizes.get(i)*sizeScalar, paint);
+			c.drawText(Integer.toString(i), pts.get(i).x, pts.get(i).y, paint);
+		}
+	}
+	
+	
+	private static class testCSConv implements ICanvScreenConverter {
+		public float canvToScreenDist(float canvasDist) { return 0; }
+		public float screenToCanvDist(float screenDist) { return 0; }
+		public Rect canvRectToScreenRect(RectF canvRect) { return null; }
 	}
 	
 	
