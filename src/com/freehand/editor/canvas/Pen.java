@@ -298,11 +298,10 @@ public class Pen implements ITool {
 			poly.addFirst(tanIntPts[0]);
 			poly.addFirst(tanPts[1]);
 		} else if (circIntPts != null) {
-			List<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[0], ARC_RES);
+			List<Point> left = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), true, poly.getFirst(), circIntPts[1], ARC_RES);
 			for (Point p : left) {
 				poly.addFirst(p);
 			}
-			poly.addFirst(circIntPts[0]);
 		} else {
 			Log.d("PEN", "containment broken but no left handed intersections");
 			return;
@@ -317,11 +316,10 @@ public class Pen implements ITool {
 			poly.addLast(tanIntPts[1]);
 			poly.addLast(tanPts[3]);
 		} else if (circIntPts != null) {
-			List<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[1], ARC_RES);
+			List<Point> right = MiscGeom.approximateCircularArc(points.get(containingIndex), sizes.get(containingIndex), false, poly.getLast(), circIntPts[0], ARC_RES);
 			for (Point p : right) {
 				poly.addLast(p);
 			}
-			poly.addLast(circIntPts[1]);
 		} else {
 			Log.d("PEN", "containment broken but no right handed intersections");
 			return;
