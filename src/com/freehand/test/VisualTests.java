@@ -1,6 +1,7 @@
 package com.freehand.test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.graphics.Canvas;
@@ -9,7 +10,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.MotionEvent;
-import android.view.View;
 
 import com.freehand.editor.canvas.ICanvScreenConverter;
 import com.freehand.editor.canvas.Note;
@@ -56,40 +56,151 @@ public class VisualTests {
 	}
 	
 	
+	
+	
+	
 	public static void penBacktrackTests (final Canvas c) {
 		c.drawColor(Color.WHITE);
 		
 		List<Point> pts = new ArrayList<Point>();
-		List<Float> sizes = new ArrayList<Float>();
+		List<Float> pressures = new ArrayList<Float>();
 		
 		pts.add(new Point(100, 300));
-		sizes.add(0.2f);
+		pressures.add(0.2f);
 		
 		pts.add(new Point(198, 300));
-		sizes.add(0.2f);
+		pressures.add(0.2f);
 		
 		pts.add(new Point(202, 300));
-		sizes.add(1.0f);
-		
-
+		pressures.add(1.0f);
 		
 		pts.add(new Point(300, 300));
-		sizes.add(1.0f);
+		pressures.add(1.0f);
 		
+		penTester(c, pts, pressures, 10.0f);
+	}
+	
+	
+	public static void breakContainmentTests (final Canvas c) {
+		c.drawColor(Color.WHITE);
 		
+		breakContainmentCleanDoubleBackTest(c);
+		breakContainmentDirtyForwardTest(c);
+		breakContainmentCircIntersectionTest(c);
+		breakContainmentCircIntersectionBackInTest(c);
+	}
+	
+	public static void breakContainmentCleanDoubleBackTest (final Canvas c) {
+		List<Point> pts = new ArrayList<Point>();
+		List<Float> pressures = new ArrayList<Float>();
+		
+		pts.add(new Point(300, 300));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(202, 300));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(198, 300));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(199, 302));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(400, 200));
+		pressures.add(0.2f);
+		
+		penTester(c, pts, pressures, 10.0f);
+	}
+	
+	
+	public static void breakContainmentCircIntersectionTest (final Canvas c) {
+		List<Point> pts = new ArrayList<Point>();
+		List<Float> pressures = new ArrayList<Float>();
+		
+		pts.add(new Point(600, 600));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(502, 600));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(498, 600));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(493, 602));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(400, 600));
+		pressures.add(0.2f);
+		
+		penTester(c, pts, pressures, 10.0f);
+	}
+	
+	
+	public static void breakContainmentCircIntersectionBackInTest (final Canvas c) {
+		List<Point> pts = new ArrayList<Point>();
+		List<Float> pressures = new ArrayList<Float>();
+		
+		pts.add(new Point(300, 600));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(202, 600));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(198, 600));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(193, 602));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(198, 595));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(100, 600));
+		pressures.add(0.2f);
+		
+		penTester(c, pts, pressures, 10.0f);
+	}
+	
+	
+	public static void breakContainmentDirtyForwardTest(final Canvas c) {
+		List<Point> pts = new ArrayList<Point>();
+		List<Float> pressures = new ArrayList<Float>();
+		
+		pts.add(new Point(600, 300));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(502, 300));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(498, 300));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(491, 302));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(491, 296));
+		pressures.add(0.2f);
+		
+		pts.add(new Point(400, 300));
+		pressures.add(0.2f);
+		
+		penTester(c, pts, pressures, 10.0f);
+	}
+	
+	private static void penTester (final Canvas c, final List<Point> pts, final List<Float> pressures, final float size) {
 		final Pen pen = new Pen(new Note(), new testCSConv(), null, 1.0f, Color.BLACK, 10.0f, true);
-		final MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, pts.get(0).x, pts.get(0).y, sizes.get(0), 0, 0, 1, 1, 1, 0);
+		final MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, pts.get(0).x, pts.get(0).y, pressures.get(0), 0, 0, 1, 1, 1, 0);
 		for (int i = 1; i < pts.size(); i++) {
-			event.addBatch(0, pts.get(i).x, pts.get(i).y, sizes.get(i), 0, 0);
+			event.addBatch(0, pts.get(i).x, pts.get(i).y, pressures.get(i), 0, 0);
 		}
-		
-		drawCircles(c, pts, sizes, 10.0f);
 		
 		pen.onMotionEvent(event);
 		pen.draw(c);
+		drawCircles(c, pts, pressures, 10.0f);
 	}
 	
-	public static void drawCircles (final Canvas c, final List<Point> pts, final List<Float> sizes, final float sizeScalar) {
+	
+	private static void drawCircles (final Canvas c, final List<Point> pts, final List<Float> pressures, final float size) {
 		final Paint paint = new Paint();
 		paint.setColor(Color.RED);
 		paint.setAntiAlias(true);
@@ -97,8 +208,8 @@ public class VisualTests {
 		paint.setStrokeWidth(0);
 		
 		for (int i = 0; i < pts.size(); i++) {
-			c.drawCircle(pts.get(i).x, pts.get(i).y, sizes.get(i)*sizeScalar, paint);
-			c.drawText(Integer.toString(i), pts.get(i).x, pts.get(i).y, paint);
+			c.drawCircle(pts.get(i).x, pts.get(i).y, pressures.get(i)*size, paint);
+//			c.drawText(Integer.toString(i), pts.get(i).x, pts.get(i).y, paint);
 		}
 	}
 	
