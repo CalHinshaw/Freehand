@@ -1,15 +1,14 @@
 package com.freehand.editor.canvas;
 
+import java.util.LinkedList;
+
 import android.view.MotionEvent;
 
 class MotionEventFilter {
 	private float stylusPressureCutoff = -1.0f;
 	
-	private boolean ignoreCurrentMotionEvent = false;
-	private float prevCanvStylusX = Float.NaN;
-	private float prevCanvStylusY = Float.NaN;
-	private float prevStylusPressure = Float.NaN;
-	private long prevStylusTime = Long.MIN_VALUE;
+	private final LinkedList<MotionEventRow> queue = new LinkedList<MotionEventRow>();
+	private MotionEventRow lastValidRow = null;
 	
 	public MotionEventFilter () {
 		if (android.os.Build.PRODUCT.equals("SGH-I717")) {
@@ -25,80 +24,85 @@ class MotionEventFilter {
 	 * <p>
 	 * If this method must receive all of the MotionEvents in a continuous touch to work correctly.
 	 */
-	public MotionEvent filter (final MotionEvent event) {
-		if (stylusPressureCutoff < 0) return event;
-		if (event.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) return event;
-		
-		if (ignoreCurrentMotionEvent == true && event.getActionMasked() == MotionEvent.ACTION_UP) {
-			ignoreCurrentMotionEvent = false;
-			clearPrevStylusFields();
-			return null;
-		} else if (ignoreCurrentMotionEvent == true) {
-			return null;
+	public MotionEvent filter (final MotionEvent e) {
+		if (e.getToolType(0) != MotionEvent.TOOL_TYPE_STYLUS) return e;		// We're not doing any filtering of capacitive events yet
+		if (e.getActionMasked() == MotionEvent.ACTION_DOWN) {
+			lastValidRow = new MotionEventRow(e.getEventTime(), e.getX(), e.getY(), e.getPressure(), e.getSize());
+			return e;
 		}
 		
-		MotionEvent toReturn = event;
 		
-		for (int i = 0; i < event.getHistorySize(); i++) {
-			if (event.getHistoricalPressure(i) < stylusPressureCutoff) {
-				toReturn = stripLowPressures(event);
-				ignoreCurrentMotionEvent = true;
+		// Add everything in e to queue
+		for (int i = 0; i < e.getHistorySize(); i++) {
+			queue.add(new MotionEventRow(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), e.getHistoricalPressure(i), e.getHistoricalSize(i)));
+		}
+		queue.add(new MotionEventRow(e.getEventTime(), e.getX(), e.getY(), e.getPressure(), e.getSize()));
+		
+		int lastIncludedIndex = -1;
+		for (int i = queue.size()-1; i >= 0; i--) {
+			if (queue.get(i).pressure > stylusPressureCutoff) {
+				lastIncludedIndex = i;
+				break;
 			}
 		}
 		
-		if (event.getPressure() < stylusPressureCutoff) {
-			toReturn = stripLowPressures(event);
-			ignoreCurrentMotionEvent = true;
-		}
 		
-		if (event.getActionMasked() == MotionEvent.ACTION_UP) {
-			ignoreCurrentMotionEvent = false;
-			clearPrevStylusFields();
-		} else {
-			prevCanvStylusX = event.getX();
-			prevCanvStylusY = event.getY();
-			prevStylusPressure = event.getPressure();
-			prevStylusTime = event.getEventTime();
-		}
+		MotionEvent newEvent;
 		
-		return toReturn;
-	}
-	
-	
-	private MotionEvent stripLowPressures (final MotionEvent e) {
-		MotionEvent newEvent = null;
-		
-		// non-historical pointer must be below threshold because once you're below you never go up and this
-		// method is only called if we're sure there's at least one low pressure, so we're ignoring
-		
-		for (int i = e.getHistorySize()-1; i >=0; i--) {
-			if (e.getHistoricalPressure(i) >= stylusPressureCutoff) {
-				if (newEvent == null) {
-					newEvent = MotionEvent.obtain(e.getDownTime(), e.getHistoricalEventTime(i), MotionEvent.ACTION_UP, e.getHistoricalX(i),
-						e.getHistoricalY(i), e.getHistoricalPressure(i), e.getHistoricalSize(i), e.getMetaState(), e.getXPrecision(),
-						e.getYPrecision(), e.getDeviceId(), e.getEdgeFlags());
-				} else {
-					newEvent.addBatch(e.getHistoricalEventTime(i), e.getHistoricalX(i), e.getHistoricalY(i), e.getHistoricalPressure(i),
-						e.getHistoricalSize(i), e.getMetaState());
-				}
-			}
-		}
-		
-		if (newEvent == null) {
-			newEvent = MotionEvent.obtain(e.getDownTime(), prevStylusTime, MotionEvent.ACTION_UP, prevCanvStylusX,
-				prevCanvStylusY, prevStylusPressure, e.getSize(), e.getMetaState(), e.getXPrecision(),
+		// Build the filtered MotionEvent
+		if (lastIncludedIndex > -1) {
+			newEvent = MotionEvent.obtain(e.getDownTime(), queue.get(0).time, e.getActionMasked(), queue.get(0).x,
+				queue.get(0).y, queue.get(0).pressure, queue.get(0).size, e.getMetaState(), e.getXPrecision(),
 				e.getYPrecision(), e.getDeviceId(), e.getEdgeFlags());
 			
+			for (int i = 1; i <= lastIncludedIndex; i++) {
+				newEvent.addBatch(queue.get(i).time, queue.get(i).x, queue.get(i).y, queue.get(i).pressure, queue.get(i).size, e.getMetaState());
+			}
+			
+			lastValidRow = new MotionEventRow(queue.get(lastIncludedIndex).time, queue.get(lastIncludedIndex).x, queue.get(lastIncludedIndex).y,
+				queue.get(lastIncludedIndex).pressure, queue.get(lastIncludedIndex).size);
+			
+			for (int i = 0; i <= lastIncludedIndex; i++) {
+				queue.removeFirst();
+			}
+		} else if (e.getActionMasked() == MotionEvent.ACTION_UP) {
+			// If the current MotionEvent isn't valid sends the last valid row received again for up.
+			// A number of devices always do this, so any code that consumes this should be able to deal with it.
+			newEvent = MotionEvent.obtain(e.getDownTime(), lastValidRow.time, MotionEvent.ACTION_UP, lastValidRow.x,
+				lastValidRow.y, lastValidRow.pressure, lastValidRow.size, e.getMetaState(), e.getXPrecision(),
+				e.getYPrecision(), e.getDeviceId(), e.getEdgeFlags());
+		} else {
+			newEvent = null;
+		}
+		
+		if (e.getActionMasked() == MotionEvent.ACTION_UP) {
+			reset();
 		}
 		
 		return newEvent;
 	}
+
+	
+	private void reset () {
+		queue.clear();
+		lastValidRow = null;
+	}
 	
 	
-	private void clearPrevStylusFields () {
-		prevCanvStylusX = Float.NaN;
-		prevCanvStylusY = Float.NaN;
-		prevStylusPressure = Float.NaN;
-		prevStylusTime = Long.MIN_VALUE;
+	private static class MotionEventRow {
+		public final long time;
+		public final float x;
+		public final float y;
+		public final float pressure;
+		public final float size;
+		
+		
+		public MotionEventRow(long time, float x, float y, float pressure, float size) {
+			this.time = time;
+			this.x = x;
+			this.y = y;
+			this.pressure = pressure;
+			this.size = size;
+		}
 	}
 }
