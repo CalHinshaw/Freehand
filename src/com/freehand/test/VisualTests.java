@@ -1,7 +1,6 @@
 package com.freehand.test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import android.graphics.Canvas;
@@ -77,7 +76,7 @@ public class VisualTests {
 		pts.add(new Point(300, 300));
 		pressures.add(1.0f);
 		
-		penTester(c, pts, pressures, 10.0f);
+		penTester(c, pts, pressures, 10.0f, true);
 	}
 	
 	
@@ -109,7 +108,7 @@ public class VisualTests {
 		pts.add(new Point(400, 200));
 		pressures.add(0.2f);
 		
-		penTester(c, pts, pressures, 10.0f);
+		penTester(c, pts, pressures, 10.0f, true);
 	}
 	
 	
@@ -132,7 +131,7 @@ public class VisualTests {
 		pts.add(new Point(400, 600));
 		pressures.add(0.2f);
 		
-		penTester(c, pts, pressures, 10.0f);
+		penTester(c, pts, pressures, 10.0f, true);
 	}
 	
 	
@@ -158,7 +157,7 @@ public class VisualTests {
 		pts.add(new Point(100, 600));
 		pressures.add(0.2f);
 		
-		penTester(c, pts, pressures, 10.0f);
+		penTester(c, pts, pressures, 10.0f, true);
 	}
 	
 	
@@ -184,10 +183,47 @@ public class VisualTests {
 		pts.add(new Point(400, 300));
 		pressures.add(0.2f);
 		
-		penTester(c, pts, pressures, 10.0f);
+		penTester(c, pts, pressures, 10.0f, true);
 	}
 	
-	private static void penTester (final Canvas c, final List<Point> pts, final List<Float> pressures, final float size) {
+	
+	public static void standardPenTests (final Canvas c) {
+		c.drawColor(Color.WHITE);
+		
+		straitPenTest(c);
+	}
+	
+	
+	public static void straitPenTest (final Canvas c) {
+		List<Point> pts = new ArrayList<Point>();
+		List<Float> pressures = new ArrayList<Float>();
+		
+		pts.add(new Point(300, 300));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(301, 301));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(302, 302));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(303, 301));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(304, 300));
+		pressures.add(1.0f);
+		
+		pts.add(new Point(320, 300));
+		pressures.add(1.0f);
+		
+		penTester(c, pts, pressures, 10.0f, false);
+	}
+	
+	
+	
+	
+	
+	private static void penTester (final Canvas c, final List<Point> pts, final List<Float> pressures, final float size, final boolean showNumbers) {
 		final Pen pen = new Pen(new Note(), new testCSConv(), null, 1.0f, Color.BLACK, 10.0f, true);
 		final MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_MOVE, pts.get(0).x, pts.get(0).y, pressures.get(0), 0, 0, 1, 1, 1, 0);
 		for (int i = 1; i < pts.size(); i++) {
@@ -196,11 +232,11 @@ public class VisualTests {
 		
 		pen.onMotionEvent(event);
 		pen.draw(c);
-		drawCircles(c, pts, pressures, 10.0f);
+//		drawCircles(c, pts, pressures, 10.0f, showNumbers);
 	}
 	
 	
-	private static void drawCircles (final Canvas c, final List<Point> pts, final List<Float> pressures, final float size) {
+	private static void drawCircles (final Canvas c, final List<Point> pts, final List<Float> pressures, final float size, final boolean showNumbers) {
 		final Paint paint = new Paint();
 		paint.setColor(Color.RED);
 		paint.setAntiAlias(true);
@@ -209,7 +245,9 @@ public class VisualTests {
 		
 		for (int i = 0; i < pts.size(); i++) {
 			c.drawCircle(pts.get(i).x, pts.get(i).y, pressures.get(i)*size, paint);
-//			c.drawText(Integer.toString(i), pts.get(i).x, pts.get(i).y, paint);
+			if (showNumbers == true) {
+				c.drawText(Integer.toString(i), pts.get(i).x, pts.get(i).y, paint);
+			}
 		}
 	}
 	

@@ -228,7 +228,5 @@ public class NoteView extends View implements IActionBarListener {
 				c.drawText(Integer.toString(i), paperSideX-15, i*paperHeight-yMax-20, pageNumberPaint);
 			}
 		}
-		
-//		VisualTests.penBacktrackTests(c);
 	}
 }
