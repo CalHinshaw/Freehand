@@ -5,6 +5,7 @@ import java.io.File;
 import com.calhounroberthinshaw.freehand.R;
 
 import com.freehand.editor.canvas.Note;
+import com.freehand.pdf.PdfDoc;
 import com.freehand.preferences.PrefActivity;
 import com.freehand.tutorial.TutorialPrefs;
 
@@ -279,6 +280,10 @@ public class MainMenuActivity extends Activity {
         final File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
         mBrowser.setRootDirectory(rootDirectory);
         mBrowser.setMainMenuActivity(this);
+        
+        
+        PdfDoc.test(new PdfDoc());
+        
     }
     
     @Override

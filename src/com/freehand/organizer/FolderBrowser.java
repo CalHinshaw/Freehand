@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.share.NoteSharer;
+import com.freehand.share.NoteSharer.Format;
 import com.freehand.tutorial.TutorialPrefs;
 
 import android.annotation.SuppressLint;
@@ -427,7 +428,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			return;
 		}
 		
-		new NoteSharer(getContext()).execute(new ArrayList<Object>(toShare));
+		new NoteSharer(getContext(), Format.PDF).execute(new ArrayList<Object>(toShare));
 	}
 	
 	public void createNewFolder (final String name) {

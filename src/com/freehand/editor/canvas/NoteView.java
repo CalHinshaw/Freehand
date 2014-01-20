@@ -2,7 +2,6 @@ package com.freehand.editor.canvas;
 
 import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.editor.tool_bar.IActionBarListener;
-import com.freehand.test.VisualTests;
 
 import android.content.Context;
 import android.graphics.Canvas;

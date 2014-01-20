@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.editor.canvas.Note;
 import com.freehand.share.NoteSharer;
+import com.freehand.share.NoteSharer.Format;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -126,7 +127,7 @@ public class ActionBar extends LinearLayout {
 			mNote.save();
 			ArrayList<Object> toShare = new ArrayList<Object>(1);
 			toShare.add(mNote.getPath());
-			new NoteSharer(getContext()).execute(toShare);
+			new NoteSharer(getContext(), Format.PDF).execute(toShare);
 			mMenuWindow.dismiss();
 		}
 	};
