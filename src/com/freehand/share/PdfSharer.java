@@ -1,8 +1,6 @@
 package com.freehand.share;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,13 +14,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.DialogInterface.OnCancelListener;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.RectF;
-import android.graphics.Bitmap.CompressFormat;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -224,16 +216,4 @@ public class PdfSharer extends AsyncTask<List<Object>, Object, Intent> {
 		
 		return aabb;
 	}
-	
-	private static Rect rectfToRect (RectF rectf) {
-		Rect rect = new Rect();
-		
-		rect.left = (int) rectf.left;
-		rect.right = (int) (rectf.right+1);
-		rect.top = (int) rectf.top;
-		rect.bottom = (int) (rectf.bottom+1);
-		
-		return rect;
-	}
-	
 }

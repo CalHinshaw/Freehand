@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.graphics.Color;
-import android.os.Environment;
 import android.util.Log;
 
 
@@ -162,27 +161,5 @@ public class PdfDoc {
 			this.height = height;
 			this.width = width;
 		}
-	}
-	
-	
-	
-	public static void test(final PdfDoc d) {
-		d.newPage(1000, 1000);
-		d.moveTo(100, 100);
-		d.lineTo(200, 200);
-		d.lineTo(100, 200);
-		d.lineTo(100, 100);
-		d.setColor(Color.BLUE);
-		d.fill();
-		
-		d.moveTo(150, 100);
-		d.lineTo(250, 200);
-		d.lineTo(150, 200);
-		d.lineTo(150, 100);
-		d.setColor(0x99FF0000);
-		d.fill();
-		
-		
-		d.writePdf(new File(Environment.getExternalStorageDirectory(), "test.pdf"));
 	}
 }
