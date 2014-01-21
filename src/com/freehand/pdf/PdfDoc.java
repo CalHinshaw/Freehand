@@ -12,24 +12,23 @@ import android.graphics.Color;
 import android.os.Environment;
 import android.util.Log;
 
-import com.freehand.ink.Point;
 
 public class PdfDoc {
 	private static final String charset = "US-ASCII";
 	
 	private final List<PdfPage> pages = new ArrayList<PdfPage>();
 	
-	public void moveTo (final Point p) {
-		append(Float.toString(p.x));
+	public void moveTo (final float x, final float y) {
+		append(Float.toString(x));
 		append(" ");
-		append(Float.toString(curPage().height-p.y));
+		append(Float.toString(curPage().height-y));
 		append(" m\n");
 	}
 	
-	public void lineTo (final Point p) {
-		append(Float.toString(p.x));
+	public void lineTo (final float x, final float y) {
+		append(Float.toString(x));
 		append(" ");
-		append(Float.toString(curPage().height-p.y));
+		append(Float.toString(curPage().height-y));
 		append(" l\n");
 	}
 	
@@ -50,7 +49,7 @@ public class PdfDoc {
 	}
 	
 	public void newPage (final int width, final int height) {
-		pages.add(new PdfPage(width, height));
+		pages.add(new PdfPage(height, width));
 		append("/DeviceRGB cs\n");
 	}
 	
@@ -169,17 +168,17 @@ public class PdfDoc {
 	
 	public static void test(final PdfDoc d) {
 		d.newPage(1000, 1000);
-		d.moveTo(new Point(100, 100));
-		d.lineTo(new Point(200, 200));
-		d.lineTo(new Point(100, 200));
-		d.lineTo(new Point(100, 100));
+		d.moveTo(100, 100);
+		d.lineTo(200, 200);
+		d.lineTo(100, 200);
+		d.lineTo(100, 100);
 		d.setColor(Color.BLUE);
 		d.fill();
 		
-		d.moveTo(new Point(150, 100));
-		d.lineTo(new Point(250, 200));
-		d.lineTo(new Point(150, 200));
-		d.lineTo(new Point(150, 100));
+		d.moveTo(150, 100);
+		d.lineTo(250, 200);
+		d.lineTo(150, 200);
+		d.lineTo(150, 100);
 		d.setColor(0x99FF0000);
 		d.fill();
 		

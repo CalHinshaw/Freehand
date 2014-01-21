@@ -280,10 +280,6 @@ public class MainMenuActivity extends Activity {
         final File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
         mBrowser.setRootDirectory(rootDirectory);
         mBrowser.setMainMenuActivity(this);
-        
-        
-        PdfDoc.test(new PdfDoc());
-        
     }
     
     @Override

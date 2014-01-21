@@ -28,18 +28,14 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
-public class NoteSharer extends AsyncTask<List<Object>, Object, Intent> {
-	public static enum Format { PNG, PDF }
-	
+public class PngSharer extends AsyncTask<List<Object>, Object, Intent> {
 	private static final float TARGET_RATIO = 11.0f/8.5f;
 	
 	private Context mContext;
 	private ProgressDialog mDialog;
-	private final Format format;
 	
-	public NoteSharer (final Context newContext, final Format format) {
+	public PngSharer (final Context newContext) {
 		mContext = newContext;
-		this.format = format;
 	}
 	
 	@Override
@@ -106,14 +102,8 @@ public class NoteSharer extends AsyncTask<List<Object>, Object, Intent> {
 			}
 			
 			List<Uri> cur = saveNoteAsPNGs(toShare, rootDirectory, progressIncrement*i, progressIncrement);
-			if (format == Format.PNG) {
-				imageUris.addAll(cur);
-			} else if (format == Format.PDF) {
-				Uri toAdd = buildPdf(toShare, rootDirectory, cur);
-				if (toAdd != null) {
-					imageUris.add(toAdd);
-				}
-			}
+			imageUris.addAll(cur);
+
 		}
 		
 		//Debug.stopMethodTracing();
@@ -129,28 +119,6 @@ public class NoteSharer extends AsyncTask<List<Object>, Object, Intent> {
 			return shareIntent;
 		}
 		
-	}
-	
-	
-	private static Uri buildPdf(final Note note, final File rootDir, final List<Uri> pages) {
-//		final PdfDocument pdf = PdfDocument.createPdf();
-//		pdf.setCompressionMode(PdfDocument.HPDF_COMP_ALL);
-//		
-//		for (Uri uri : pages) {
-//			final PdfPage page = pdf.addPage();
-//			page.setSize(Size.LETTER, Direction.PORTRAIT);
-//			page.drawPngImageFromFile(uri.getPath(), 0, 0, 72*8.5f, 72*11);
-//		}
-//		
-//		final String noteName = (new File(note.getPath()).getName()).replace(".note", "");
-//		final File target = new File(rootDir, noteName + ".pdf");
-//		
-//		if (pdf.saveToFile(target.getAbsolutePath())) {
-//			return Uri.fromFile(target);
-//		} else {
-//			return null;
-//		}
-		return null;
 	}
 	
 	
