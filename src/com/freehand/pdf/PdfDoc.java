@@ -106,7 +106,7 @@ public class PdfDoc {
 			for (int i : pageObjectNumbers) {
 				w.write((i + " 0 R ").getBytes(charset));
 			}
-			w.write("]\nendobj\n".getBytes(charset));
+			w.write("]\n>>\nendobj\n".getBytes(charset));
 			
 			// Write Catalog object
 			objOffsets.add(w.size());
@@ -123,7 +123,7 @@ public class PdfDoc {
 			// Write Trailer
 			w.write("trailer\n<<\n".getBytes(charset));
 			w.write(("/Size "+objOffsets.size()+" 0 R\n").getBytes(charset));
-			w.write(("/Root " + Integer.toString(objOffsets.size()-2)+" 0 R\n").getBytes(charset));
+			w.write(("/Root " + Integer.toString(objOffsets.size()-1)+" 0 R\n").getBytes(charset));
 			w.write((">>\nstartxref\n" + startXref + "\n%%EOF").getBytes(charset));
 			
 			w.close();
