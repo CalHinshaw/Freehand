@@ -18,6 +18,9 @@ public class PdfDoc {
 	private final List<PdfPage> pages = new ArrayList<PdfPage>();
 	
 	public void moveTo (final float x, final float y) {
+		if (Float.isNaN(x) || Float.isNaN(y)) return;
+		if (Float.isInfinite(x) || Float.isInfinite(y)) return;
+		
 		append(Float.toString(x));
 		append(" ");
 		append(Float.toString(curPage().height-y));
@@ -25,6 +28,9 @@ public class PdfDoc {
 	}
 	
 	public void lineTo (final float x, final float y) {
+		if (Float.isNaN(x) || Float.isNaN(y)) return;
+		if (Float.isInfinite(x) || Float.isInfinite(y)) return;
+		
 		append(Float.toString(x));
 		append(" ");
 		append(Float.toString(curPage().height-y));
