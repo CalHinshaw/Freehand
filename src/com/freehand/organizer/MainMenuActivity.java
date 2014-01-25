@@ -5,7 +5,6 @@ import java.io.File;
 import com.calhounroberthinshaw.freehand.R;
 
 import com.freehand.editor.canvas.Note;
-import com.freehand.pdf.PdfDoc;
 import com.freehand.preferences.PrefActivity;
 import com.freehand.tutorial.TutorialPrefs;
 

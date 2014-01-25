@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" >
+    
+    <TextView
+        android:id="@+id/new_note_message"
+        android:text="Please pick your share format."
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+	
+	<RadioGroup
+	    android:id="@+id/export_format"
+	    android:orientation="vertical"
+	    android:layout_height="wrap_content"
+	    android:layout_width="fill_parent" >
+	    
+	    <RadioButton
+	        android:id="@+id/pdf"
+	        android:checked="true"
+	        android:text="PDF"/>
+	    
+	    <RadioButton 
+	        android:id="@+id/png"
+	        android:checked="false"
+	        android:text="PNGs" />
+	</RadioGroup>
+	
+</LinearLayout>

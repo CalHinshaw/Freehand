@@ -1,11 +1,14 @@
 package com.freehand.editor.tool_bar;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.editor.canvas.Note;
 import com.freehand.share.PdfSharer;
+import com.freehand.share.ShareDialog;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
@@ -121,12 +124,15 @@ public class ActionBar extends LinearLayout {
 	};
 	
 	private final OnClickListener shareButtonListener = new OnClickListener () {
-		@SuppressWarnings("unchecked")
 		public void onClick(View v) {
 			mNote.save();
-			ArrayList<Object> toShare = new ArrayList<Object>(1);
+			List<Object> toShare = new ArrayList<Object>(1);
 			toShare.add(mNote.getPath());
-			new PdfSharer(getContext()).execute(toShare);
+			
+			if (getContext() instanceof Activity) {
+				new ShareDialog(getContext(), new ArrayList<Object>(toShare)).show(((Activity) getContext()).getFragmentManager(), "share");
+			}
+			
 			mMenuWindow.dismiss();
 		}
 	};

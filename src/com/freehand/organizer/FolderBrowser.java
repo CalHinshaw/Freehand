@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.share.PdfSharer;
+import com.freehand.share.ShareDialog;
 import com.freehand.tutorial.TutorialPrefs;
 
 import android.annotation.SuppressLint;
@@ -415,7 +416,6 @@ public class FolderBrowser extends HorizontalScrollView {
 			.show();
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void shareSelections () {
 		final Set<String> toShare = new TreeSet<String>();
 		for (File f : selections) {
@@ -427,7 +427,7 @@ public class FolderBrowser extends HorizontalScrollView {
 			return;
 		}
 		
-		new PdfSharer(getContext()).execute(new ArrayList<Object>(toShare));
+		new ShareDialog(getContext(), new ArrayList<Object>(toShare)).show(mActivity.getFragmentManager(), "share");
 	}
 	
 	public void createNewFolder (final String name) {
