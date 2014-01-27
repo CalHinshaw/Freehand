@@ -31,6 +31,7 @@ public class ShareDialog extends DialogFragment {
 		
 		// Create onClickListener for the positive button
 		OnClickListener positiveListener = new OnClickListener () {
+			@SuppressWarnings("unchecked")
 			public void onClick(DialogInterface dialog, int which) {
 				final RadioGroup g = (RadioGroup) contentView.findViewById(R.id.export_format);
 				
