@@ -109,8 +109,9 @@ public class PdfDoc {
 			// Write Pages object
 			objOffsets.add(w.size());
 			w.write((Integer.toString(objOffsets.size()-1) + " 0 obj\n<<\n/Type /Pages\n/Count " + pageObjectNumbers.size() + "\n/Kids [").getBytes(charset));
-			for (int i : pageObjectNumbers) {
-				w.write((i + " 0 R ").getBytes(charset));
+			for (int i = 0; i < pageObjectNumbers.size(); i++) {
+				if (i != 0) w.write(" ".getBytes(charset));
+				w.write((pageObjectNumbers.get(i) + " 0 R").getBytes(charset));
 			}
 			w.write("]\n>>\nendobj\n".getBytes(charset));
 			
@@ -128,7 +129,7 @@ public class PdfDoc {
 			
 			// Write Trailer
 			w.write("trailer\n<<\n".getBytes(charset));
-			w.write(("/Size "+objOffsets.size()+" 0 R\n").getBytes(charset));
+			w.write(("/Size "+objOffsets.size()+"\n").getBytes(charset));
 			w.write(("/Root " + Integer.toString(objOffsets.size()-1)+" 0 R\n").getBytes(charset));
 			w.write((">>\nstartxref\n" + startXref + "\n%%EOF").getBytes(charset));
 			
