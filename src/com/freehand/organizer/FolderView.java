@@ -10,6 +10,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import com.calhounroberthinshaw.freehand.R;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -34,9 +35,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 public class FolderView extends ListView {
-	private static final int BLUE_HIGHLIGHT = 0x600099CC;
-	private static final int SOLID_BLUE_HIGHLIGHT = 0xFF0099CC;
-	private static final int ORANGE_HIGHLIGHT = 0xAAFFBB33;
+	private final int TRANS_HIGHLIGHT;
+	private final int SOLID_HIGHLIGHT;
 	private static final int NO_COLOR = 0x00FFFFFF;
 	
 	private static final float STATIONARY_RADIUS_SQUARED = 1500;
@@ -92,6 +92,9 @@ public class FolderView extends ListView {
 		super(context);
 		mBrowser = browser;
 		folder = root;
+		
+		TRANS_HIGHLIGHT = getResources().getColor(R.color.trans_highlight);
+		SOLID_HIGHLIGHT = getResources().getColor(R.color.solid_highlight);
 
 		// Create and set the adapter for this ListView
 		mAdapter = new FolderAdapter(this.getContext(), R.layout.directoryview_row);
@@ -105,7 +108,7 @@ public class FolderView extends ListView {
 		mSelectedPaint = new Paint();
 		mSelectedPaint.setAntiAlias(true);
 		mSelectedPaint.setStyle(Paint.Style.STROKE);
-		mSelectedPaint.setColor(SOLID_BLUE_HIGHLIGHT);
+		mSelectedPaint.setColor(SOLID_HIGHLIGHT);
 		mSelectedPaint.setStrokeWidth(2*selectedRad);
 	}
 
@@ -285,20 +288,20 @@ public class FolderView extends ListView {
 		
 		if (dragState == STATE_UP) {
 			highlightRect = new Rect(0, 0, this.getWidth(), (int)(this.getHeight()*SCROLL_REGION_MULTIPLIER));
-			highlightShader = new LinearGradient(0, 0, 0, this.getHeight()*SCROLL_REGION_MULTIPLIER, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+			highlightShader = new LinearGradient(0, 0, 0, this.getHeight()*SCROLL_REGION_MULTIPLIER, SOLID_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			highlightPaint.setShader(highlightShader);
 			highlightPaint.setStyle(Paint.Style.FILL);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
 		} else if (dragState == STATE_DOWN) {
 			highlightRect = new Rect(0, this.getHeight()-(int)(this.getHeight()*SCROLL_REGION_MULTIPLIER), this.getWidth(), this.getHeight());
-			highlightShader = new LinearGradient(0, this.getHeight(), 0, this.getHeight() - this.getHeight()*SCROLL_REGION_MULTIPLIER, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+			highlightShader = new LinearGradient(0, this.getHeight(), 0, this.getHeight() - this.getHeight()*SCROLL_REGION_MULTIPLIER, SOLID_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			highlightPaint.setShader(highlightShader);
 			highlightPaint.setStyle(Paint.Style.FILL);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
 		} else if (dragState == STATE_FOLDER) {
-			highlightPaint.setColor(ORANGE_HIGHLIGHT);
+			highlightPaint.setColor(SOLID_HIGHLIGHT);
 			highlightPaint.setStrokeWidth(6);
 			highlightPaint.setStyle(Paint.Style.STROKE);
 			highlightRect = new Rect(3, this.getScrollY()+3, getWidth()-3, this.getHeight()-3);
@@ -308,14 +311,14 @@ public class FolderView extends ListView {
 			final View v = getViewAtPosition(dragState);
 			if (mBrowser.getDisplayStatus(fileUnderDrag) == false) {
 				highlightRect = new Rect((int)(v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), v.getRight(), v.getBottom());
-				highlightShader = new LinearGradient(v.getRight(), v.getTop(), (v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+				highlightShader = new LinearGradient(v.getRight(), v.getTop(), (v.getRight() - v.getWidth()*DIRECTORY_UP_REGION_MULTIPLIER), v.getTop(), SOLID_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 				highlightPaint.setShader(highlightShader);
 				highlightPaint.setStyle(Paint.Style.FILL);
 				canvas.drawRect(highlightRect, highlightPaint);
 			}
 			
 			highlightPaint.setShader(null);
-			highlightPaint.setColor(ORANGE_HIGHLIGHT);
+			highlightPaint.setColor(SOLID_HIGHLIGHT);
 			highlightPaint.setStrokeWidth(4);
 			highlightPaint.setStyle(Paint.Style.STROKE);
 			highlightRect = new Rect(v.getLeft()+2, v.getTop()+2, v.getRight()-2, v.getBottom()-2);
@@ -430,7 +433,7 @@ public class FolderView extends ListView {
 			if (mBrowser.getFileSelectionStatus(holder.file) && mBrowser.dragInProgress()) {
 				convertView.setBackgroundColor(Color.LTGRAY);
 			} else if (mBrowser.getFileSelectionStatus(holder.file)) {
-				convertView.setBackgroundColor(BLUE_HIGHLIGHT);
+				convertView.setBackgroundColor(TRANS_HIGHLIGHT);
 			} else {
 				convertView.setBackgroundColor(0x0000000000);
 			}

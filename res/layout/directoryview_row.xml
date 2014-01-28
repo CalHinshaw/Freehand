@@ -36,7 +36,7 @@
         android:id="@+id/DirectoryViewRowBar"
         android:layout_height="fill_parent"
         android:layout_width="10dip"
-        android:background="@color/orange"
+        android:background="@color/trans_highlight"
         android:visibility="invisible" />
     	
     

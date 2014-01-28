@@ -8,9 +8,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
+import com.calhounroberthinshaw.freehand.R;
 import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.Note.PaperType;
-import com.freehand.share.PdfSharer;
 import com.freehand.share.ShareDialog;
 import com.freehand.tutorial.TutorialPrefs;
 
@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -39,7 +40,7 @@ import android.widget.Toast;
 
 public class FolderBrowser extends HorizontalScrollView {
 	private static final float DRAG_SCROLL_REGION_SCREEN_PERCENTAGE = 0.10f;
-	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
+	private final int HIGHLIGHT;
 	private static final int NO_COLOR = 0x00FFFFFF;
 	private static final float MIN_FOLDER_WIDTH_DIP = 300;
 	
@@ -85,6 +86,18 @@ public class FolderBrowser extends HorizontalScrollView {
 		mLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE + LinearLayout.SHOW_DIVIDER_END);
 		
 		this.addView(mLayout);
+		this.setBackgroundColor(Color.WHITE);
+		HIGHLIGHT = getResources().getColor(R.color.solid_highlight);
+		
+		
+		
+		// TODO delete following
+		
+		Bitmap b = Bitmap.createBitmap(5, 5, Bitmap.Config.ARGB_8888);
+		Canvas c = new Canvas(b);
+		c.drawColor(Color.WHITE);
+		c.drawColor(getResources().getColor(R.color.trans_highlight));
+		Log.d("PEN", Integer.toHexString(b.getPixel(1, 1)));
 	}
 	
 
@@ -307,14 +320,14 @@ public class FolderBrowser extends HorizontalScrollView {
 		
 		if (dragInProgress && scrollInProgress && currentDragRegion == -1) {
 			Rect highlightRect = new Rect(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, this.getHeight());
-			Shader highlightShader = new LinearGradient(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+			Shader highlightShader = new LinearGradient(this.getScrollX(), 0, this.getScrollX() + mDragRegionWidth, 0, HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			Paint highlightPaint = new Paint();
 			highlightPaint.setShader(highlightShader);
 			
 			canvas.drawRect(highlightRect, highlightPaint);
 		} else if (dragInProgress && scrollInProgress && currentDragRegion == 1) {
 			Rect highlightRect = new Rect(this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, this.getScrollX() + this.getWidth(), this.getHeight());
-			Shader highlightShader = new LinearGradient(this.getScrollX() + this.getWidth(), 0, this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, ORANGE_HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
+			Shader highlightShader = new LinearGradient(this.getScrollX() + this.getWidth(), 0, this.getScrollX() + this.getWidth() - mDragRegionWidth, 0, HIGHLIGHT, NO_COLOR, Shader.TileMode.CLAMP);
 			Paint highlightPaint = new Paint();
 			highlightPaint.setShader(highlightShader);
 			

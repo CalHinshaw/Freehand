@@ -1,5 +1,7 @@
 package com.freehand.organizer;
 
+import com.calhounroberthinshaw.freehand.R;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -8,8 +10,6 @@ import android.util.AttributeSet;
 import android.widget.Button;
 
 public class HighlightButton extends Button {
-	private static final int ORANGE_HIGHLIGHT = 0xFFFFBB33;
-	
 	private boolean drawHighlight = false;
 	
 	private Rect highlightRect = new Rect();
@@ -19,7 +19,7 @@ public class HighlightButton extends Button {
 		super(context, attrs);
 		
 		highlightPaint.setAntiAlias(true);
-		highlightPaint.setColor(ORANGE_HIGHLIGHT);
+		highlightPaint.setColor(getResources().getColor(R.color.solid_highlight));
 		highlightPaint.setStrokeWidth(6);
 		highlightPaint.setStyle(Paint.Style.STROKE);
 	}
