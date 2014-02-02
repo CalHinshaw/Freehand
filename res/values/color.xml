@@ -9,4 +9,5 @@
 	<color name="solid_highlight">#ff0099cc</color>
 	<color name="trans_highlight">#600099cc</color>
 	<color name="opaque_trans_highlight">#ff9fd8ec</color>
+	<color name="clear">#00000000</color>
 </resources>

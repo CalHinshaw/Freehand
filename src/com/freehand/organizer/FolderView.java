@@ -429,13 +429,12 @@ public class FolderView extends ListView {
 				convertView.findViewById(R.id.DirectoryViewRowBar).setVisibility(INVISIBLE);
 			}
 			
-			
 			if (mBrowser.getFileSelectionStatus(holder.file) && mBrowser.dragInProgress()) {
 				convertView.setBackgroundColor(Color.LTGRAY);
 			} else if (mBrowser.getFileSelectionStatus(holder.file)) {
 				convertView.setBackgroundColor(TRANS_HIGHLIGHT);
 			} else {
-				convertView.setBackgroundColor(0x0000000000);
+				convertView.setBackgroundDrawable(getResources().getDrawable(R.drawable.row_background));
 			}
 
 			return convertView;

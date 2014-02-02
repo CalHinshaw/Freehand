@@ -88,16 +88,6 @@ public class FolderBrowser extends HorizontalScrollView {
 		this.addView(mLayout);
 		this.setBackgroundColor(Color.WHITE);
 		HIGHLIGHT = getResources().getColor(R.color.solid_highlight);
-		
-		
-		
-		// TODO delete following
-		
-		Bitmap b = Bitmap.createBitmap(5, 5, Bitmap.Config.ARGB_8888);
-		Canvas c = new Canvas(b);
-		c.drawColor(Color.WHITE);
-		c.drawColor(getResources().getColor(R.color.trans_highlight));
-		Log.d("PEN", Integer.toHexString(b.getPixel(1, 1)));
 	}
 	
 
