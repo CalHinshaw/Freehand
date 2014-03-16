@@ -14,14 +14,12 @@ import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.share.ShareDialog;
 import com.freehand.tutorial.TutorialPrefs;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -303,7 +301,6 @@ public class FolderBrowser extends HorizontalScrollView {
 		return scrollInProgress;
 	}
 	
-	@SuppressLint("DrawAllocation")
 	@Override
 	protected void onDraw (Canvas canvas) {
 		super.onDraw(canvas);
