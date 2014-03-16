@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.calhounroberthinshaw.freehand"
-    android:versionCode="13"
-    android:versionName="v0.31" >
+    android:versionCode="14"
+    android:versionName="v0.32" >
 
     <uses-sdk
         android:minSdkVersion="15"
