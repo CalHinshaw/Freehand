@@ -21,6 +21,8 @@ import android.view.View;
 
 class PenCreatorView extends View {
 	
+	private static final int TRACKER_COLOR = 0xff1c1c1c;
+	
 	public static final float HEIGHT_SCALAR = 1.144f;
 	
     /**
@@ -225,53 +227,7 @@ class PenCreatorView extends View {
 		
 	}
 	
-	private void drawAlphaPanel(Canvas canvas){
-		
-		if(!mShowAlphaPanel || mAlphaRect == null || mAlphaPattern == null) return;
-		
-		final RectF rect = mAlphaRect;
-		
-		if(BORDER_WIDTH_PX > 0){
-			mBorderPaint.setColor(mBorderColor);
-			canvas.drawRect(rect.left - BORDER_WIDTH_PX, 
-					rect.top - BORDER_WIDTH_PX, 
-					rect.right + BORDER_WIDTH_PX, 
-					rect.bottom + BORDER_WIDTH_PX, 
-					mBorderPaint);		
-		}
-		
-		
-		mAlphaPattern.draw(canvas);
-		
-		float[] hsv = new float[]{mHue,mSat,mVal};
-		int color = Color.HSVToColor(hsv);
-		int acolor = Color.HSVToColor(0, hsv);
-		
-		mAlphaShader = new LinearGradient(rect.left, rect.top, rect.right, rect.top, 
-				color, acolor, TileMode.CLAMP);
-		
-		
-		mAlphaPaint.setShader(mAlphaShader);
-		
-		canvas.drawRect(rect, mAlphaPaint);
-		
-		if(mAlphaSliderText != null && mAlphaSliderText!= ""){
-			canvas.drawText(mAlphaSliderText, rect.centerX(), rect.centerY() + 4 * mDensity, mAlphaTextPaint);
-		}
-		
-		float rectWidth = 4 * mDensity / 2;
-		
-		Point p = alphaToPoint(mAlpha);
-				
-		RectF r = new RectF();
-		r.left = p.x - rectWidth;
-		r.right = p.x + rectWidth;
-		r.top = rect.top - RECTANGLE_TRACKER_OFFSET;
-		r.bottom = rect.bottom + RECTANGLE_TRACKER_OFFSET;
-		
-		canvas.drawRoundRect(r, 2, 2, mRectTrackerPaint);
-		
-	}
+
 	
 	
 	private void drawSizePanel(Canvas canvas) {
@@ -580,5 +536,318 @@ class PenCreatorView extends View {
 	
 	public interface IPenChangedListener {
 		public void onPenChanged(int color, float size);
+	}
+	
+	
+	//************************************ Slider/Selector Classes *************************************
+	
+	private static class SatValSelector extends View {
+		private static final float INNER_TRACKER_RADIUS = 4.0f;
+		private static final float OUTER_TRACKER_RADIUS = 5.0f;
+		
+		private final float mDensity;
+		private final int borderSize;
+		
+		private Shader valShader;
+		private final Paint shaderPaint = new Paint();
+		private final Paint outerTrackerPaint = new Paint();
+		private final Paint innerTrackerPaint = new Paint();
+		
+		private float xPos;
+		private float yPos;
+		
+		public SatValSelector(Context context) {
+			super(context);
+			
+			mDensity = getContext().getResources().getDisplayMetrics().density;
+			borderSize = (int) (2.0f*mDensity + 1);
+			
+			shaderPaint.setAntiAlias(true);
+			
+			outerTrackerPaint.setAntiAlias(true);
+			outerTrackerPaint.setStyle(Style.STROKE);
+			outerTrackerPaint.setStrokeWidth(2f * mDensity);
+			outerTrackerPaint.setColor(0xffdddddd);
+			
+			innerTrackerPaint.setAntiAlias(true);
+			innerTrackerPaint.setStyle(Style.STROKE);
+			innerTrackerPaint.setStrokeWidth(2f * mDensity);
+			innerTrackerPaint.setColor(0xff000000);
+		}
+		
+		@Override
+		protected void onMeasure (final int widthMeasureSpec, final int heightMeasureSpec) {
+			setMeasuredDimension(View.MeasureSpec.getSize(heightMeasureSpec), View.MeasureSpec.getSize(heightMeasureSpec));
+		}
+		
+		@Override
+		protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+			super.onSizeChanged(w, h, oldw, oldh);
+			
+			valShader = new LinearGradient(0, borderSize, 0, this.getHeight()-borderSize, 
+					0xffffffff, 0xff000000, TileMode.CLAMP);
+		}
+		
+		public void draw (final Canvas c, final float hue) {
+			// Make the saturation/value box
+			final int rgb = Color.HSVToColor(new float[] {hue,1.0f,1.0f});
+			final Shader satShader = new LinearGradient(borderSize, 0, this.getWidth()-borderSize, 0, 
+					0xffffffff, rgb, TileMode.CLAMP);
+			final Shader satValShader = new ComposeShader(valShader, satShader, PorterDuff.Mode.MULTIPLY);
+			shaderPaint.setShader(satValShader);
+			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, shaderPaint);
+			
+			// Draw tracker
+			c.drawCircle(xPos, yPos, INNER_TRACKER_RADIUS * mDensity, innerTrackerPaint);
+			c.drawCircle(xPos, yPos, OUTER_TRACKER_RADIUS * mDensity, outerTrackerPaint);
+		}
+		
+		@Override
+		public boolean onTouchEvent (final MotionEvent e) {
+			xPos = bind(e.getX(), borderSize, this.getWidth()-borderSize);
+			yPos = bind(e.getY(), borderSize, this.getHeight()-borderSize);
+			return true;
+		}
+		
+		public float[] getSatAndVal () {
+			final float width = getWidth()-2*borderSize;
+			final float height = getHeight()-2*borderSize;
+			return new float[] {1.0f/width*(xPos-borderSize), 1.0f-(1.0f/height*(yPos-borderSize))};
+		}
+	}
+	
+	private static class HueSelector extends View {
+		private static final float TRACKER_OFFSET = 2.0f;
+		
+		private final float mDensity;
+		private final int borderSize;
+		
+		private final Paint huePaint = new Paint();
+		private final Paint trackerPaint = new Paint();
+		
+		private float yPos;
+		
+		
+		public HueSelector(Context context) {
+			super(context);
+			
+			mDensity = getContext().getResources().getDisplayMetrics().density;
+			borderSize = (int) (2.0f*mDensity + 1);
+			
+			huePaint.setAntiAlias(true);
+			
+			trackerPaint.setAntiAlias(true);
+			trackerPaint.setColor(TRACKER_COLOR);
+			trackerPaint.setStyle(Style.STROKE);
+			trackerPaint.setStrokeWidth(TRACKER_OFFSET * mDensity);
+		}
+		
+		@Override
+		protected void onMeasure (final int widthMeasureSpec, final int heightMeasureSpec) {
+			setMeasuredDimension(View.MeasureSpec.getSize(heightMeasureSpec)/10, View.MeasureSpec.getSize(heightMeasureSpec));
+		}
+		
+		@Override
+		protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+			super.onSizeChanged(w, h, oldw, oldh);
+			
+			huePaint.setShader(new LinearGradient(0, borderSize, 0, this.getHeight()-borderSize, buildHueColorArray(), null, TileMode.CLAMP));
+		}
+		
+		public void draw (final Canvas c) {
+			// Draw hues
+			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, huePaint);
+			
+			// Draw slider
+			float trackerSize = TRACKER_OFFSET * mDensity;
+			c.drawRoundRect(new RectF(0, getWidth(), yPos-trackerSize, yPos+trackerSize), trackerSize, trackerSize, trackerPaint);
+		}
+		
+		@Override
+		public boolean onTouchEvent (final MotionEvent e) {
+			yPos = bind(e.getY(), borderSize, this.getHeight()-borderSize);
+			return true;
+		}
+		
+		public float getHue () {
+			final float height = this.getHeight()-2*borderSize;
+			return 360f - ((yPos-borderSize) * 360f / height);
+		}
+		
+		private static int[] buildHueColorArray () {
+			final int[] hues = new int[361];
+			
+			int count = 0;
+			for(int i = hues.length-1; i >= 0; i--, count++){
+				hues[count] = Color.HSVToColor(new float[]{i, 1f, 1f});
+			}
+			
+			return hues;
+		}
+	}
+	
+	/**
+	 * Ignores normal onDraw process - uses must call draw manually.
+	 * Ignores normal onMeasure process - setMeasuredDimension called with args width and width/10.
+	 * @author cal
+	 */
+	private static class AlphaSelector extends View {
+		private final float mDensity;
+		private final int borderSize;
+		
+		private AlphaPatternDrawable mAlphaPattern;
+		private final Paint shaderPaint = new Paint();
+		private final Paint labelPaint = new Paint();
+		private final Paint trackerPaint = new Paint();
+		
+		private float xPos;
+		
+		public AlphaSelector(Context context) {
+			super(context);
+			mDensity = getContext().getResources().getDisplayMetrics().density;
+			borderSize = (int) (2.0f*mDensity + 1);
+			
+			shaderPaint.setAntiAlias(true);
+			
+			labelPaint.setAntiAlias(true);
+			labelPaint.setTextAlign(Paint.Align.CENTER);
+			
+			trackerPaint.setAntiAlias(true);
+			trackerPaint.setColor(TRACKER_COLOR);
+			trackerPaint.setStyle(Style.STROKE);
+			trackerPaint.setStrokeWidth(2.0f * mDensity);
+		}
+		
+		@Override
+		protected void onMeasure (final int widthMeasureSpec, final int heightMeasureSpec) {
+			final int width = View.MeasureSpec.getSize(widthMeasureSpec);
+			setMeasuredDimension(width, width/10);
+		}
+		
+		@Override
+		protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+			super.onSizeChanged(w, h, oldw, oldh);
+			
+			mAlphaPattern = new AlphaPatternDrawable((int) (5 * mDensity));
+			mAlphaPattern.setBounds(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize);
+		}
+		
+		public void draw (final Canvas c, final int color) {
+			// Draw the alpha pattern
+			mAlphaPattern.draw(c);
+			
+			// Draw the shader that shows how transparent a colors looks at a given alpha on top of the alpha pattern
+			final int acolor = color - 0xff000000;
+			shaderPaint.setShader(new LinearGradient(borderSize, 0, this.getWidth()-borderSize, 0, color, acolor, TileMode.CLAMP));
+			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, shaderPaint);
+			
+			// Draw the transparency label on top of that stuff
+			c.drawText("Transparency", this.getWidth()/2, this.getHeight()/2 + labelPaint.getTextSize()/2, labelPaint);
+			
+			// Draw the alpha tracker on top of everything else
+			final float rectWidth = 2 * mDensity;
+			final RectF r = new RectF();
+			r.left = xPos - rectWidth;
+			r.right = xPos + rectWidth;
+			r.top =  0;
+			r.bottom = this.getHeight();
+			c.drawRoundRect(r, rectWidth, rectWidth, trackerPaint);
+		}
+		
+		@Override
+		public boolean onTouchEvent (final MotionEvent e) {
+			xPos = bind(e.getX(), borderSize, this.getWidth()-borderSize);
+			return true;
+		}
+		
+		public int getSelectedAlpha () {
+			return (int) ((xPos-borderSize)/(this.getWidth()-2*borderSize) * 255);
+		}
+	}
+	
+	private static class SizeSelector extends View {
+		private final float mDensity;
+		private final int borderSize;
+		
+		private final Path sizePath = new Path();
+		
+		private final Paint sizePaint = new Paint();
+		private final Paint trackerPaint = new Paint();
+		
+		private float xPos;
+		
+		public SizeSelector (Context context) {
+			super(context);
+			mDensity = getContext().getResources().getDisplayMetrics().density;
+			borderSize = (int) (2.0f*mDensity + 1);
+			
+			
+			sizePaint.setAntiAlias(true);
+			sizePaint.setStyle(Paint.Style.FILL);
+			
+			trackerPaint.setAntiAlias(true);
+			trackerPaint.setColor(TRACKER_COLOR);
+			trackerPaint.setStyle(Style.STROKE);
+			trackerPaint.setStrokeWidth(2.0f * mDensity);
+		}
+		
+		@Override
+		protected void onMeasure (final int widthMeasureSpec, final int heightMeasureSpec) {
+			final int width = View.MeasureSpec.getSize(widthMeasureSpec);
+			setMeasuredDimension(width, width/10);
+		}
+		
+		@Override
+		protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+			super.onSizeChanged(w, h, oldw, oldh);
+			
+			sizePath.reset();
+			sizePath.moveTo(borderSize, borderSize);
+			sizePath.lineTo(getWidth()-borderSize, getHeight()/2);
+			sizePath.lineTo(borderSize, getHeight()-borderSize);
+		}
+		
+		public void draw (final Canvas c, final int color) {
+			// Draw the size slider
+			sizePaint.setColor(color);
+			c.drawPath(sizePath, sizePaint);
+			
+			// Draw the size tracker
+			final float rectWidth = 2 * mDensity;
+			final RectF r = new RectF();
+			r.left = xPos - rectWidth;
+			r.right = xPos + rectWidth;
+			r.top =  0;
+			r.bottom = this.getHeight();
+			c.drawRoundRect(r, rectWidth, rectWidth, trackerPaint);
+		}
+		
+		@Override
+		public boolean onTouchEvent (final MotionEvent e) {
+			xPos = bind(e.getX(), borderSize, this.getWidth()-borderSize);
+			return true;
+		}
+		
+		public float getSelectedSize () {
+			final float h = getHeight()-2*borderSize;
+			final float w = getWidth()-2*borderSize;
+			return h-(xPos*h/w);
+		}
+	}
+	
+	private static class PenDisplay extends View {
+
+		public PenDisplay(Context context) {
+			super(context);
+			// TODO Auto-generated constructor stub
+		}
+		
+	}
+	
+	
+	private static float bind (final float input, final float floor, final float ceiling) {
+		if (input < floor) return floor;
+		if (input > ceiling) return ceiling;
+		return input;
 	}
 }
