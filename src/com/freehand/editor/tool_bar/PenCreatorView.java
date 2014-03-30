@@ -426,9 +426,25 @@ class PenCreatorView extends View {
 		int startX = mStartTouchPoint.x;
 		int startY = mStartTouchPoint.y;
 		
-		
+		public void setPen(int newColor, float newSize) {
+			float[] newHSV = {0,0,0};
+			Color.colorToHSV(newColor, newHSV);
+			mHue = newHSV[0];
+			mSat = newHSV[1];
+			mVal = newHSV[2];
+			mAlpha = Color.alpha(newColor);
+			mSize = newSize;
+		}
 		if(mHueRect.contains(startX, startY)){
-			
+			public void setPen(int newColor, float newSize) {
+				float[] newHSV = {0,0,0};
+				Color.colorToHSV(newColor, newHSV);
+				mHue = newHSV[0];
+				mSat = newHSV[1];
+				mVal = newHSV[2];
+				mAlpha = Color.alpha(newColor);
+				mSize = newSize;
+			}
 			mHue = pointToHue(event.getY());
 						
 			update = true;
@@ -523,17 +539,6 @@ class PenCreatorView extends View {
 		return mListener;
 	}
 	
-	public void setPen(int newColor, float newSize) {
-		float[] newHSV = {0,0,0};
-		Color.colorToHSV(newColor, newHSV);
-		mHue = newHSV[0];
-		mSat = newHSV[1];
-		mVal = newHSV[2];
-		mAlpha = Color.alpha(newColor);
-		mSize = newSize;
-	}
-	
-	
 	public interface IPenChangedListener {
 		public void onPenChanged(int color, float size);
 	}
@@ -553,10 +558,10 @@ class PenCreatorView extends View {
 		private final Paint outerTrackerPaint = new Paint();
 		private final Paint innerTrackerPaint = new Paint();
 		
-		private float xPos;
-		private float yPos;
+		private float sat;
+		private float val;
 		
-		public SatValSelector(Context context) {
+		public SatValSelector(final Context context, final float sat, final float val) {
 			super(context);
 			
 			mDensity = getContext().getResources().getDisplayMetrics().density;
@@ -573,6 +578,9 @@ class PenCreatorView extends View {
 			innerTrackerPaint.setStyle(Style.STROKE);
 			innerTrackerPaint.setStrokeWidth(2f * mDensity);
 			innerTrackerPaint.setColor(0xff000000);
+			
+			this.sat = sat;
+			this.val = val;
 		}
 		
 		@Override
@@ -598,21 +606,47 @@ class PenCreatorView extends View {
 			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, shaderPaint);
 			
 			// Draw tracker
+			final float xPos = satToXPos(sat);
+			final float yPos = valToYPos(val);
 			c.drawCircle(xPos, yPos, INNER_TRACKER_RADIUS * mDensity, innerTrackerPaint);
 			c.drawCircle(xPos, yPos, OUTER_TRACKER_RADIUS * mDensity, outerTrackerPaint);
 		}
 		
 		@Override
 		public boolean onTouchEvent (final MotionEvent e) {
-			xPos = bind(e.getX(), borderSize, this.getWidth()-borderSize);
-			yPos = bind(e.getY(), borderSize, this.getHeight()-borderSize);
+			sat = xPosToSat(e.getX());
+			val = yPosToVal(e.getY());
 			return true;
 		}
 		
-		public float[] getSatAndVal () {
+		public float getSat () {
+			return sat;
+		}
+		
+		public float getVal () {
+			return val;
+		}
+		
+		private float xPosToSat (final float xPos) {
+			final float boundXPos = bind(xPos, borderSize, this.getWidth()-borderSize);
 			final float width = getWidth()-2*borderSize;
+			return (boundXPos-borderSize)/width;
+		}
+		
+		private float yPosToVal (final float yPos) {
+			final float boundYPos = bind(yPos, borderSize, this.getHeight()-borderSize);
 			final float height = getHeight()-2*borderSize;
-			return new float[] {1.0f/width*(xPos-borderSize), 1.0f-(1.0f/height*(yPos-borderSize))};
+			return 1.0f-(boundYPos-borderSize)/height;
+		}
+		
+		private float satToXPos (final float sat) {
+			final float width = getWidth()-2*borderSize;
+			return sat*width + borderSize;
+		}
+		
+		private float valToYPos (final float val) {
+			final float height = getHeight()-2*borderSize;
+			return (1-val)*height + borderSize;
 		}
 	}
 	
@@ -625,10 +659,10 @@ class PenCreatorView extends View {
 		private final Paint huePaint = new Paint();
 		private final Paint trackerPaint = new Paint();
 		
-		private float yPos;
+		private float hue;
 		
 		
-		public HueSelector(Context context) {
+		public HueSelector(final Context context, final float hue) {
 			super(context);
 			
 			mDensity = getContext().getResources().getDisplayMetrics().density;
@@ -640,6 +674,8 @@ class PenCreatorView extends View {
 			trackerPaint.setColor(TRACKER_COLOR);
 			trackerPaint.setStyle(Style.STROKE);
 			trackerPaint.setStrokeWidth(TRACKER_OFFSET * mDensity);
+			
+			this.hue = hue;
 		}
 		
 		@Override
@@ -659,19 +695,30 @@ class PenCreatorView extends View {
 			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, huePaint);
 			
 			// Draw slider
-			float trackerSize = TRACKER_OFFSET * mDensity;
+			final float yPos = hueToYPos(hue);
+			final float trackerSize = TRACKER_OFFSET * mDensity;
 			c.drawRoundRect(new RectF(0, getWidth(), yPos-trackerSize, yPos+trackerSize), trackerSize, trackerSize, trackerPaint);
 		}
 		
 		@Override
 		public boolean onTouchEvent (final MotionEvent e) {
-			yPos = bind(e.getY(), borderSize, this.getHeight()-borderSize);
+			hue = yPosToHue(e.getY());
 			return true;
 		}
 		
 		public float getHue () {
+			return hue;
+		}
+		
+		private float yPosToHue (final float yPos) {
+			final float boundYPos = bind(yPos, borderSize, this.getHeight()-borderSize);
 			final float height = this.getHeight()-2*borderSize;
-			return 360f - ((yPos-borderSize) * 360f / height);
+			return 360f - ((boundYPos-borderSize) * 360f / height);
+		}
+		
+		private float hueToYPos (final float hue) {
+			final float height = this.getHeight()-2*borderSize;
+			return (height*(360.0f-hue)/360.0f) + borderSize;
 		}
 		
 		private static int[] buildHueColorArray () {
@@ -700,9 +747,9 @@ class PenCreatorView extends View {
 		private final Paint labelPaint = new Paint();
 		private final Paint trackerPaint = new Paint();
 		
-		private float xPos;
+		private int alpha;
 		
-		public AlphaSelector(Context context) {
+		public AlphaSelector(final Context context, final int alpha) {
 			super(context);
 			mDensity = getContext().getResources().getDisplayMetrics().density;
 			borderSize = (int) (2.0f*mDensity + 1);
@@ -716,6 +763,8 @@ class PenCreatorView extends View {
 			trackerPaint.setColor(TRACKER_COLOR);
 			trackerPaint.setStyle(Style.STROKE);
 			trackerPaint.setStrokeWidth(2.0f * mDensity);
+			
+			this.alpha = alpha;
 		}
 		
 		@Override
@@ -745,6 +794,7 @@ class PenCreatorView extends View {
 			c.drawText("Transparency", this.getWidth()/2, this.getHeight()/2 + labelPaint.getTextSize()/2, labelPaint);
 			
 			// Draw the alpha tracker on top of everything else
+			final float xPos = alphaToXPos(alpha);
 			final float rectWidth = 2 * mDensity;
 			final RectF r = new RectF();
 			r.left = xPos - rectWidth;
@@ -756,16 +806,29 @@ class PenCreatorView extends View {
 		
 		@Override
 		public boolean onTouchEvent (final MotionEvent e) {
-			xPos = bind(e.getX(), borderSize, this.getWidth()-borderSize);
+			alpha = xPosToAlpha(e.getX());
 			return true;
 		}
 		
 		public int getSelectedAlpha () {
-			return (int) ((xPos-borderSize)/(this.getWidth()-2*borderSize) * 255);
+			return alpha;
+		}
+		
+		private int xPosToAlpha (final float xPos) {
+			final float boundXPos = bind(xPos, borderSize, this.getWidth()-borderSize);
+			final float width = this.getWidth()-2*borderSize;
+			return (int) ((boundXPos-borderSize)*255.0f/width);
+		}
+		
+		private float alphaToXPos (final int alpha) {
+			final float width = this.getWidth()-2*borderSize;
+			return alpha * width / 255.0f + borderSize;
 		}
 	}
 	
 	private static class SizeSelector extends View {
+		private static final float MAX_SIZE = 40.0f;
+		
 		private final float mDensity;
 		private final int borderSize;
 		
@@ -774,9 +837,9 @@ class PenCreatorView extends View {
 		private final Paint sizePaint = new Paint();
 		private final Paint trackerPaint = new Paint();
 		
-		private float xPos;
+		private float size;
 		
-		public SizeSelector (Context context) {
+		public SizeSelector (final Context context, final float size) {
 			super(context);
 			mDensity = getContext().getResources().getDisplayMetrics().density;
 			borderSize = (int) (2.0f*mDensity + 1);
@@ -789,6 +852,8 @@ class PenCreatorView extends View {
 			trackerPaint.setColor(TRACKER_COLOR);
 			trackerPaint.setStyle(Style.STROKE);
 			trackerPaint.setStrokeWidth(2.0f * mDensity);
+			
+			this.size = size;
 		}
 		
 		@Override
@@ -813,6 +878,7 @@ class PenCreatorView extends View {
 			c.drawPath(sizePath, sizePaint);
 			
 			// Draw the size tracker
+			final float xPos = sizeToXPos(size);
 			final float rectWidth = 2 * mDensity;
 			final RectF r = new RectF();
 			r.left = xPos - rectWidth;
@@ -824,20 +890,29 @@ class PenCreatorView extends View {
 		
 		@Override
 		public boolean onTouchEvent (final MotionEvent e) {
-			xPos = bind(e.getX(), borderSize, this.getWidth()-borderSize);
+			size = sizeToXPos(e.getX());
 			return true;
 		}
 		
 		public float getSelectedSize () {
-			final float h = getHeight()-2*borderSize;
-			final float w = getWidth()-2*borderSize;
-			return h-(xPos*h/w);
+			return size;
+		}
+		
+		public float sizeToXPos (final float size) {
+			final float width = getWidth()-2*borderSize;
+			return width * (MAX_SIZE-size) / MAX_SIZE;
+		}
+		
+		public float xPosToSize (final float xPos) {
+			final float boundXPos = bind(xPos, borderSize, getWidth()-borderSize);
+			final float width = getWidth()-2*borderSize;
+			return bind(MAX_SIZE-(boundXPos*MAX_SIZE/width), 0.1f, MAX_SIZE);
 		}
 	}
 	
 	private static class PenDisplay extends View {
 
-		public PenDisplay(Context context) {
+		public PenDisplay(final Context context) {
 			super(context);
 			// TODO Auto-generated constructor stub
 		}
