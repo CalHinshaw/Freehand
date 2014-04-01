@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.freehand.editor.tool_bar.PenCreatorView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="4dip"
+    android:background="@color/dkgray" >
+    
+    <LinearLayout 
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+        
+        <view class="com.freehand.editor.tool_bar.PenCreatorView$SatValSelector"
+            android:id="@+id/sat_val_selector"
+            android:layout_width="210dip"
+            android:layout_height="210dip" />
+        
+        <view class="com.freehand.editor.tool_bar.PenCreatorView$HueSelector"
+            android:id="@+id/hue_selector"
+            android:layout_width="40dip"
+            android:layout_height="210dip" />
+        
+    </LinearLayout>
+    
+    <view class="com.freehand.editor.tool_bar.PenCreatorView$AlphaSelector"
+        android:id = "@+id/alpha_selector"
+        android:layout_height="40dip"
+        android:layout_width="250dip"
+        android:layout_marginTop="2dip"
+        android:layout_marginBottom="2dip" />
+    
+    <view class="com.freehand.editor.tool_bar.PenCreatorView$SizeSelector"
+        android:id = "@+id/size_selector"
+        android:layout_height="40dip"
+        android:layout_width="250dip" />
+
+</com.freehand.editor.tool_bar.PenCreatorView>

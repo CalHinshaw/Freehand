@@ -15,7 +15,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.CompoundButton;
 
-public class PenRadioButton extends PreviousStateAwareRadioButton implements PenCreatorView.IPenChangedListener {
+public class PenRadioButton extends PreviousStateAwareRadioButton implements IPenChangedListener {
 	private Drawable mBackground;
 	private IActionBarListener mListener = null;
 	
@@ -32,8 +32,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	private Paint selectedPaint = new Paint();
 	private Paint pressedPaint = new Paint();
 	
-	private AnchorWindow mPenCreator;
-	private PenCreatorView mPenCreatorView;
+	private PenCreator penCreator;
 	
 	
 	/**
@@ -41,14 +40,14 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	 */
 	private OnClickListener mClickListener = new OnClickListener () {
 		public void onClick(View v) {
-			if (PenRadioButton.this.mPenCreator.lastClosedByAnchorTouch() == true) {
+			if (PenRadioButton.this.penCreator.lastClosedByAnchorTouch() == true) {
 				return;
 			}
 			
 			if (previousStateWasChecked()) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
-				PenRadioButton.this.mPenCreator.show();
+				PenRadioButton.this.penCreator.show();
 				setTutorialToOff();
 			}
 			
@@ -61,7 +60,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 			PenRadioButton.this.setChecked(true);
 			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			vibrator.vibrate(40);
-			PenRadioButton.this.mPenCreator.show();
+			PenRadioButton.this.penCreator.show();
 			setTutorialToOff();
 			
 			return true;
@@ -107,9 +106,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 		this.setOnLongClickListener(mLongClickListener);
 		this.setOnCheckedChangeListener(mCheckListener);
 		
-		mPenCreatorView = new PenCreatorView(this.getContext(), this, color, size);
-		mPenCreator = new AnchorWindow(this, mPenCreatorView, (int) (320 * getResources().getDisplayMetrics().density),
-			(int) (320*PenCreatorView.HEIGHT_SCALAR * getResources().getDisplayMetrics().density));
+		penCreator = new PenCreator (this, this);
 	}
 	
 	/**
@@ -123,7 +120,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 		size = newSize;
 		
 		samplePaint.setColor(color);
-		mPenCreatorView.setPen(color, size);
+		penCreator.setPen(newColor, newSize);
 	}
 	
 	public void setListener (IActionBarListener newListener) {
@@ -174,11 +171,11 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements Pen
 	}
 	
 	public boolean getPenCreatorShowing () {
-		return mPenCreator.isShowing();
+		return penCreator.isShowing();
 	}
 	
 	public void closePenCreatorWindow() {
-		mPenCreator.dismiss();
+		penCreator.dismiss();
 	}
 	
 	
