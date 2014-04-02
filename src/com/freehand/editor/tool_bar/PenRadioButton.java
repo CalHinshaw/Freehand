@@ -47,7 +47,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 			if (previousStateWasChecked()) {
 				Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 				vibrator.vibrate(40);
-				PenRadioButton.this.penCreator.show();
+				PenRadioButton.this.penCreator.show(color, size);
 				setTutorialToOff();
 			}
 			
@@ -60,7 +60,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 			PenRadioButton.this.setChecked(true);
 			Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
 			vibrator.vibrate(40);
-			PenRadioButton.this.penCreator.show();
+			PenRadioButton.this.penCreator.show(color, size);
 			setTutorialToOff();
 			
 			return true;

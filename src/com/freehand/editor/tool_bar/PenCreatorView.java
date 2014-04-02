@@ -15,40 +15,61 @@ import android.graphics.Shader;
 import android.graphics.Paint.Style;
 import android.graphics.Shader.TileMode;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
 
 public class PenCreatorView extends LinearLayout {
-	private final static int TRACKER_COLOR = 0xff1c1c1c;
+	private final static int TRACKER_COLOR = 0xff505050;
 	
 	private SatValSelector satValSelector;
 	private HueSelector hueSelector;
 	private AlphaSelector alphaSelector;
 	private SizeSelector sizeSelector;
 	
+	private IPenChangedListener listener;
+	
 	public PenCreatorView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+	}
+	
+	public void setListener (final IPenChangedListener listener) {
+		this.listener = listener;
+	}
+	
+	private void getViewsById () {
+		satValSelector = (SatValSelector) this.findViewById(R.id.sat_val_selector);
+		hueSelector = (HueSelector) this.findViewById(R.id.hue_selector);
+		alphaSelector = (AlphaSelector) this.findViewById(R.id.alpha_selector);
+		sizeSelector = (SizeSelector) this.findViewById(R.id.size_selector);
+	}
+	
+	public void setPen (final int color, final float size) {
+		if (satValSelector == null || hueSelector == null || alphaSelector == null || sizeSelector == null) {
+			getViewsById();
+		}
+		
+		if (satValSelector == null || hueSelector == null || alphaSelector == null || sizeSelector == null) return;
+		
+		satValSelector.setColor(color);
+		hueSelector.setColor(color);
+		alphaSelector.setColor(color);
+		sizeSelector.setColor(color);
+		sizeSelector.setSize(size);
 	}
 	
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
 		super.onLayout(changed, l, t, r, b);
-		
-		satValSelector = (SatValSelector) this.findViewById(R.id.sat_val_selector);
-		hueSelector = (HueSelector) this.findViewById(R.id.hue_selector);
-		alphaSelector = (AlphaSelector) this.findViewById(R.id.alpha_selector);
-		sizeSelector = (SizeSelector) this.findViewById(R.id.size_selector);
+		getViewsById();
 	}
 
 	@Override
 	protected void onDraw (final Canvas c) {
 		c.drawColor(R.color.dkgray);
 		
-		final float hue = hueSelector.getHue();
-		final int color = Color.HSVToColor(new float[] {hue, satValSelector.getSat(), satValSelector.getVal()});
-		satValSelector.setHue(hue);
+		final int color = Color.HSVToColor(new float[] {hueSelector.getHue(), satValSelector.getSat(), satValSelector.getVal()});
+		satValSelector.setColor(color);
 		alphaSelector.setColor(color);
 		sizeSelector.setColor(color);
 		
@@ -58,7 +79,15 @@ public class PenCreatorView extends LinearLayout {
 	@Override
 	public boolean dispatchTouchEvent (final MotionEvent e) {
 		final boolean toReturn = super.dispatchTouchEvent(e);
+		
+		if (listener != null) {
+			listener.onPenChanged(Color.HSVToColor(alphaSelector.getSelectedAlpha(),
+					new float[] {hueSelector.getHue(), satValSelector.getSat(), satValSelector.getVal()}),
+					sizeSelector.getSelectedSize());
+		}
+		
 		invalidate();
+		
 		return toReturn;
 	}
 
@@ -115,8 +144,13 @@ public class PenCreatorView extends LinearLayout {
 					0xffffffff, 0xff000000, TileMode.CLAMP);
 		}
 		
-		public void setHue (final float hue) {
-			this.hue = hue;
+		public void setColor (final int color) {
+			final float[] hsv = new float[3];
+			Color.colorToHSV(color, hsv);
+			
+			this.hue = hsv[0];
+			this.sat = hsv[1];
+			this.val = hsv[2];
 		}
 		
 		@Override
@@ -205,6 +239,12 @@ public class PenCreatorView extends LinearLayout {
 			trackerPaint.setStrokeWidth(TRACKER_OFFSET * mDensity);
 		}
 		
+		public void setColor (final int color) {
+			final float[] hsv = new float[3];
+			Color.colorToHSV(color, hsv);
+			this.hue = hsv[0];
+		}
+		
 		@Override
 		protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 			super.onSizeChanged(w, h, oldw, oldh);
@@ -261,11 +301,6 @@ public class PenCreatorView extends LinearLayout {
 	
 	
 	
-	/**
-	 * Ignores normal onDraw process - uses must call draw manually.
-	 * Ignores normal onMeasure process - setMeasuredDimension called with args width and width/10.
-	 * @author cal
-	 */
 	public static class AlphaSelector extends View {
 		private final float mDensity;
 		private final int borderSize;
@@ -304,7 +339,6 @@ public class PenCreatorView extends LinearLayout {
 		}
 		
 		public void setColor (final int color) {
-			Log.d("PEN", "setColor");
 			this.color = color;
 		}
 		
@@ -315,7 +349,7 @@ public class PenCreatorView extends LinearLayout {
 			
 			// Draw the shader that shows how transparent a colors looks at a given alpha on top of the alpha pattern
 			final int acolor = color - 0xff000000;
-			shaderPaint.setShader(new LinearGradient(borderSize, 0, this.getWidth()-borderSize, 0, color, acolor, TileMode.CLAMP));
+			shaderPaint.setShader(new LinearGradient(this.getWidth()-borderSize, 0, borderSize, 0, color, acolor, TileMode.CLAMP));
 			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, shaderPaint);
 			
 			// Draw the transparency label on top of that stuff
@@ -374,21 +408,12 @@ public class PenCreatorView extends LinearLayout {
 		
 		private int color;
 		
-		public SizeSelector (final Context context) {
-			super(context);
-			mDensity = getContext().getResources().getDisplayMetrics().density;
-			borderSize = (int) (2.0f*mDensity + 1);
-			initPaint();
-		}
 		
 		public SizeSelector (final Context context, final AttributeSet attrs) {
 			super(context, attrs);
 			mDensity = getContext().getResources().getDisplayMetrics().density;
 			borderSize = (int) (2.0f*mDensity + 1);
-			initPaint();
-		}
-		
-		private void initPaint () {
+			
 			sizePaint.setAntiAlias(true);
 			sizePaint.setStyle(Paint.Style.FILL);
 			
@@ -396,6 +421,10 @@ public class PenCreatorView extends LinearLayout {
 			trackerPaint.setColor(TRACKER_COLOR);
 			trackerPaint.setStyle(Style.STROKE);
 			trackerPaint.setStrokeWidth(2.0f * mDensity);
+		}
+		
+		public void setColor (final int color) {
+			this.color = color;
 		}
 		
 		public void setSize (final float size) {
@@ -410,10 +439,6 @@ public class PenCreatorView extends LinearLayout {
 			sizePath.moveTo(borderSize, borderSize);
 			sizePath.lineTo(getWidth()-borderSize, getHeight()/2);
 			sizePath.lineTo(borderSize, getHeight()-borderSize);
-		}
-		
-		public void setColor (final int color) {
-			this.color = color;
 		}
 		
 		@Override
