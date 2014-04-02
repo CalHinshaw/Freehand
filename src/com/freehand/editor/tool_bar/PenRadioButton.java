@@ -109,7 +109,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 		penCreator = new PenCreator (this, this);
 	}
 	
-	/**
+	/**#0x7
 	 * Usually called after a PenRadioButton object is created to set it's initial pen configuration from the app's settings
 	 * 
 	 * @param newColor the new pen's color

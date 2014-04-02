@@ -40,6 +40,13 @@ public class PenCreatorView extends LinearLayout {
 		this.listener = listener;
 	}
 	
+	public void setDisplayClickListener (final View.OnClickListener listener) {
+		if (satValSelector == null || hueSelector == null || alphaSelector == null || sizeSelector == null) {
+			getViewsById();
+		}
+		penDisplay.setOnClickListener(listener);
+	}
+	
 	private void getViewsById () {
 		satValSelector = (SatValSelector) this.findViewById(R.id.sat_val_selector);
 		hueSelector = (HueSelector) this.findViewById(R.id.hue_selector);
@@ -498,6 +505,8 @@ public class PenCreatorView extends LinearLayout {
 	public static class PenDisplay extends View {
 		private final Drawable alphaPattern;
 		private final Paint inkPaint = new Paint();
+		private final int pressedColor;
+		
 		private float centerX;
 		private float centerY;
 		
@@ -507,6 +516,7 @@ public class PenCreatorView extends LinearLayout {
 		public PenDisplay(final Context context, final AttributeSet attrs) {
 			super(context, attrs);
 			alphaPattern = new AlphaPatternDrawable((int) (5.0f * getContext().getResources().getDisplayMetrics().density));
+			pressedColor = this.getResources().getColor(R.color.trans_highlight);
 			
 			inkPaint.setAntiAlias(true);
 			inkPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -534,6 +544,10 @@ public class PenCreatorView extends LinearLayout {
 			alphaPattern.draw(c);
 			inkPaint.setColor(color);
 			c.drawCircle(centerX, centerY, size/2.0f, inkPaint);
+			
+			if (this.isPressed()) {
+				c.drawColor(pressedColor);
+			}
 		}
 		
 	}

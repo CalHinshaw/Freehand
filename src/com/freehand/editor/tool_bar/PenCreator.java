@@ -3,6 +3,7 @@ package com.freehand.editor.tool_bar;
 import com.calhounroberthinshaw.freehand.R;
 
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.PopupWindow;
 
@@ -15,6 +16,12 @@ class PenCreator {
 		penCreatorView.setListener(listener);
 		
 		window = new AnchorWindow(anchor, penCreatorView, LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+		
+		penCreatorView.setDisplayClickListener(new OnClickListener () {
+			public void onClick(View v) {
+				dismiss();
+			}
+		});
 	}
 	
 	public boolean lastClosedByAnchorTouch () {
