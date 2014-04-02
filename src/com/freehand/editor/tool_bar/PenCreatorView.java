@@ -10,10 +10,12 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Paint.Style;
 import android.graphics.Shader.TileMode;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,6 +28,7 @@ public class PenCreatorView extends LinearLayout {
 	private HueSelector hueSelector;
 	private AlphaSelector alphaSelector;
 	private SizeSelector sizeSelector;
+	private PenDisplay penDisplay;
 	
 	private IPenChangedListener listener;
 	
@@ -42,6 +45,7 @@ public class PenCreatorView extends LinearLayout {
 		hueSelector = (HueSelector) this.findViewById(R.id.hue_selector);
 		alphaSelector = (AlphaSelector) this.findViewById(R.id.alpha_selector);
 		sizeSelector = (SizeSelector) this.findViewById(R.id.size_selector);
+		penDisplay = (PenDisplay) this.findViewById(R.id.pen_display);
 	}
 	
 	public void setPen (final int color, final float size) {
@@ -56,6 +60,8 @@ public class PenCreatorView extends LinearLayout {
 		alphaSelector.setColor(color);
 		sizeSelector.setColor(color);
 		sizeSelector.setSize(size);
+		penDisplay.setColor(color);
+		penDisplay.setSize(size);
 	}
 	
 	@Override
@@ -68,10 +74,14 @@ public class PenCreatorView extends LinearLayout {
 	protected void onDraw (final Canvas c) {
 		c.drawColor(R.color.dkgray);
 		
-		final int color = Color.HSVToColor(new float[] {hueSelector.getHue(), satValSelector.getSat(), satValSelector.getVal()});
+		final int color = Color.HSVToColor(alphaSelector.getSelectedAlpha(),
+				new float[] {hueSelector.getHue(), satValSelector.getSat(), satValSelector.getVal()});
+		
 		satValSelector.setColor(color);
 		alphaSelector.setColor(color);
 		sizeSelector.setColor(color);
+		penDisplay.setColor(color);
+		penDisplay.setSize(sizeSelector.getSelectedSize());
 		
 		super.onDraw(c);
 	}
@@ -339,7 +349,8 @@ public class PenCreatorView extends LinearLayout {
 		}
 		
 		public void setColor (final int color) {
-			this.color = color;
+			this.alpha = Color.alpha(color);
+			this.color = color | 0xff000000;
 		}
 		
 		@Override
@@ -348,8 +359,7 @@ public class PenCreatorView extends LinearLayout {
 			mAlphaPattern.draw(c);
 			
 			// Draw the shader that shows how transparent a colors looks at a given alpha on top of the alpha pattern
-			final int acolor = color - 0xff000000;
-			shaderPaint.setShader(new LinearGradient(this.getWidth()-borderSize, 0, borderSize, 0, color, acolor, TileMode.CLAMP));
+			shaderPaint.setShader(new LinearGradient(borderSize, 0, this.getWidth()-borderSize, 0, 0, color, TileMode.CLAMP));
 			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, shaderPaint);
 			
 			// Draw the transparency label on top of that stuff
@@ -424,7 +434,7 @@ public class PenCreatorView extends LinearLayout {
 		}
 		
 		public void setColor (final int color) {
-			this.color = color;
+			this.color = color | 0xff000000;
 		}
 		
 		public void setSize (final float size) {
@@ -486,10 +496,44 @@ public class PenCreatorView extends LinearLayout {
 	
 	
 	public static class PenDisplay extends View {
-
+		private final Drawable alphaPattern;
+		private final Paint inkPaint = new Paint();
+		private float centerX;
+		private float centerY;
+		
+		private float size;
+		private int color;
+		
 		public PenDisplay(final Context context, final AttributeSet attrs) {
 			super(context, attrs);
-			// TODO Auto-generated constructor stub
+			alphaPattern = new AlphaPatternDrawable((int) (5.0f * getContext().getResources().getDisplayMetrics().density));
+			
+			inkPaint.setAntiAlias(true);
+			inkPaint.setStrokeCap(Paint.Cap.ROUND);
+			inkPaint.setStrokeWidth(0);
+		}
+		
+		@Override
+		protected void onSizeChanged (int w, int h, int oldw, int oldh) {
+			super.onSizeChanged(w, h, oldw, oldh);
+			alphaPattern.setBounds(new Rect(0, 0, w, h));
+			centerX = w/2.0f;
+			centerY = h/2.0f;
+		}
+		
+		public void setColor (final int color) {
+			this.color = color;
+		}
+		
+		public void setSize (final float size) {
+			this.size = size;
+		}
+		
+		@Override
+		protected void onDraw (final Canvas c) {
+			alphaPattern.draw(c);
+			inkPaint.setColor(color);
+			c.drawCircle(centerX, centerY, size/2.0f, inkPaint);
 		}
 		
 	}

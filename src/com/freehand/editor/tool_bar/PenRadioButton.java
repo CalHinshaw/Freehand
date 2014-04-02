@@ -118,8 +118,8 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	public void setPen (int newColor, float newSize) {
 		color = newColor;
 		size = newSize;
-		
 		samplePaint.setColor(color);
+		
 		penCreator.setPen(newColor, newSize);
 	}
 	
@@ -153,7 +153,9 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	}
 	
 	public void onPenChanged(int newColor, float newSize) {
-		setPen(newColor, newSize);
+		color = newColor;
+		size = newSize;
+		samplePaint.setColor(color);
 		
 		if (isChecked() == true && mListener != null) {
 			mListener.setTool(IActionBarListener.Tool.PEN, size*dipScale, color);

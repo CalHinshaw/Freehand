@@ -6,6 +6,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:padding="4dip"
+    android:gravity="center_horizontal"
     android:background="@color/dkgray" >
     
     <LinearLayout 
@@ -36,5 +37,11 @@
         android:id = "@+id/size_selector"
         android:layout_height="40dip"
         android:layout_width="250dip" />
+    
+    <view class="com.freehand.editor.tool_bar.PenCreatorView$PenDisplay"
+        android:id="@+id/pen_display"
+        android:layout_marginTop="2dip"
+        android:layout_height="40dip"
+        android:layout_width="40dip" />
 
 </com.freehand.editor.tool_bar.PenCreatorView>

@@ -2,7 +2,6 @@ package com.freehand.editor.tool_bar;
 
 import com.calhounroberthinshaw.freehand.R;
 
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.PopupWindow;
@@ -32,7 +31,6 @@ class PenCreator {
 	}
 	
 	public void dismiss() {
-		Log.d("PEN", ""+penCreatorView.getWidth() + "   " + penCreatorView.getHeight());
 		window.dismiss();
 	}
 	
