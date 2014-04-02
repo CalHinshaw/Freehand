@@ -22,7 +22,9 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 public class PenCreatorView extends LinearLayout {
-	private final static int TRACKER_COLOR = 0xff505050;
+	private final static int TRACKER_COLOR = 0xff1c1c1c;
+	
+	private final int backgroundColor;
 	
 	private SatValSelector satValSelector;
 	private HueSelector hueSelector;
@@ -34,6 +36,7 @@ public class PenCreatorView extends LinearLayout {
 	
 	public PenCreatorView(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		backgroundColor = this.getResources().getColor(R.color.dkgray);
 	}
 	
 	public void setListener (final IPenChangedListener listener) {
@@ -79,7 +82,7 @@ public class PenCreatorView extends LinearLayout {
 
 	@Override
 	protected void onDraw (final Canvas c) {
-		c.drawColor(R.color.dkgray);
+		c.drawColor(backgroundColor);
 		
 		final int color = Color.HSVToColor(alphaSelector.getSelectedAlpha(),
 				new float[] {hueSelector.getHue(), satValSelector.getSat(), satValSelector.getVal()});
