@@ -41,10 +41,15 @@
         android:paddingTop="5dip"
         android:paddingBottom="5dip" >
         
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
+        
         <Button 
 	   		android:id = "@+id/newNoteButton"
 	   		style="@style/TextButton"
-	    	android:text = "@string/new_note" />
+	    	android:text = "@string/full_new_note" />
         
         <View
             android:background="@color/white"
@@ -54,7 +59,7 @@
         <Button 
     	    android:id="@+id/newFolderButton"
     	    style="@style/TextButton"
-    	    android:text="@string/new_folder" />
+    	    android:text="@string/full_new_folder" />
         
         <View
             android:background="@color/white"
@@ -78,6 +83,11 @@
         android:paddingTop="5dip"
         android:paddingBottom="5dip" >
     	
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
+        
         <com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/cancelButton"
 	   		style="@style/TextButton"
