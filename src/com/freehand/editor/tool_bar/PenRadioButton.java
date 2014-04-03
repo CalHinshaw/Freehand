@@ -37,7 +37,6 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	private final Path erasePath = new Path();
 	private final Paint erasePaint = new Paint();
 	
-	private Rect selectedRect;
 	private Paint selectedPaint = new Paint();
 	private Paint pressedPaint = new Paint();
 	
@@ -110,7 +109,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 		erasePaint.setColor(backgroundColor);
 		
 		selectedPaint.setColor(0xFF33B5E5);
-		selectedPaint.setStrokeWidth(4.0f);
+		selectedPaint.setStrokeWidth(3.0f*getContext().getResources().getDisplayMetrics().density);
 		selectedPaint.setStyle(Paint.Style.STROKE);
 		selectedPaint.setStrokeJoin(Paint.Join.MITER);
 		selectedPaint.setStrokeCap(Paint.Cap.BUTT);
@@ -145,10 +144,9 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	
 	@Override
 	protected void onSizeChanged (int w, int h, int oldW, int oldH) {
-		sampleX = (float) (w/2);
-		sampleY = (float) (h/2);
+		sampleX = w/2.0f;
+		sampleY = h/2.0f;
 		
-		selectedRect = new Rect(2, 2, w-2, h-2);
 		alphaPatternDrawable.setBounds(new Rect(0, 0, w, h));
 	}
 	
@@ -156,7 +154,7 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	
 	@Override
 	protected void onDraw (Canvas canvas) {
-		final float sizeToDraw = bucketSizes(size)/2.0f;
+		final float sizeToDraw = penSizeToSampleRadius(size, getContext().getResources().getDisplayMetrics().density);
 		
 		if (Color.alpha(color) != 0xff) {
 			alphaPatternDrawable.draw(canvas);
@@ -164,30 +162,28 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 		
 		canvas.drawCircle(sampleX, sampleY, sizeToDraw, samplePaint);
 		
-		if (Color.alpha(color) != 0xff) {
-			erasePath.reset();
-			erasePath.addCircle(sampleX, sampleY, sizeToDraw, Path.Direction.CCW);
-			canvas.drawPath(erasePath, erasePaint);
-		}
-		
-		if (isChecked()) {
-			canvas.drawRect(selectedRect, selectedPaint);
-		}
-		
 		if (isPressed()) {
 			canvas.drawPaint(pressedPaint);
 		}
+		
+		erasePath.reset();
+		erasePath.addCircle(sampleX, sampleY, sizeToDraw, Path.Direction.CCW);
+		canvas.drawPath(erasePath, erasePaint);
+		
+		if (isChecked()) {
+			canvas.drawCircle(sampleX, sampleY, sizeToDraw+selectedPaint.getStrokeWidth()/2.0f, selectedPaint);
+		}
 	}
 	
-	private static float bucketSizes (final float size) {
+	private static float penSizeToSampleRadius (final float size, final float density) {
 		if (size < 10.0f) {
-			return 10.0f;
+			return 5.0f*density;
 		} else if (size < 20.0f) {
-			return 20.0f;
+			return 9.0f*density;
 		} else if (size < 30.0f) {
-			return 30.0f;
+			return 13.0f*density;
 		} else {
-			return 40.0f;
+			return 17.0f*density;
 		}
 	}
 	
