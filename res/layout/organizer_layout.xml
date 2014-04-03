@@ -14,7 +14,6 @@
         android:background="@color/dkgray" />
     
     <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/defaultActionBar"
         android:layout_alignParentRight="true"
 	    android:layout_alignParentTop="true"
@@ -27,28 +26,37 @@
         <Button 
 	   		android:id = "@+id/newNoteButton"
 	   		style="@style/TextButton"
-	    	android:text = "Create New Note"
+	    	android:text="@string/new_note"
 	    	android:padding="0dip"
 	    	android:layout_marginLeft="5dip"
 	    	android:layout_weight="1" />
+        
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
         
         <Button 
     	    android:id="@+id/newFolderButton"
     	    style="@style/TextButton"
     	    android:padding="0dip"
-    	    android:text="Create New Folder"
+    	    android:text="@string/new_folder"
     	    android:layout_weight="1" />
         
-        <Button
-	        android:id="@+id/preferences"
-	        android:layout_width = "50dip"
-	        android:layout_height = "50dip"
-	        android:layout_marginRight="5dip"
-	        android:background="@drawable/settings_button_selector" />
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
+        
+        <Button 
+    	    android:id="@+id/preferences"
+    	    style="@style/TextButton"
+    	    android:padding="0dip"
+    	    android:text="@string/settings"
+    	    android:layout_weight="1" />
  	</LinearLayout>
  	
     <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android" 
         android:id="@+id/itemsSelectedActionBar"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
@@ -63,24 +71,41 @@
 	   		style="@style/TextButton"
 	   		android:layout_marginLeft="5dip"
 	    	android:text = "@string/cancel"
-	    	android:layout_weight="2" />
+	    	android:layout_weight="1" />
+        
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
 
         <com.freehand.organizer.HighlightButton
             android:id = "@+id/shareButton"
             style="@style/TextButton"
 	    	android:text = "@string/share_button"
-	    	android:layout_weight="2" />
+	    	android:layout_weight="1" />
+        
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
         
         <com.freehand.organizer.HighlightButton
             android:id="@+id/renameButton"
             style="@style/TextButton"
-            android:text="Rename" />
+            android:text="@string/rename"
+            android:layout_weight="1" />
+        
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
         
 		<com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/deleteButton"
     		style="@style/TextButton"
     		android:text = "@string/delete"
     		android:layout_weight="1" />
+		
 	</LinearLayout>
         	   
 	    

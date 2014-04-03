@@ -46,17 +46,26 @@
 	   		style="@style/TextButton"
 	    	android:text = "@string/new_note" />
         
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
+        
         <Button 
     	    android:id="@+id/newFolderButton"
     	    style="@style/TextButton"
     	    android:text="@string/new_folder" />
         
-        <Button
-	        android:id="@+id/preferences"
-	        android:layout_width = "50dip"
-	        android:layout_height = "50dip"
-	        android:layout_marginRight="5dip"
-	        android:background="@drawable/settings_button_selector" />
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
+        
+        <Button 
+	   		android:id = "@+id/preferences"
+	   		style="@style/TextButton"
+	    	android:text="@string/settings" />
+        
  	</LinearLayout>
  	
     <LinearLayout
@@ -73,16 +82,31 @@
 	   		android:id = "@+id/cancelButton"
 	   		style="@style/TextButton"
 	    	android:text = "@string/cancel"/>
+        
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
         	
         <com.freehand.organizer.HighlightButton
             android:id = "@+id/shareButton"
             style="@style/TextButton"
 	    	android:text = "@string/share_button" />
         
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
+        
         <com.freehand.organizer.HighlightButton
             android:id="@+id/renameButton"
             style="@style/TextButton"
-            android:text="Rename" />
+            android:text="@string/rename" />
+        
+        <View
+            android:background="@color/white"
+            android:layout_width="1dip"
+            android:layout_height="fill_parent" />
         
 		<com.freehand.organizer.HighlightButton 
 	   		android:id = "@+id/deleteButton"

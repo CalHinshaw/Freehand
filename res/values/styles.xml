@@ -8,10 +8,12 @@
         <item name="android:layout_width">wrap_content</item> 
    	    <item name="android:layout_height">fill_parent</item>
    	    <item name="android:layout_marginRight">5dip</item>
+   	    <item name="android:gravity">center</item>
         <item name="android:paddingLeft">15dip</item>
    	    <item name="android:paddingRight">15dip</item>
-   	    <item name="android:textSize">15sp</item>
-   	    <item name="android:background">@drawable/organizer_button</item>
+   	    <item name="android:textSize">20sp</item>
+   	    <item name="android:textColor">@color/text_button_color</item>
+   	    <item name="android:background">@color/clear</item>
     </style>
     
 </resources>
