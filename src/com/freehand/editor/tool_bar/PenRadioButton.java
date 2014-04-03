@@ -1,6 +1,7 @@
 package com.freehand.editor.tool_bar;
 
 
+import com.calhounroberthinshaw.freehand.R;
 import com.freehand.tutorial.TutorialPrefs;
 
 import android.content.Context;
@@ -8,6 +9,9 @@ import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
+import android.graphics.Path;
+import android.graphics.Path.FillType;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
@@ -16,7 +20,8 @@ import android.view.View;
 import android.widget.CompoundButton;
 
 public class PenRadioButton extends PreviousStateAwareRadioButton implements IPenChangedListener {
-	private Drawable mBackground;
+	private int backgroundColor;
+	
 	private IActionBarListener mListener = null;
 	
 	private final float dipScale = getResources().getDisplayMetrics().density;
@@ -27,6 +32,10 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	private float sampleX = 0;
 	private float sampleY = 0;
 	private Paint samplePaint = new Paint();
+	
+	private Drawable alphaPatternDrawable;
+	private final Path erasePath = new Path();
+	private final Paint erasePaint = new Paint();
 	
 	private Rect selectedRect;
 	private Paint selectedPaint = new Paint();
@@ -86,12 +95,19 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	}
 	
 	private void init () {
-		mBackground = new AlphaPatternDrawable((int) (5*getContext().getResources().getDisplayMetrics().density));
+		alphaPatternDrawable = new AlphaPatternDrawable((int) (5*getContext().getResources().getDisplayMetrics().density));
+		backgroundColor = this.getResources().getColor(R.color.dkgray);
 		
 		samplePaint.setColor(color);
 		samplePaint.setStrokeWidth(size);
 		samplePaint.setStrokeCap(Paint.Cap.ROUND);
 		samplePaint.setAntiAlias(true);
+		
+		erasePath.setFillType(FillType.INVERSE_WINDING);
+		
+		erasePaint.setAntiAlias(true);
+		erasePaint.setStyle(Style.FILL);
+		erasePaint.setColor(backgroundColor);
 		
 		selectedPaint.setColor(0xFF33B5E5);
 		selectedPaint.setStrokeWidth(4.0f);
@@ -129,19 +145,28 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	
 	@Override
 	protected void onSizeChanged (int w, int h, int oldW, int oldH) {
-		mBackground.setBounds(new Rect(0, 0, w, h));
-		
 		sampleX = (float) (w/2);
 		sampleY = (float) (h/2);
 		
-		
 		selectedRect = new Rect(2, 2, w-2, h-2);
+		alphaPatternDrawable.setBounds(new Rect(0, 0, w, h));
 	}
+	
+	
 	
 	@Override
 	protected void onDraw (Canvas canvas) {
-		mBackground.draw(canvas);
-		canvas.drawCircle(sampleX, sampleY, size, samplePaint);
+		if (Color.alpha(color) != 0xff) {
+			alphaPatternDrawable.draw(canvas);
+		}
+		
+		canvas.drawCircle(sampleX, sampleY, size/2.0f, samplePaint);
+		
+		if (Color.alpha(color) != 0xff) {
+			erasePath.reset();
+			erasePath.addCircle(sampleX, sampleY, size/2.0f, Path.Direction.CCW);
+			canvas.drawPath(erasePath, erasePaint);
+		}
 		
 		if (isChecked()) {
 			canvas.drawRect(selectedRect, selectedPaint);
@@ -151,6 +176,9 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 			canvas.drawPaint(pressedPaint);
 		}
 	}
+	
+	
+
 	
 	public void onPenChanged(int newColor, float newSize) {
 		color = newColor;

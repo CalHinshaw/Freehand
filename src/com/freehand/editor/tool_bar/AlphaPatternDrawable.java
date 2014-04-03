@@ -67,7 +67,7 @@ public class AlphaPatternDrawable extends Drawable {
 	/**
 	 * Generate the checker board bitmap and cache it.
 	 */
-	private void generatePatternBitmap(){
+	private void generatePatternBitmap() {
 		
 		if(getBounds().width() <= 0 || getBounds().height() <= 0){
 			return;
@@ -95,5 +95,41 @@ public class AlphaPatternDrawable extends Drawable {
 
 			verticalStartWhite = !verticalStartWhite;
 		}
+	}
+	
+	/**
+	 * Untested - if it doesn't work you should fix it.
+	 */
+	public static Bitmap generatePatternBitmap(final int width, final int height, final int squareSize) {
+		final Paint whitePaint = new Paint(0xffffffff);
+		whitePaint.setAntiAlias(true);
+		final Paint grayPaint = new Paint(0xffcbcbcb);
+		grayPaint.setAntiAlias(true);
+		
+		
+		final Bitmap b = Bitmap.createBitmap(width, height, Config.ARGB_8888);			
+		final Canvas canvas = new Canvas(b);
+		
+		final int numHorizSquares = (int) Math.ceil((width / squareSize));
+		final int numVertSquares = (int) Math.ceil(height / squareSize);
+		
+		final Rect r = new Rect();
+		boolean verticalStartWhite = true;
+		for (int i = 0; i <= numVertSquares; i++) {
+			boolean isWhite = verticalStartWhite;
+			for (int j = 0; j <= numHorizSquares; j++) {
+				r.top = i * squareSize;
+				r.left = j * squareSize;
+				r.bottom = r.top + squareSize;
+				r.right = r.left + squareSize;
+				canvas.drawRect(r, isWhite ? whitePaint : grayPaint);
+
+				isWhite = !isWhite;
+			}
+
+			verticalStartWhite = !verticalStartWhite;
+		}
+		
+		return b;
 	}
 }
