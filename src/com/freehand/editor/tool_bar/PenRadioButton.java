@@ -156,15 +156,17 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 	
 	@Override
 	protected void onDraw (Canvas canvas) {
+		final float sizeToDraw = bucketSizes(size)/2.0f;
+		
 		if (Color.alpha(color) != 0xff) {
 			alphaPatternDrawable.draw(canvas);
 		}
 		
-		canvas.drawCircle(sampleX, sampleY, size/2.0f, samplePaint);
+		canvas.drawCircle(sampleX, sampleY, sizeToDraw, samplePaint);
 		
 		if (Color.alpha(color) != 0xff) {
 			erasePath.reset();
-			erasePath.addCircle(sampleX, sampleY, size/2.0f, Path.Direction.CCW);
+			erasePath.addCircle(sampleX, sampleY, sizeToDraw, Path.Direction.CCW);
 			canvas.drawPath(erasePath, erasePaint);
 		}
 		
@@ -177,6 +179,17 @@ public class PenRadioButton extends PreviousStateAwareRadioButton implements IPe
 		}
 	}
 	
+	private static float bucketSizes (final float size) {
+		if (size < 10.0f) {
+			return 10.0f;
+		} else if (size < 20.0f) {
+			return 20.0f;
+		} else if (size < 30.0f) {
+			return 30.0f;
+		} else {
+			return 40.0f;
+		}
+	}
 	
 
 	
