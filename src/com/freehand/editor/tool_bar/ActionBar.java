@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.editor.canvas.Note;
-import com.freehand.share.PdfSharer;
 import com.freehand.share.ShareDialog;
 
 import android.app.Activity;
@@ -385,9 +384,9 @@ public class ActionBar extends LinearLayout {
 	}
 	
 	private int calcNumPenButtons (final int w, final boolean hwMenuKey) {
-		final float layoutWidth = w - buttonMargin;
-		final int numButtons = (int) (layoutWidth/(buttonWidth+buttonMargin));
-		return Math.min(5, numButtons - (hwMenuKey ? 4 : 5));
+		final float buttonGroupWidth = w - 4*buttonWidth - 2*buttonMargin;
+		final int numButtons = (int) (buttonGroupWidth/(buttonWidth+buttonMargin));
+		return Math.min(5, numButtons - (hwMenuKey ? 0 : 1));
 	}
 	
 	private void adjustShowingViews (final int numPens, final boolean hwMenuKey) {
