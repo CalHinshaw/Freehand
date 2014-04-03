@@ -343,6 +343,7 @@ public class PenCreatorView extends LinearLayout {
 			
 			labelPaint.setAntiAlias(true);
 			labelPaint.setTextAlign(Paint.Align.CENTER);
+			labelPaint.setTextSize(15.0f*mDensity);
 			
 			trackerPaint.setAntiAlias(true);
 			trackerPaint.setColor(TRACKER_COLOR);
@@ -373,7 +374,7 @@ public class PenCreatorView extends LinearLayout {
 			c.drawRect(borderSize, borderSize, this.getWidth()-borderSize, this.getHeight()-borderSize, shaderPaint);
 			
 			// Draw the transparency label on top of that stuff
-			c.drawText("Transparency", this.getWidth()/2, this.getHeight()/2 + labelPaint.getTextSize()/2, labelPaint);
+			c.drawText("Transparency", this.getWidth()/2, this.getHeight()/2 + labelPaint.getTextSize()/2.0f, labelPaint);
 			
 			// Draw the alpha tracker on top of everything else
 			final float xPos = alphaToXPos(alpha);
@@ -546,7 +547,7 @@ public class PenCreatorView extends LinearLayout {
 		protected void onDraw (final Canvas c) {
 			alphaPattern.draw(c);
 			inkPaint.setColor(color);
-			c.drawCircle(centerX, centerY, size/2.0f, inkPaint);
+			c.drawCircle(centerX, centerY, size*getContext().getResources().getDisplayMetrics().density/2.0f, inkPaint);
 			
 			if (this.isPressed()) {
 				c.drawColor(pressedColor);
