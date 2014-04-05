@@ -15,6 +15,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.PaintDrawable;
 import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -27,6 +28,8 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 public class ActionBar extends LinearLayout {
+	private float density;
+	
 	private IActionBarListener mListener = null;
 	private Note mNote;
 
@@ -46,9 +49,9 @@ public class ActionBar extends LinearLayout {
 	
 	private final PopupWindow mMenuWindow;
 	private final LinearLayout menuLayout = new LinearLayout(this.getContext());
-	private final Button saveButton = new Button(this.getContext());
-	private final Button shareButton = new Button(this.getContext());
-	private final Button renameButton = new Button(this.getContext());
+	private final Button saveButton = new Button(new ContextThemeWrapper(getContext(), R.style.TextButton));
+	private final Button shareButton = new Button(new ContextThemeWrapper(getContext(), R.style.TextButton));
+	private final Button renameButton = new Button(new ContextThemeWrapper(getContext(), R.style.TextButton));
 	
 	
 	
@@ -166,6 +169,8 @@ public class ActionBar extends LinearLayout {
 	public ActionBar(Context context, AttributeSet attributes) {
 		super(context, attributes);
 		
+		density = this.getContext().getResources().getDisplayMetrics().density;
+		
 		initBarButtons();
 		initMenuButtons();
 		
@@ -242,35 +247,40 @@ public class ActionBar extends LinearLayout {
 	}
 	
 	private void initMenuButtons () {
-		final int dividerHeight = (int) (2*getResources().getDisplayMetrics().density + 1);
+		final int dividerHeight = (int) (2.0f*density);
 		
 		menuLayout.setOrientation(LinearLayout.VERTICAL);
 		menuLayout.setBackgroundColor(Color.DKGRAY);
 		menuLayout.setPadding(dividerHeight, 0, dividerHeight, 0);
 		
 		
-		final PaintDrawable divider = new PaintDrawable(Color.DKGRAY);
+		final PaintDrawable divider = new PaintDrawable(Color.WHITE);
 		divider.setIntrinsicHeight(dividerHeight);
 		menuLayout.setDividerDrawable(divider);
-		menuLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_BEGINNING + LinearLayout.SHOW_DIVIDER_MIDDLE + LinearLayout.SHOW_DIVIDER_END);
-		
+		menuLayout.setShowDividers(LinearLayout.SHOW_DIVIDER_MIDDLE);
 		
 		saveButton.setText("Save");
 		saveButton.setTextSize(20);
+		saveButton.setTextColor(this.getResources().getColorStateList(R.color.text_button_color));
 		saveButton.setGravity(Gravity.LEFT);
-		saveButton.setBackgroundResource(R.drawable.organizer_button);
+		saveButton.setPadding((int) (10.0f*density), (int) (2.0f*density), (int) (2.0f*density), (int) (10.0f*density));
+		saveButton.setBackgroundColor(this.getResources().getColor(R.color.clear));
 		menuLayout.addView(saveButton);
 		
 		shareButton.setText("Share");
 		shareButton.setTextSize(20);
+		shareButton.setTextColor(this.getResources().getColorStateList(R.color.text_button_color));
 		shareButton.setGravity(Gravity.LEFT);
-		shareButton.setBackgroundResource(R.drawable.organizer_button);
+		shareButton.setPadding((int) (10.0f*density), (int) (2.0f*density), (int) (2.0f*density), (int) (10.0f*density));
+		shareButton.setBackgroundColor(this.getResources().getColor(R.color.clear));
 		menuLayout.addView(shareButton);
 		
 		renameButton.setText("Rename");
 		renameButton.setTextSize(20);
+		renameButton.setTextColor(this.getResources().getColorStateList(R.color.text_button_color));
 		renameButton.setGravity(Gravity.LEFT);
-		renameButton.setBackgroundResource(R.drawable.organizer_button);
+		renameButton.setPadding((int) (10.0f*density), (int) (2.0f*density), (int) (2.0f*density), (int) (10.0f*density));
+		renameButton.setBackgroundColor(this.getResources().getColor(R.color.clear));
 		menuLayout.addView(renameButton);
 	}
 	
