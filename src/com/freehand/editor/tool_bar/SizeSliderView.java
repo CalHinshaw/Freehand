@@ -14,7 +14,7 @@ import android.view.View;
 
 class SizeSliderView extends View {
 	private static final int BUFFER = 4;
-	private static final float MAX_SIZE = 45f;
+	private static final float MAX_SIZE = 40.0f;
 	private static final float MIN_SIZE = 0.1f;
 	
 	private float screenDensity = 1f;
