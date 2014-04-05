@@ -239,7 +239,7 @@ public class ActionBar extends LinearLayout {
 		menuButtonSpacer.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1.0f));
 		this.addView(menuButtonSpacer);
 		
-		menuButton.setBackgroundResource(R.drawable.menu_button);
+		menuButton.setBackgroundResource(R.drawable.ic_action_overflow);
 		menuButton.setPadding(0, 0, 0, 0);
 		menuButton.setLayoutParams(llButtonParams);
 		menuButton.setOnClickListener(menuButtonListener);
