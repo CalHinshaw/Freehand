@@ -37,7 +37,7 @@ public class ActionBar extends LinearLayout {
 	private final Button redoButton = new Button(this.getContext());
 	private final PreviousStateAwareRadioButton eraserButton = new PreviousStateAwareRadioButton(this.getContext());
 	private final PreviousStateAwareRadioButton selectButton = new PreviousStateAwareRadioButton(this.getContext());
-	private final PenRadioButton[] penButtons = new PenRadioButton[5];
+	private final PenRadioButton[] penButtons = new PenRadioButton[8];
 	private final View menuButtonSpacer = new View(this.getContext());
 	private final Button menuButton = new Button(this.getContext());
 	
@@ -222,7 +222,7 @@ public class ActionBar extends LinearLayout {
 		eraserButton.setLayoutParams(rgButtonParams);
 		toolRadioGroup.addView(eraserButton);
 		
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 8; i++) {
 			penButtons[i] = new PenRadioButton(this.getContext());
 			penButtons[i].setLayoutParams(rgButtonParams);
 			toolRadioGroup.addView(penButtons[i]);
@@ -386,7 +386,7 @@ public class ActionBar extends LinearLayout {
 	private int calcNumPenButtons (final int w, final boolean hwMenuKey) {
 		final float buttonGroupWidth = w - 4*buttonWidth - 2*buttonMargin;
 		final int numButtons = (int) (buttonGroupWidth/(buttonWidth+buttonMargin));
-		return Math.min(5, numButtons - (hwMenuKey ? 0 : 1));
+		return Math.min(8, numButtons - (hwMenuKey ? 0 : 1));
 	}
 	
 	private void adjustShowingViews (final int numPens, final boolean hwMenuKey) {

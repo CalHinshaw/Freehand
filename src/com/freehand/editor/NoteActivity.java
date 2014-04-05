@@ -17,6 +17,8 @@ import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
 
 public class NoteActivity extends Activity {
+	private static final int NUM_PENS = 8;
+	
 	private ActionBar mActionBar;
 	private NoteView mNoteView;
 	private Note mNote;
@@ -95,8 +97,8 @@ public class NoteActivity extends Activity {
 		super.onResume();
 		
 		final SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
-		final int[] colors = new int[5];
-		final float[] sizes = new float[5];
+		final int[] colors = new int[NUM_PENS];
+		final float[] sizes = new float[NUM_PENS];
 		if (readPenPrefs(mPrefs, colors, sizes) == false) {
 			initPenPrefs(mPrefs);
 			readPenPrefs(mPrefs, colors, sizes);
@@ -121,8 +123,8 @@ public class NoteActivity extends Activity {
 		super.onPause();
 		mNote.save();
 		
-		final int[] colors = new int[5];
-		final float[] sizes = new float[5];
+		final int[] colors = new int[NUM_PENS];
+		final float[] sizes = new float[NUM_PENS];
 		mActionBar.getPens(colors, sizes);
 		final SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
 		savePenPrefs(mPrefs, colors, sizes);
@@ -150,6 +152,15 @@ public class NoteActivity extends Activity {
 		
 		editor.putInt("Pen4Color", 0x70FFFF0A);
 		editor.putFloat("Pen4Size", 25.0f);
+		
+		editor.putInt("Pen5Color", Color.CYAN);
+		editor.putFloat("Pen5Size", 15.0f);
+		
+		editor.putInt("Pen6Color", Color.RED);
+		editor.putFloat("Pen6Size", 15.0f);
+		
+		editor.putInt("Pen7Color", Color.GREEN);
+		editor.putFloat("Pen7Size", 15.0f);
 		
 		editor.commit();
 	}
