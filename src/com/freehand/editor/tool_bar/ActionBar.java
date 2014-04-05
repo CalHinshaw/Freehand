@@ -323,6 +323,14 @@ public class ActionBar extends LinearLayout {
 		}
 	}
 	
+	public void setEraserSize (final float size) {
+		eraserSize = size;
+	}
+	
+	public float getEraserSize () {
+		return eraserSize;
+	}
+	
 	public int getCheckedButton () {
 		if (eraserButton.isChecked() == true) {
 			return 0;

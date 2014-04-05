@@ -27,9 +27,18 @@ class SizeSliderView extends View {
 	
 	private IActionBarListener mListener;
 
+	
+	public SizeSliderView (final Context context) {
+		super(context);
+		init();
+	}
+	
 	public SizeSliderView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-
+		init();
+	}
+	
+	private void init () {
 		screenDensity = getContext().getResources().getDisplayMetrics().density;
 		
 		trianglePaint = new Paint();

@@ -105,6 +105,8 @@ public class NoteActivity extends Activity {
 		}
 		mActionBar.setPens(colors, sizes);
 		
+		mActionBar.setEraserSize(readEraserSizePref(mPrefs));
+		
 		mActionBar.setCheckedButton(checkedOnPause);
 		
 		TutorialPrefs.setContext(this);
@@ -129,6 +131,8 @@ public class NoteActivity extends Activity {
 		final SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
 		savePenPrefs(mPrefs, colors, sizes);
 		
+		saveEraserSizePref(mPrefs, mActionBar.getEraserSize());
+		
 		checkedOnPause = mActionBar.getCheckedButton();
 		
 		TutorialPrefs.clear();
@@ -136,7 +140,6 @@ public class NoteActivity extends Activity {
 	
 	private void initPenPrefs (SharedPreferences mPrefs) {
 		SharedPreferences.Editor editor = mPrefs.edit();
-		editor.clear();
 		
 		editor.putInt("Pen0Color", Color.BLACK);
 		editor.putFloat("Pen0Size", 6.5f);
@@ -188,7 +191,6 @@ public class NoteActivity extends Activity {
 	
 	private void savePenPrefs (final SharedPreferences mPrefs, final int colors[], final float sizes[]) {
 		final SharedPreferences.Editor editor = mPrefs.edit();
-		editor.clear();
 		
 		for (int i = 0; i < colors.length; i++) {
 			editor.putInt("Pen" + Integer.toString(i) + "Color", colors[i]);
@@ -196,6 +198,18 @@ public class NoteActivity extends Activity {
 		}
 		
 		editor.commit();
+	}
+	
+	private float readEraserSizePref (final SharedPreferences prefs) {
+		try {
+			return prefs.getFloat("EraserSize", 6.0f);
+		} catch (ClassCastException e) {
+			return 6.0f;
+		}
+	}
+	
+	private void saveEraserSizePref (final SharedPreferences prefs, final float eraserSize) {
+		prefs.edit().putFloat("EraserSize", eraserSize).commit();
 	}
 	
 	
