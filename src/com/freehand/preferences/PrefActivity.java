@@ -1,13 +1,14 @@
 package com.freehand.preferences;
 
 import android.R;
+import android.app.Activity;
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
 
-public class PrefActivity extends PreferenceActivity {
+public class PrefActivity extends Activity {
 	@Override
 	public void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		this.setTitle("Settings");
 		getFragmentManager().beginTransaction().replace(R.id.content, new PrefFragment()).commit();
 	}
 }
