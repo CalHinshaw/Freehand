@@ -12,9 +12,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DialogFragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -279,6 +282,8 @@ public class MainMenuActivity extends Activity {
         final File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
         mBrowser.setRootDirectory(rootDirectory);
         mBrowser.setMainMenuActivity(this);
+        
+        showLeavingBetaDialog();
     }
     
     @Override
@@ -334,5 +339,38 @@ public class MainMenuActivity extends Activity {
     
     public static boolean isRunning () {
     	return isRunning;
+    }
+    
+    private void showLeavingBetaDialog () {
+    	final SharedPreferences prefs = getPreferences(MODE_PRIVATE);
+    	
+    	// If we're not displaying the dialog return.
+    	try {
+    		if (prefs.getBoolean("show_leaving_beta_dialog", true) == false) return;
+    	} catch (ClassCastException e) {
+    		return;
+    	}
+    	
+    	final String message = "Thanks to everyone who's given me feedback and reported bugs - Freehand wouldn't be where it is now without your support.\n\n" +
+    			"On April 17, 2014 I'll be removing freehand from beta and adding a one time license purchase needed to create more than five notes " +
+    			"(fewer than five notes is a free trial). The single license will unlock all of Freehand's local functionality forever - I will never use" +
+    			" in app purchases to sell individual features or consumables. I might, however, add web services to Freehand that I will charge for, but " +
+    			"they won't be necessary for or affect local usage and will never take away from the local functionality.\n\nMy day job has kept me from " +
+    			"putting all of the time into Freehand I've wanted, so I'm hoping I can make enough off of freehand to be able to devote more time to it going " +
+    			"forward. Some of the features your support will let me implement are ink smoothing, natural erasing, a paint bucket, text boxes, and images. " +
+    			"Thanks again!\n\n-Cal Hinshaw";
+    	
+    	(new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT))
+	        .setTitle("Freehand is Leaving Beta!")
+	        .setMessage(message)
+	        .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+	            public void onClick(DialogInterface dialog, int whichButton) {
+	               dialog.cancel();
+	            }
+	        }).setNegativeButton("Don't Show Again", new DialogInterface.OnClickListener() {
+	            public void onClick(DialogInterface dialog, int whichButton) {
+	                prefs.edit().putBoolean("show_leaving_beta_dialog", false).commit();
+	            }
+	        }).show();
     }
 }
