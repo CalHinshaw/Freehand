@@ -2,9 +2,10 @@ package com.freehand.organizer;
 
 import java.io.File;
 
+import com.android.vending.billing.IabHelper;
 import com.calhounroberthinshaw.freehand.R;
 
-import com.freehand.billing.IabSingleton;
+import com.freehand.billing.FreehandIabHelper;
 import com.freehand.editor.canvas.Note;
 import com.freehand.preferences.PrefActivity;
 import com.freehand.tutorial.TutorialPrefs;
@@ -30,7 +31,8 @@ import android.widget.Button;
 
 public class MainMenuActivity extends Activity {
 	private static final long VIBRATE_DURATION = 50;
-	private static boolean isRunning = false;
+	
+	private boolean hasPro = false;
 	
 	private FolderBrowser mBrowser;
 	
@@ -282,14 +284,24 @@ public class MainMenuActivity extends Activity {
         mBrowser.setRootDirectory(rootDirectory);
         mBrowser.setMainMenuActivity(this);
         
-        IabSingleton.loadIAP(this);
-        
         showLeavingBetaDialog();
     }
     
     @Override
     protected void onResume() {
     	super.onResume();
+    	
+        // Initiate the pro license check
+        final IabHelper iabHelper = new IabHelper(this, FreehandIabHelper.PUBLIC_KEY);
+        final FreehandIabHelper.ProStatusCallbackFn proCallback = new FreehandIabHelper.ProStatusCallbackFn() {
+			@Override
+			public void proStatusCallbackFn(Boolean result) {
+				hasPro = result;
+				iabHelper.dispose();
+			}
+		};
+		FreehandIabHelper.loadIAB(iabHelper, proCallback);
+    	
     	TutorialPrefs.setContext(this);
     }
     
@@ -320,20 +332,8 @@ public class MainMenuActivity extends Activity {
     	}
     }
     
-    @Override
-    protected void onStart() {
-    	super.onStart();
-    	isRunning = true;
-    }
-    
-    @Override
-    protected void onDestroy() {
-    	super.onDestroy();
-    	isRunning = false;
-    }
-    
-    public static boolean isRunning () {
-    	return isRunning;
+    public boolean getProStatus () {
+    	return this.hasPro;
     }
     
     private void showLeavingBetaDialog () {
