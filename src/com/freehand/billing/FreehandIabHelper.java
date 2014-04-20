@@ -75,22 +75,6 @@ public class FreehandIabHelper {
     	iabHelper.startSetup(setupFinishedListener);
     }
     
-//    public static void buyPro (final Activity activity, final int requestCode, final CallbackFn callback) {
-//    	final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
-//			@Override
-//			public void onIabPurchaseFinished(IabResult result, Purchase info) {
-//				if (result.isSuccess()) {
-//					hasProLisence = true;
-//					callback.callbackFn(true);
-//				} else {
-//					callback.callbackFn(false);
-//				}
-//			}
-//		};
-//    	
-//    	iabHelper.launchPurchaseFlow(activity, SKU_PRO, requestCode, listener);
-//    }
-    
     public interface ProStatusCallbackFn {
     	public void proStatusCallbackFn (final Boolean result);
     }
