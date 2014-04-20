@@ -54,9 +54,7 @@ public class Security {
     public static boolean verifyPurchase(String base64PublicKey, String signedData, String signature) {
         if (TextUtils.isEmpty(signedData) || TextUtils.isEmpty(base64PublicKey) ||
                 TextUtils.isEmpty(signature)) {
-//            Log.e(TAG, "Purchase verification failed: missing data.");
-            // TODO change return back to false for prod
-            return true;
+            return false;
         }
 
         PublicKey key = Security.generatePublicKey(base64PublicKey);

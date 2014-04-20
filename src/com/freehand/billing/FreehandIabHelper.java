@@ -14,7 +14,7 @@ public class FreehandIabHelper {
 			"ZhOViHCpzQbF6znNu10r771WDdOmv0Ta7W/Qi/icuKf8fKRWhgDh4AzVhmE2z34bGoAZEwkA7AxdedAgdnCe7R6MargdJS9EUh+5PqFsY5QhT115VUbBD2E" +
 			"W8kcqp6wlj3HuxGdfzevok7fNBQ8qaxSEeWGFCv8dYVLQ4WBnXqIIAA/OSQIDAQAB";
 	
-	public static final String SKU_PRO = "android.test.purchased";
+	public static final String SKU_PRO = "pro";
 	
 	
 	
