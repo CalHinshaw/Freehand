@@ -441,6 +441,27 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void createNewNote (final String name, final PaperType paperType) {
+		
+		if (this.mActivity.getProStatus() == false) {
+			
+			final Set<String> paths = new TreeSet<String>();
+			this.getNonDirectoryFilePaths(this.root, paths);
+			
+			int count = 0;
+			for (String path : paths) {
+				if (path.endsWith(".note")) {
+					count++;
+				}
+			}
+			
+			if (count > 5) {
+				// TODO prompt for pro upgrade
+				
+				
+				return;
+			}
+		}
+		
 		final File newNote = new File(selectedFolder, name);
 		
 		if (newNote.getParentFile().isDirectory() == false) {
