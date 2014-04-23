@@ -331,7 +331,13 @@ public class MainMenuActivity extends Activity {
     	TutorialPrefs.clear();
     }
     
-    
+	@Override
+    protected void onActivityResult (final int requestCode, final int resultCode, final Intent data) {
+    	if (iabHelper == null || !iabHelper.handleActivityResult(requestCode, resultCode, data)) {
+    		Log.d("PEN", "purchase NOT handled");
+    		super.onActivityResult(requestCode, resultCode, data);
+    	}
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -362,11 +368,9 @@ public class MainMenuActivity extends Activity {
 		    	final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
 					@Override
 					public void onIabPurchaseFinished(IabResult result, Purchase info) {
-						Log.d("PEN", "purchase finished, result is " + result.isSuccess());
 						hasPro = hasPro || result.isSuccess();
 						
 						if (hasPro == true) {
-							Log.d("PEN", "launching new note dialog!");
 							newNoteButtonOnClickListener.onClick(null);
 						}
 					}
@@ -379,7 +383,7 @@ public class MainMenuActivity extends Activity {
 		final AlertDialog.Builder b = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT);
 		
 		b.setTitle("Get Freehand Pro!")
-		 .setMessage("You've exceded the free trial's cap on the number of notes you can have. If you want to make a new note" +
+		 .setMessage("You've exceded the free trial's cap on the number of notes you can have. If you want to make a new note please " +
 		 		"either delete one of your existing notes and try again or get Freehand Pro.\n\nFreehand pro removes the cap on the number" +
 		 		"of notes you have, and guarantees access to all on-device features added in the future without an further purchases." +
 		 		"\n\nIf you have any questions about Pro please email me at calhinshaw@gmail.com!")

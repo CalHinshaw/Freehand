@@ -2,7 +2,6 @@ package com.freehand.preferences;
 
 import com.android.vending.billing.IabHelper;
 import com.android.vending.billing.IabResult;
-import com.android.vending.billing.Inventory;
 import com.android.vending.billing.Purchase;
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.billing.FreehandIabHelper;
@@ -14,6 +13,7 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.text.InputType;
 import android.util.Log;
+import android.widget.Toast;
 
 public class PrefFragment extends PreferenceFragment {
 	
@@ -48,54 +48,55 @@ public class PrefFragment extends PreferenceFragment {
 			public boolean onPreferenceClick(final Preference preference) {
 				
 				if (isPro == true) {
-					Log.d("PEN", "consuming pro");
-					
-					final IabHelper.OnConsumeFinishedListener consumeListener = new IabHelper.OnConsumeFinishedListener() {
+					Toast.makeText(getActivity(), "Thanks for buying Pro, your support really helps!", Toast.LENGTH_LONG).show();
+				} else {
+					final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
 						@Override
-						public void onConsumeFinished(Purchase purchase, IabResult result) {
-							if (result.isSuccess() == true) {
-								Log.d("PEN", "Pro consumed");
-								isPro = false;
-							}
+						public void onIabPurchaseFinished(IabResult result, Purchase info) {
+							Log.d("PEN", "purchase finished, result is " + result.isSuccess());
+							isPro = isPro || result.isSuccess();
 							proPref.setTitle(isPro ? "Thanks for buying PRO!" : "Get Freehand Pro!");
 						}
 					};
 					
-					IabHelper.QueryInventoryFinishedListener queryListener = new IabHelper.QueryInventoryFinishedListener() {
-						@Override
-						public void onQueryInventoryFinished(IabResult result, Inventory inv) {
-							if (result.isSuccess()) {
-								iabHelper.consumeAsync(inv.getPurchase(FreehandIabHelper.SKU_PRO), consumeListener);
-								
-							}
-						}
-					};
-					
-					iabHelper.queryInventoryAsync(queryListener);
-					
-					return true;
+					iabHelper.launchPurchaseFlow(getActivity(), FreehandIabHelper.SKU_PRO, 0, listener);
 				}
-				
-		    	final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
-					@Override
-					public void onIabPurchaseFinished(IabResult result, Purchase info) {
-						Log.d("PEN", "purchase finished, result is " + result.isSuccess());
-						isPro = isPro || result.isSuccess();
-						proPref.setTitle(isPro ? "Thanks for buying PRO!" : "Get Freehand Pro!");
-					}
-				};
-				
-				iabHelper.launchPurchaseFlow(getActivity(), FreehandIabHelper.SKU_PRO, 0, listener);
 				
 				return true;
 			}
 		});
     }
     
+//    private void consumeProForTesting (final Preference proPref) {
+//    	Log.d("PEN", "consuming pro");
+//		
+//		final IabHelper.OnConsumeFinishedListener consumeListener = new IabHelper.OnConsumeFinishedListener() {
+//			@Override
+//			public void onConsumeFinished(Purchase purchase, IabResult result) {
+//				if (result.isSuccess() == true) {
+//					Log.d("PEN", "Pro consumed");
+//					isPro = false;
+//				}
+//				proPref.setTitle(isPro ? "Thanks for buying PRO!" : "Get Freehand Pro!");
+//			}
+//		};
+//		
+//		IabHelper.QueryInventoryFinishedListener queryListener = new IabHelper.QueryInventoryFinishedListener() {
+//			@Override
+//			public void onQueryInventoryFinished(IabResult result, Inventory inv) {
+//				if (result.isSuccess()) {
+//					iabHelper.consumeAsync(inv.getPurchase(FreehandIabHelper.SKU_PRO), consumeListener);
+//					
+//				}
+//			}
+//		};
+//		
+//		iabHelper.queryInventoryAsync(queryListener);
+//    }
+    
     @Override
     public void onActivityResult (final int requestCode, final int resultCode, final Intent data) {
     	if (iabHelper == null || !iabHelper.handleActivityResult(requestCode, resultCode, data)) {
-    		Log.d("PEN", "purchase NOT handled");
     		super.onActivityResult(requestCode, resultCode, data);
     	}
     }
