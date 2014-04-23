@@ -21,8 +21,34 @@ public class FreehandIabHelper {
 	public static void loadIAB (final IabHelper iabHelper, final ProStatusCallbackFn proStatusCallback) {
     	if (iabHelper == null) return;
     	
-    	final IabHelper.QueryInventoryFinishedListener queryFinishedListener = new IabHelper.QueryInventoryFinishedListener() {
+    	final IabHelper.OnIabSetupFinishedListener setupFinishedListener = new IabHelper.OnIabSetupFinishedListener() {
 			@SuppressWarnings("unused")
+			@Override
+			public void onIabSetupFinished(IabResult result) {
+				Log.d("PEN", "IabHelper setup finished");
+				
+	            if (!result.isSuccess()) {
+	                Log.d("PEN", "There was a problem setting up in-app billing: " + result);
+	                return;
+	            }
+	
+	            // Have we been disposed of in the meantime? If so, quit.
+	            if (iabHelper == null) {
+	            	Log.d("PEN", "Our IabHelper was disposed of before setup finished.");
+	            	return;
+	            }
+	
+	            // IAB is fully set up. Now, let's get an inventory of stuff we own.
+	            Log.d("PEN", "Setup successful. Querying inventory.");
+	            queryPro(iabHelper, proStatusCallback);
+			}
+    	};
+    	
+    	iabHelper.startSetup(setupFinishedListener);
+    }
+	
+	public static void queryPro (final IabHelper iabHelper, final ProStatusCallbackFn proStatusCallback) {
+		final IabHelper.QueryInventoryFinishedListener queryFinishedListener = new IabHelper.QueryInventoryFinishedListener() {
 			@Override
 			public void onQueryInventoryFinished(IabResult result, Inventory inventory) {
 				Log.d("PEN", "Query inventory finished.");
@@ -49,31 +75,8 @@ public class FreehandIabHelper {
 			}
 		};
 		
-    	final IabHelper.OnIabSetupFinishedListener setupFinishedListener = new IabHelper.OnIabSetupFinishedListener() {
-			@SuppressWarnings("unused")
-			@Override
-			public void onIabSetupFinished(IabResult result) {
-				Log.d("PEN", "IabHelper setup finished");
-				
-	            if (!result.isSuccess()) {
-	                Log.d("PEN", "There was a problem setting up in-app billing: " + result);
-	                return;
-	            }
-	
-	            // Have we been disposed of in the meantime? If so, quit.
-	            if (iabHelper == null) {
-	            	Log.d("PEN", "Our IabHelper was disposed of before setup finished.");
-	            	return;
-	            }
-	
-	            // IAB is fully set up. Now, let's get an inventory of stuff we own.
-	            Log.d("PEN", "Setup successful. Querying inventory.");
-	            iabHelper.queryInventoryAsync(queryFinishedListener);
-			}
-    	};
-    	
-    	iabHelper.startSetup(setupFinishedListener);
-    }
+		iabHelper.queryInventoryAsync(queryFinishedListener);
+	}
     
     public interface ProStatusCallbackFn {
     	public void proStatusCallbackFn (final Boolean result);

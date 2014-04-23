@@ -3,6 +3,8 @@ package com.freehand.organizer;
 import java.io.File;
 
 import com.android.vending.billing.IabHelper;
+import com.android.vending.billing.IabResult;
+import com.android.vending.billing.Purchase;
 import com.calhounroberthinshaw.freehand.R;
 
 import com.freehand.billing.FreehandIabHelper;
@@ -20,6 +22,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.View;
@@ -32,7 +35,15 @@ import android.widget.Button;
 public class MainMenuActivity extends Activity {
 	private static final long VIBRATE_DURATION = 50;
 	
-	private boolean hasPro = false;
+	public boolean hasPro = false;
+	public IabHelper iabHelper;
+	
+    private final FreehandIabHelper.ProStatusCallbackFn proCallback = new FreehandIabHelper.ProStatusCallbackFn() {
+		@Override
+		public void proStatusCallbackFn(Boolean result) {
+			hasPro = result;
+		}
+	};
 	
 	private FolderBrowser mBrowser;
 	
@@ -160,6 +171,11 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
+			if (hasPro == false && mBrowser.getNumNotes() >= 5) {
+				showProDialog();
+				return;
+			}
+			
 			final File targetDir = mBrowser.getSelectedFolder();
 			
 			// Find the default input string - unnamed note + the smallest unused natural number
@@ -288,21 +304,25 @@ public class MainMenuActivity extends Activity {
     }
     
     @Override
+    protected void onStart () {
+    	super.onStart();
+    	iabHelper = new IabHelper(this, FreehandIabHelper.PUBLIC_KEY);
+		FreehandIabHelper.loadIAB(iabHelper, proCallback);
+    }
+    
+    @Override
     protected void onResume() {
     	super.onResume();
-    	
-        // Initiate the pro license check
-        final IabHelper iabHelper = new IabHelper(this, FreehandIabHelper.PUBLIC_KEY);
-        final FreehandIabHelper.ProStatusCallbackFn proCallback = new FreehandIabHelper.ProStatusCallbackFn() {
-			@Override
-			public void proStatusCallbackFn(Boolean result) {
-				hasPro = result;
-				iabHelper.dispose();
-			}
-		};
-		FreehandIabHelper.loadIAB(iabHelper, proCallback);
-    	
     	TutorialPrefs.setContext(this);
+    	if (iabHelper.isUseable()) {
+    		FreehandIabHelper.queryPro(iabHelper, proCallback);
+    	}
+    }
+    
+    @Override
+    protected void onStop () {
+    	super.onStop();
+    	iabHelper.dispose();
     }
     
     @Override
@@ -310,6 +330,8 @@ public class MainMenuActivity extends Activity {
     	super.onPause();
     	TutorialPrefs.clear();
     }
+    
+    
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -332,9 +354,39 @@ public class MainMenuActivity extends Activity {
     	}
     }
     
-    public boolean getProStatus () {
-    	return this.hasPro;
-    }
+	private void showProDialog () {
+		final DialogInterface.OnClickListener getProListener = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+
+		    	final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
+					@Override
+					public void onIabPurchaseFinished(IabResult result, Purchase info) {
+						Log.d("PEN", "purchase finished, result is " + result.isSuccess());
+						hasPro = hasPro || result.isSuccess();
+						
+						if (hasPro == true) {
+							Log.d("PEN", "launching new note dialog!");
+							newNoteButtonOnClickListener.onClick(null);
+						}
+					}
+				};
+				
+				iabHelper.launchPurchaseFlow(MainMenuActivity.this, FreehandIabHelper.SKU_PRO, 0, listener);
+			}
+		};
+		
+		final AlertDialog.Builder b = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT);
+		
+		b.setTitle("Get Freehand Pro!")
+		 .setMessage("You've exceded the free trial's cap on the number of notes you can have. If you want to make a new note" +
+		 		"either delete one of your existing notes and try again or get Freehand Pro.\n\nFreehand pro removes the cap on the number" +
+		 		"of notes you have, and guarantees access to all on-device features added in the future without an further purchases." +
+		 		"\n\nIf you have any questions about Pro please email me at calhinshaw@gmail.com!")
+		  .setPositiveButton("Get Pro!", getProListener)
+		  .setNegativeButton("Cancel", null)
+		  .create().show();
+	}
     
     private void showLeavingBetaDialog () {
     	final SharedPreferences prefs = getPreferences(MODE_PRIVATE);

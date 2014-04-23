@@ -8,7 +8,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
+import com.android.vending.billing.IabHelper;
+import com.android.vending.billing.IabResult;
+import com.android.vending.billing.Purchase;
 import com.calhounroberthinshaw.freehand.R;
+import com.freehand.billing.FreehandIabHelper;
 import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.share.ShareDialog;
@@ -441,27 +445,6 @@ public class FolderBrowser extends HorizontalScrollView {
 	}
 	
 	public void createNewNote (final String name, final PaperType paperType) {
-		
-		if (this.mActivity.getProStatus() == false) {
-			
-			final Set<String> paths = new TreeSet<String>();
-			this.getNonDirectoryFilePaths(this.root, paths);
-			
-			int count = 0;
-			for (String path : paths) {
-				if (path.endsWith(".note")) {
-					count++;
-				}
-			}
-			
-			if (count > 5) {
-				// TODO prompt for pro upgrade
-				
-				
-				return;
-			}
-		}
-		
 		final File newNote = new File(selectedFolder, name);
 		
 		if (newNote.getParentFile().isDirectory() == false) {
@@ -590,6 +573,20 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	public File getSelectedFolder () {
 		return this.selectedFolder;
+	}
+	
+	public int getNumNotes () {
+		final Set<String> paths = new TreeSet<String>();
+		getNonDirectoryFilePaths(this.root, paths);
+		
+		int count = 0;
+		for (String path : paths) {
+			if (path.endsWith(".note")) {
+				count++;
+			}
+		}
+		
+		return count;
 	}
 	
 	private FolderView getViewUnderPoint (final float x, final float y) {
