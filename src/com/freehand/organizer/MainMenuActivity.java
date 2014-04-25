@@ -31,19 +31,13 @@ import android.view.View.OnDragListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.Toast;
 
 public class MainMenuActivity extends Activity {
 	private static final long VIBRATE_DURATION = 50;
 	
 	public boolean hasPro = false;
 	public IabHelper iabHelper;
-	
-    private final FreehandIabHelper.ProStatusCallbackFn proCallback = new FreehandIabHelper.ProStatusCallbackFn() {
-		@Override
-		public void proStatusCallbackFn(Boolean result) {
-			hasPro = result;
-		}
-	};
 	
 	private FolderBrowser mBrowser;
 	
@@ -299,15 +293,21 @@ public class MainMenuActivity extends Activity {
         final File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
         mBrowser.setRootDirectory(rootDirectory);
         mBrowser.setMainMenuActivity(this);
-        
-        showLeavingBetaDialog();
     }
     
     @Override
     protected void onStart () {
     	super.onStart();
-    	iabHelper = new IabHelper(this, FreehandIabHelper.PUBLIC_KEY);
-		FreehandIabHelper.loadIAB(iabHelper, proCallback);
+    	iabHelper = new IabHelper(this, FreehandIabHelper.getKey());
+		FreehandIabHelper.loadIAB(iabHelper, new FreehandIabHelper.ProStatusCallbackFn() {
+			@Override
+			public void proStatusCallbackFn(Boolean result) {
+				hasPro = result;
+				if (hasPro == false) {
+					showFreeTrialDialog();
+				}
+			}
+		});
     }
     
     @Override
@@ -315,7 +315,12 @@ public class MainMenuActivity extends Activity {
     	super.onResume();
     	TutorialPrefs.setContext(this);
     	if (iabHelper.isUseable()) {
-    		FreehandIabHelper.queryPro(iabHelper, proCallback);
+    		FreehandIabHelper.queryPro(iabHelper, new FreehandIabHelper.ProStatusCallbackFn() {
+    			@Override
+    			public void proStatusCallbackFn(Boolean result) {
+    				hasPro = result;
+    			}
+    		});
     	}
     }
     
@@ -371,6 +376,7 @@ public class MainMenuActivity extends Activity {
 						hasPro = hasPro || result.isSuccess();
 						
 						if (hasPro == true) {
+							Toast.makeText(MainMenuActivity.this, "Thanks for buying Pro, your support really helps!", Toast.LENGTH_LONG).show();
 							newNoteButtonOnClickListener.onClick(null);
 						}
 					}
@@ -384,7 +390,7 @@ public class MainMenuActivity extends Activity {
 		
 		b.setTitle("Get Freehand Pro!")
 		 .setMessage("You've exceded the free trial's cap on the number of notes you can have. If you want to make a new note please " +
-		 		"either delete one of your existing notes and try again or get Freehand Pro.\n\nFreehand pro removes the cap on the number" +
+		 		"either delete one of your existing notes and try again or get Freehand Pro.\n\nFreehand pro removes the cap on the number " +
 		 		"of notes you have, and guarantees access to all on-device features added in the future without an further purchases." +
 		 		"\n\nIf you have any questions about Pro please email me at calhinshaw@gmail.com!")
 		  .setPositiveButton("Get Pro!", getProListener)
@@ -392,27 +398,26 @@ public class MainMenuActivity extends Activity {
 		  .create().show();
 	}
     
-    private void showLeavingBetaDialog () {
+    private void showFreeTrialDialog () {
     	final SharedPreferences prefs = getPreferences(MODE_PRIVATE);
     	
     	// If we're not displaying the dialog return.
     	try {
-    		if (prefs.getBoolean("show_leaving_beta_dialog", true) == false) return;
+    		if (prefs.getBoolean("show_trial_info_dialog", true) == false) return;
     	} catch (ClassCastException e) {
     		return;
     	}
     	
-    	final String message = "Thanks to everyone who's given me feedback and reported bugs - Freehand wouldn't be where it is now without your support.\n\n" +
-    			"On April 17, 2014 I'll be removing freehand from beta and adding a one time license purchase needed to create more than five notes " +
-    			"(fewer than five notes is a free trial). The single license will unlock all of Freehand's local functionality forever - I will never use" +
-    			" in app purchases to sell individual features or consumables. I might, however, add web services to Freehand that I will charge for, but " +
-    			"they won't be necessary for or affect local usage and will never take away from the local functionality.\n\nMy day job has kept me from " +
-    			"putting all of the time into Freehand I've wanted, so I'm hoping I can make enough off of freehand to be able to devote more time to it going " +
-    			"forward. Some of the features your support will let me implement are ink smoothing, natural erasing, a paint bucket, text boxes, and images. " +
-    			"Thanks again!\n\n-Cal Hinshaw";
+    	final String message = "Welcome to Freehand's free trial! The free trial has all of the functionality of the full version, " +
+    			"but caps the number of notes you can have at five. The Pro license that uncaps the number of notes you can have is " +
+    			"a one time purchase and will cover all features added locally* in the future - I will never use in app purchases to " +
+    			"sell individual features and consumables.\n\nIf you have any questions or comments about Freehand or the Pro license " +
+    			"please email me at calhinshaw@gmail.com.\n\n* In the future I might add features that run in the cloud, and if I do " +
+    			"I'll likely charge for those, but there will never be any additional charges for features that run on the Android " +
+    			"device itself.\n\n- Cal Hinshaw";
     	
     	(new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT))
-	        .setTitle("Freehand is Leaving Beta!")
+	        .setTitle("Welcome to Freehand!")
 	        .setMessage(message)
 	        .setPositiveButton("Close", new DialogInterface.OnClickListener() {
 	            public void onClick(DialogInterface dialog, int whichButton) {
@@ -420,7 +425,7 @@ public class MainMenuActivity extends Activity {
 	            }
 	        }).setNegativeButton("Don't Show Again", new DialogInterface.OnClickListener() {
 	            public void onClick(DialogInterface dialog, int whichButton) {
-	                prefs.edit().putBoolean("show_leaving_beta_dialog", false).commit();
+	                prefs.edit().putBoolean("show_trial_info_dialog", false).commit();
 	            }
 	        }).show();
     }

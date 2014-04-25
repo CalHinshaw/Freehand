@@ -24,7 +24,7 @@
         android:persistent = "true" />
     
     <Preference
-        android:title="Get Pro!"
+        android:title="Get Freehand Pro!"
         android:key="pro_preference" />
     
 </PreferenceScreen>

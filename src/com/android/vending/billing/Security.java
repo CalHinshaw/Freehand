@@ -54,7 +54,8 @@ public class Security {
     public static boolean verifyPurchase(String base64PublicKey, String signedData, String signature) {
         if (TextUtils.isEmpty(signedData) || TextUtils.isEmpty(base64PublicKey) ||
                 TextUtils.isEmpty(signature)) {
-            return true;
+        	
+            return false;
         }
 
         PublicKey key = Security.generatePublicKey(base64PublicKey);

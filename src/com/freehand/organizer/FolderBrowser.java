@@ -8,11 +8,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
-import com.android.vending.billing.IabHelper;
-import com.android.vending.billing.IabResult;
-import com.android.vending.billing.Purchase;
 import com.calhounroberthinshaw.freehand.R;
-import com.freehand.billing.FreehandIabHelper;
 import com.freehand.editor.canvas.Note;
 import com.freehand.editor.canvas.Note.PaperType;
 import com.freehand.share.ShareDialog;

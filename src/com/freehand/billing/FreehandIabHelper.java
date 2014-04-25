@@ -8,15 +8,19 @@ import com.android.vending.billing.Inventory;
 import com.android.vending.billing.Purchase;
 
 public class FreehandIabHelper {
+	private static final String PK1 = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwc8zJDwniUbdn";
+	private static final String PK2 = "qKiUtkMbrLomID1JaQ0cJLApsX7qbBGU+78bwUwZ7JlFtBF/ITxstrYXw";
+	private static final String PK3 = "iiFmB3HKbQaGdTWf2TOb7TK0ysitlcBzHBRYNvD6bsgxtaPwREwT1hql6";
+	private static final String PK4 = "z+cPrxISyXvRCsvf/T+u9gNGkEkkZeg1SMOL+ZhOViHCpzQbF6znNu10r";
+	private static final String PK5 = "771WDdOmv0Ta7W/Qi/icuKf8fKRWhgDh4AzVhmE2z34bGoAZEwkA7Axde";
+	private static final String PK6 = "dAgdnCe7R6MargdJS9EUh+5PqFsY5QhT115VUbBD2EW8kcqp6wlj3HuxG";
+	private static final String PK7 = "dfzevok7fNBQ8qaxSEeWGFCv8dYVLQ4WBnXqIIAA/OSQIDAQAB";
 	
-	public static final String PUBLIC_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwc8zJDwniUbdnqKiUtkMbrLomID1JaQ0cJLApsX7qbBGU" +
-			"+78bwUwZ7JlFtBF/ITxstrYXwiiFmB3HKbQaGdTWf2TOb7TK0ysitlcBzHBRYNvD6bsgxtaPwREwT1hql6z+cPrxISyXvRCsvf/T+u9gNGkEkkZeg1SMOL+" +
-			"ZhOViHCpzQbF6znNu10r771WDdOmv0Ta7W/Qi/icuKf8fKRWhgDh4AzVhmE2z34bGoAZEwkA7AxdedAgdnCe7R6MargdJS9EUh+5PqFsY5QhT115VUbBD2E" +
-			"W8kcqp6wlj3HuxGdfzevok7fNBQ8qaxSEeWGFCv8dYVLQ4WBnXqIIAA/OSQIDAQAB";
+	public static final String SKU_PRO = "pro";
 	
-	public static final String SKU_PRO = "android.test.purchased";
-	
-	
+	public static String getKey () {
+		return PK1+PK2+PK3+PK4+PK5+PK6+PK7;
+	}
 	
 	public static void loadIAB (final IabHelper iabHelper, final ProStatusCallbackFn proStatusCallback) {
     	if (iabHelper == null) return;
