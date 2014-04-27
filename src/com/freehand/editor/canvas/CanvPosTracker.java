@@ -5,7 +5,6 @@ import com.freehand.ink.MiscGeom;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.util.Log;
 import android.view.MotionEvent;
 
 class CanvPosTracker implements ICanvScreenConverter {
@@ -18,18 +17,16 @@ class CanvPosTracker implements ICanvScreenConverter {
 	private Matrix canvToScreenMat = new Matrix();
 	
 	private float zoomThreshold = 0.20f;
-	private float xThreshold = 100.0f;
-	private float yThreshold = 100.0f;
+	private float xThreshold = 50.0f;
+	private float yThreshold = 50.0f;
 	
 	private boolean zoomThresholdPassed = false;
-	private float thresholdDZoom = 1.0f;
 	
 	private boolean xThresholdPassed = false;
-	private float thresholdDX = 0.0f;
 	
 	private boolean yThresholdPassed = false;
-	private float thresholdDY = 0.0f;
 	
+	private float initScreenDist = Float.NaN;
 	private float initScreenX = Float.NaN;
 	private float initScreenY = Float.NaN;
 	
@@ -60,7 +57,8 @@ class CanvPosTracker implements ICanvScreenConverter {
 		final float curScreenY = (e.getY(0)+e.getY(1)) / 2;
 		
 		if (!Float.isNaN(prevScreenPinchMidpointX) && !Float.isNaN(prevScreenPinchMidpointY) && !Float.isNaN(prevScreenPinchDist)) {
-			if (Float.isNaN(initScreenX) || Float.isNaN(initScreenY)) {
+			if (Float.isNaN(initScreenDist) || Float.isNaN(initScreenX) || Float.isNaN(initScreenY)) {
+				initScreenDist = curScreenDist;
 				initScreenX = curScreenX;
 				initScreenY = curScreenY;
 			}
@@ -80,48 +78,41 @@ class CanvPosTracker implements ICanvScreenConverter {
 	}
 	
 	private float calcDZoom (final float curScreenDist) {
-		float dZoom = 1.0f;
-		
-		if (!zoomThresholdPassed && !(thresholdDZoom > (1.0f + zoomThreshold) || thresholdDZoom < (1.0f - zoomThreshold))) {
-			thresholdDZoom *= curScreenDist / prevScreenPinchDist;
-		} else if (!zoomThresholdPassed && (thresholdDZoom > (1.0f + zoomThreshold) || thresholdDZoom < (1.0f - zoomThreshold))) {
+		final float totalZoom = curScreenDist / initScreenDist;
+				
+		if (!zoomThresholdPassed && !(totalZoom > (1.0f + zoomThreshold) || totalZoom < (1.0f - zoomThreshold))) {
+			return 1.0f;
+		} else if (!zoomThresholdPassed && (totalZoom > (1.0f + zoomThreshold) || totalZoom < (1.0f - zoomThreshold))) {
 			zoomThresholdPassed = true;
-			dZoom = thresholdDZoom * (curScreenDist / prevScreenPinchDist);
+			return totalZoom;
 		} else {
-			dZoom = curScreenDist / prevScreenPinchDist;
+			return curScreenDist / prevScreenPinchDist;
 		}
-		
-		return dZoom;
 	}
 	
 	private float calcDX (final float dZoom, final float curScreenX) {
-		final float dX = (curScreenX/dZoom - prevScreenPinchMidpointX)/zoomMult;
+		final float totalDX = curScreenX - initScreenX;
 		
-		if (!xThresholdPassed && !(thresholdDX+dX > xThreshold || thresholdDX+dX < -xThreshold)) {
-			Log.d("PEN", "before    " + dZoom);
-			thresholdDX += dX;
-			return 0.0f;
-		} else if (!xThresholdPassed && (thresholdDX+dX > xThreshold || thresholdDX+dX < -xThreshold)) {
-			Log.d("PEN", "durring    " + dZoom);
+		if (!xThresholdPassed && !(totalDX > xThreshold || totalDX < -xThreshold)) {
+			return initScreenX*(1-dZoom)/(dZoom*zoomMult);
+		} else if (!xThresholdPassed && (totalDX > xThreshold || totalDX < -xThreshold)) {
 			xThresholdPassed = true;
-			return thresholdDX + dX;
+			return (curScreenX/dZoom - initScreenX)/zoomMult;
 		} else {
-			Log.d("PEN", "after     " + dZoom);
-			return dX;
+			return (curScreenX/dZoom - prevScreenPinchMidpointX)/zoomMult;
 		}
 	}
 	
 	private float calcDY (final float dZoom, final float curScreenY) {
-		final float dY = (curScreenY/dZoom - prevScreenPinchMidpointY)/zoomMult;
+		final float totalDY = curScreenY - initScreenY;
 		
-		if (!yThresholdPassed && !(thresholdDY + dY > yThreshold || thresholdDY + dY < -yThreshold)) {
-			thresholdDY += (curScreenY/dZoom - prevScreenPinchMidpointY)/zoomMult;
-			return 0.0f;
-		} else if (!yThresholdPassed && (thresholdDY + dY > yThreshold || thresholdDY + dY < -yThreshold)) {
+		if (!yThresholdPassed && !(totalDY > yThreshold || totalDY < -yThreshold)) {
+			return initScreenY*(1-dZoom)/(dZoom*zoomMult);
+		} else if (!yThresholdPassed && (totalDY > yThreshold || totalDY < -yThreshold)) {
 			yThresholdPassed = true;
-			return thresholdDY + dY;
+			return (curScreenY/dZoom - initScreenY)/zoomMult;
 		} else {
-			return dY;
+			return (curScreenY/dZoom - prevScreenPinchMidpointY)/zoomMult;
 		}
 	}
 	
@@ -140,6 +131,7 @@ class CanvPosTracker implements ICanvScreenConverter {
 	
 	
 	public void clearPinchState () {
+		initScreenDist = Float.NaN;
 		initScreenX = Float.NaN;
 		initScreenY = Float.NaN;
 		
@@ -148,13 +140,8 @@ class CanvPosTracker implements ICanvScreenConverter {
 		prevScreenPinchDist = Float.NaN;
 		
 		zoomThresholdPassed = false;
-		thresholdDZoom = 1.0f;
-		
 		xThresholdPassed = false;
-		thresholdDX = 0.0f;
-		
 		yThresholdPassed = false;
-		thresholdDY = 0.0f;
 	}
 	
 	
