@@ -54,7 +54,7 @@ public class NoteActivity extends Activity {
 		mNoteView.setNote(mNote);
 		mNoteView.setUsingCapDrawing(getUsingCapDrawing());
 		mNoteView.setPressureSensitivity(getPressureSensitivity());
-		mNoteView.setZoomThreshold(getZoomThreshold());
+		setPanZoomActivationThresholds();
 		
 		mActionBar.setActionBarListener(mNoteView);
 		mActionBar.setNote(mNote);
@@ -80,16 +80,22 @@ public class NoteActivity extends Activity {
 		return mPrefs.getBoolean("capacitive_drawing", true);
 	}
 	
-	private float getZoomThreshold () {
+	private void setPanZoomActivationThresholds () {
 		SharedPreferences mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-		String psString = mPrefs.getString("zoom_threshold", "20");
-		int thresholdInt = Integer.parseInt(psString);
 		
-		if (thresholdInt < 0) {
-			thresholdInt = 0;
-		}
+		final String zoomString = mPrefs.getString("zoom_threshold", "20");
+		final String xString = mPrefs.getString("x_threshold", "0");
+		final String yString = mPrefs.getString("y_threshold", "0");
 		
-		return thresholdInt / 100.0f;
+		int zoom = Integer.parseInt(zoomString);
+		int x = Integer.parseInt(xString);
+		int y = Integer.parseInt(yString);
+		
+		if (zoom < 0) zoom = 0;
+		if (x < 0) x = 0;
+		if (y < 0) y = 0;
+		
+		mNoteView.setPanZoomActivationThresholds(zoom/100.0f, x, y);
 	}
 	
 	@Override
