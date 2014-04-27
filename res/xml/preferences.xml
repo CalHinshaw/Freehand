@@ -17,10 +17,24 @@
         android:persistent = "true" />
 
     <EditTextPreference
-        android:title = "Zoom Threshold"
-        android:dialogMessage="Set the ammount zoom needs to change by before the zoom change is applied - 0 means pinch actions will zoom imediately, and 100 means the pinching fingers need to be twice as far apart as they started to zoom in"
+        android:title = "Zoom Activation Threshold"
+        android:dialogMessage="Set the ammount zoom needs to change by before the zoom change is applied - 0 means pinch actions will zoom imediately, 100 means the pinching fingers need to be twice as far apart as they started to zoom in, and a value more than 10000 will prevent zooming."
         android:key = "zoom_threshold"
         android:defaultValue = "20"
+        android:persistent = "true" />
+    
+    <EditTextPreference
+        android:title = "Horizontal Scroll Activation Threshold"
+        android:dialogMessage="Set the number of pixels you need to scroll by before the change is applied - 0 will make scrolls happen imediately and 10000 will prevent scrolling."
+        android:key = "x_threshold"
+        android:defaultValue = "0"
+        android:persistent = "true" />
+    
+    <EditTextPreference
+        android:title = "Vertial Scroll Activation Threshold"
+        android:dialogMessage="Set the number of pixels you need to scroll by before the change is applied - 0 will make scrolls happen imediately and 10000 will prevent scrolling."
+        android:key = "y_threshold"
+        android:defaultValue = "0"
         android:persistent = "true" />
     
     <Preference

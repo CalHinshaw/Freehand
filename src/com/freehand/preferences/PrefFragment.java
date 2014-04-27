@@ -32,6 +32,12 @@ public class PrefFragment extends PreferenceFragment {
     	EditTextPreference zoom = (EditTextPreference)findPreference("zoom_threshold");
     	zoom.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
     	
+    	EditTextPreference xThreshold = (EditTextPreference)findPreference("x_threshold");
+    	xThreshold.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+    	
+    	EditTextPreference yThreshold = (EditTextPreference)findPreference("y_threshold");
+    	yThreshold.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+    	
     	// IAB stuff
     	final Preference proPref = this.findPreference("pro_preference");
     	iabHelper = new IabHelper(this.getActivity(), FreehandIabHelper.getKey());
