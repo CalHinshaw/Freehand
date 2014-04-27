@@ -11,7 +11,6 @@ import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -110,7 +109,7 @@ public class NoteView extends View implements IActionBarListener {
 	}
 	
 	public void setZoomThreshold(final float threshold) {
-		canvPosTracker.setZoomThreshold(threshold);
+		canvPosTracker.setThresholds(threshold, 100, 100);
 	}
 	
 	public float[] getPos () {
@@ -189,6 +188,8 @@ public class NoteView extends View implements IActionBarListener {
 				break;
 			case STROKE_SELECTOR:
 				currentTool = new StrokeSelector(mNote, canvPosTracker, capacitiveDrawing);
+				break;
+			case SMOOTH_ERASER:
 				break;
 		}
 		
