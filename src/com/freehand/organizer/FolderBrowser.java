@@ -636,9 +636,12 @@ public class FolderBrowser extends HorizontalScrollView {
 	
 	private boolean recursivelyDelete (File toDelete) {
 		if (toDelete.isDirectory()) {
-			for (File f : toDelete.listFiles()) {
-				if (recursivelyDelete(f) == false) {
-					return false;
+			final File[] files = toDelete.listFiles();
+			if (files != null) {
+				for (File f : files) {
+					if (recursivelyDelete(f) == false) {
+						return false;
+					}
 				}
 			}
 		}
@@ -664,15 +667,21 @@ public class FolderBrowser extends HorizontalScrollView {
 		if (toGetFrom.isFile()) {
 			toAddTo.add(toGetFrom.getAbsolutePath());
 		} else {
-			for (File f : toGetFrom.listFiles()) {
-				getNonDirectoryFilePaths(f, toAddTo);
+			final File[] files = toGetFrom.listFiles();
+			if (files != null) {
+				for (File f : files) {
+					getNonDirectoryFilePaths(f, toAddTo);
+				}
 			}
 		}
 	}
 	
 	private boolean userHasFolder () {
-		for (File f : root.listFiles()) {
-			if (f.isDirectory()) return true;
+		final File[] files = root.listFiles();
+		if (files != null) {
+			for (File f : files) {
+				if (f.isDirectory()) return true;
+			}
 		}
 		return false;
 	}
