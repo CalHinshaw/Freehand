@@ -2,43 +2,49 @@
 	 
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     
-    <CheckBoxPreference
-        android:title="Draw with capacitive device"
-    	android:summary="Draw with a capacative device like a finger or soft-tipped stylus instead of just an active stylus."
-    	android:key="capacitive_drawing"
-    	android:defaultValue="true"
-    	android:persistent = "true" />
-    
-    <EditTextPreference
-        android:title = "Pressure Sensitivity"
-        android:dialogMessage="Set the stylus's pressure sensitivity - 0 is off and 100 is all the way on."
-        android:key = "pressure_sensitivity"
-        android:defaultValue = "40"
-        android:persistent = "true" />
+    <PreferenceCategory android:title="Pen Settings">
+	    <CheckBoxPreference
+	        android:title="Draw with capacitive device"
+	    	android:summary="Draw with a capacative device like a finger or soft-tipped stylus instead of just an active stylus."
+	    	android:key="capacitive_drawing"
+	    	android:defaultValue="true"
+	    	android:persistent = "true" />
+	    
+	    <EditTextPreference
+	        android:title = "Pressure Sensitivity"
+	        android:dialogMessage="Set the stylus's pressure sensitivity - 0 is off and 100 is all the way on."
+	        android:key = "pressure_sensitivity"
+	        android:defaultValue = "40"
+	        android:persistent = "true" />
+    </PreferenceCategory>
 
-    <EditTextPreference
-        android:title = "Zoom Activation Threshold"
-        android:dialogMessage="Set the ammount zoom needs to change by before the zoom change is applied - 0 means pinch actions will zoom imediately, 100 means the pinching fingers need to be twice as far apart as they started to zoom in, and a value more than 10000 will prevent zooming."
-        android:key = "zoom_threshold"
-        android:defaultValue = "20"
-        android:persistent = "true" />
+    <PreferenceCategory android:title="Zooming and Scrolling Settings">
+	    <EditTextPreference
+	        android:title = "Zoom Activation Threshold"
+	        android:dialogMessage="Set the ammount zoom needs to change by before the zoom change is applied - 0 means pinch actions will zoom imediately, 100 means the pinching fingers need to be twice as far apart as they started to zoom in, and a value more than 10000 will prevent zooming."
+	        android:key = "zoom_threshold"
+	        android:defaultValue = "20"
+	        android:persistent = "true" />
+	    
+	    <EditTextPreference
+	        android:title = "Horizontal Scroll Activation Threshold"
+	        android:dialogMessage="Set the number of pixels you need to scroll by before the change is applied - 0 will make scrolls happen imediately and 10000 will prevent scrolling."
+	        android:key = "x_threshold"
+	        android:defaultValue = "0"
+	        android:persistent = "true" />
+	    
+	    <EditTextPreference
+	        android:title = "Vertial Scroll Activation Threshold"
+	        android:dialogMessage="Set the number of pixels you need to scroll by before the change is applied - 0 will make scrolls happen imediately and 10000 will prevent scrolling."
+	        android:key = "y_threshold"
+	        android:defaultValue = "0"
+	        android:persistent = "true" />
+    </PreferenceCategory>
     
-    <EditTextPreference
-        android:title = "Horizontal Scroll Activation Threshold"
-        android:dialogMessage="Set the number of pixels you need to scroll by before the change is applied - 0 will make scrolls happen imediately and 10000 will prevent scrolling."
-        android:key = "x_threshold"
-        android:defaultValue = "0"
-        android:persistent = "true" />
-    
-    <EditTextPreference
-        android:title = "Vertial Scroll Activation Threshold"
-        android:dialogMessage="Set the number of pixels you need to scroll by before the change is applied - 0 will make scrolls happen imediately and 10000 will prevent scrolling."
-        android:key = "y_threshold"
-        android:defaultValue = "0"
-        android:persistent = "true" />
-    
-    <Preference
-        android:title="Get Freehand Pro!"
-        android:key="pro_preference" />
+	<PreferenceCategory android:title="Freehand Pro">
+		<Preference
+	        android:title="Get Freehand Pro!"
+	        android:key="pro_preference" />
+	</PreferenceCategory>
     
 </PreferenceScreen>
