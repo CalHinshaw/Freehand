@@ -73,8 +73,7 @@ public class FreehandIabHelper {
 	            
 	            Purchase proPurchase = inventory.getPurchase(SKU_PRO);
 	            if (proStatusCallback != null) {
-	            	// TODO proStatusCallback.proStatusCallbackFn(proPurchase != null);
-	            	proStatusCallback.proStatusCallbackFn(true);
+	            	proStatusCallback.proStatusCallbackFn(proPurchase != null);
 	            }
 	            Log.d("PEN", "User is " + ((proPurchase != null) ? "PRO" : "NOT PRO"));
 			}
