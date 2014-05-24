@@ -12,6 +12,7 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.text.InputType;
+import android.widget.Toast;
 
 public class PrefFragment extends PreferenceFragment {
     @Override
@@ -49,6 +50,8 @@ public class PrefFragment extends PreferenceFragment {
 					};
 					
 					FreehandIabHelper.buyPro(PrefFragment.this.getActivity(), listener);
+				} else {
+					Toast.makeText(getActivity(), "Your support really helps!", Toast.LENGTH_LONG).show();
 				}
 				
 				return true;
