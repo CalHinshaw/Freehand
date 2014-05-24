@@ -379,13 +379,9 @@ public class MainMenuActivity extends Activity {
     		return;
     	}
     	
-    	final String message = "Welcome to Freehand's free trial! The free trial has all of the functionality of the full version, " +
-    			"but caps the number of notes you can have at five. The Pro license that uncaps the number of notes you can have is " +
-    			"a one time purchase and will cover all features added locally* in the future - I will never use in app purchases to " +
-    			"sell individual features and consumables.\n\nIf you have any questions or comments about Freehand or the Pro license " +
-    			"please email me at calhinshaw@gmail.com.\n\n* In the future I might add features that run in the cloud, and if I do " +
-    			"I'll likely charge for those, but there will never be any additional charges for features that run on the Android " +
-    			"device itself.\n\n- Cal Hinshaw";
+    	final String message = "Welcome to Freehand's free trial! It has all the functionality of the full version " +
+    			"but caps the number of notes you can have at five. The Pro license, currently on sale for 50% off, removes the cap.\n" +
+    			"More details about Pro are in the settings menu under \"About Pro\".\n\nPlease feel free to contact me at calhinshaw@gmail.com!";
     	
     	(new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT))
 	        .setTitle("Welcome to Freehand!")
