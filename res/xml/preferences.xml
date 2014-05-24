@@ -45,6 +45,10 @@
 		<Preference
 	        android:title="Get Freehand Pro!"
 	        android:key="pro_preference" />
+		
+		<!--Preference
+	        android:title="debug, don't click"
+	        android:key="debug" /-->
 	</PreferenceCategory>
     
 </PreferenceScreen>

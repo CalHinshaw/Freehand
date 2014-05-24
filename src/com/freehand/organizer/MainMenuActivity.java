@@ -36,9 +36,6 @@ import android.widget.Toast;
 public class MainMenuActivity extends Activity {
 	private static final long VIBRATE_DURATION = 50;
 	
-	public boolean hasPro = false;
-	public IabHelper iabHelper;
-	
 	private FolderBrowser mBrowser;
 	
 	// itemsSelectedActionBar view references
@@ -165,7 +162,7 @@ public class MainMenuActivity extends Activity {
 	
 	private OnClickListener newNoteButtonOnClickListener = new OnClickListener() {
 		public void onClick(View v) {
-			if (hasPro == false && mBrowser.getNumNotes() >= 5) {
+			if (!FreehandIabHelper.getProStatus(MainMenuActivity.this) && mBrowser.getNumNotes() >= 5) {
 				showProDialog();
 				return;
 			}
@@ -251,6 +248,8 @@ public class MainMenuActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.organizer_layout);
         
+        FreehandIabHelper.updatePurchases(this);
+        
         // Set up the defaultActionBar
         defaultActionBar = (ViewGroup) findViewById(R.id.defaultActionBar);
         
@@ -296,38 +295,9 @@ public class MainMenuActivity extends Activity {
     }
     
     @Override
-    protected void onStart () {
-    	super.onStart();
-    	iabHelper = new IabHelper(this, FreehandIabHelper.getKey());
-		FreehandIabHelper.loadIAB(iabHelper, new FreehandIabHelper.ProStatusCallbackFn() {
-			@Override
-			public void proStatusCallbackFn(Boolean result) {
-				hasPro = result;
-				if (hasPro == false) {
-					showFreeTrialDialog();
-				}
-			}
-		});
-    }
-    
-    @Override
     protected void onResume() {
     	super.onResume();
     	TutorialPrefs.setContext(this);
-    	if (iabHelper.isUseable()) {
-    		FreehandIabHelper.queryPro(iabHelper, new FreehandIabHelper.ProStatusCallbackFn() {
-    			@Override
-    			public void proStatusCallbackFn(Boolean result) {
-    				hasPro = result;
-    			}
-    		});
-    	}
-    }
-    
-    @Override
-    protected void onStop () {
-    	super.onStop();
-    	iabHelper.dispose();
     }
     
     @Override
@@ -338,7 +308,7 @@ public class MainMenuActivity extends Activity {
     
 	@Override
     protected void onActivityResult (final int requestCode, final int resultCode, final Intent data) {
-    	if (iabHelper == null || !iabHelper.handleActivityResult(requestCode, resultCode, data)) {
+    	if (FreehandIabHelper.handleActivityResult(requestCode, resultCode, data) == false) {
     		Log.d("PEN", "purchase NOT handled");
     		super.onActivityResult(requestCode, resultCode, data);
     	}
@@ -369,20 +339,17 @@ public class MainMenuActivity extends Activity {
 		final DialogInterface.OnClickListener getProListener = new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-
 		    	final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
 					@Override
 					public void onIabPurchaseFinished(IabResult result, Purchase info) {
-						hasPro = hasPro || result.isSuccess();
-						
-						if (hasPro == true) {
+						if (FreehandIabHelper.getProStatus(MainMenuActivity.this) == true) {
 							Toast.makeText(MainMenuActivity.this, "Thanks for buying Pro, your support really helps!", Toast.LENGTH_LONG).show();
 							newNoteButtonOnClickListener.onClick(null);
 						}
 					}
 				};
 				
-				iabHelper.launchPurchaseFlow(MainMenuActivity.this, FreehandIabHelper.SKU_PRO, 0, listener);
+				FreehandIabHelper.buyPro(MainMenuActivity.this, listener);
 			}
 		};
 		

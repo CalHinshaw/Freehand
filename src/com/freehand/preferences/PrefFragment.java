@@ -3,7 +3,6 @@ package com.freehand.preferences;
 import com.android.vending.billing.IabHelper;
 import com.android.vending.billing.IabResult;
 import com.android.vending.billing.Purchase;
-import com.android.vending.billing.Inventory;
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.billing.FreehandIabHelper;
 
@@ -13,18 +12,14 @@ import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.text.InputType;
-import android.util.Log;
-import android.widget.Toast;
 
 public class PrefFragment extends PreferenceFragment {
-	
-	private IabHelper iabHelper;
-	private boolean isPro = false;
-	
     @Override
     public void onCreate (Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
     	addPreferencesFromResource(R.xml.preferences);
+    	
+    	FreehandIabHelper.updatePurchases(this.getActivity());
     	
     	EditTextPreference pressure = (EditTextPreference)findPreference("pressure_sensitivity");
     	pressure.getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -40,79 +35,83 @@ public class PrefFragment extends PreferenceFragment {
     	
     	// IAB stuff
     	final Preference proPref = this.findPreference("pro_preference");
-    	iabHelper = new IabHelper(this.getActivity(), FreehandIabHelper.getKey());
-    	final FreehandIabHelper.ProStatusCallbackFn proCallback = new FreehandIabHelper.ProStatusCallbackFn() {
-			@Override
-			public void proStatusCallbackFn(Boolean result) {
-				isPro = result;
-				proPref.setTitle(result ? "Thanks for buying PRO!" : "Get Freehand Pro!");
-			}
-		};
-    	
-    	FreehandIabHelper.loadIAB(iabHelper, proCallback);
+    	proPref.setTitle(FreehandIabHelper.getProStatus(this.getActivity()) ? "Thanks for buying PRO!" : "Get Freehand Pro!");
     	
 		proPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			public boolean onPreferenceClick(final Preference preference) {
 				
-				if (isPro == true) {
-					consumeProForTesting(proPref);
-					Toast.makeText(getActivity(), "Thanks for buying Pro, your support really helps!", Toast.LENGTH_LONG).show();
-				} else {
+				if (FreehandIabHelper.getProStatus(PrefFragment.this.getActivity()) == false) {
 					final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
 						@Override
 						public void onIabPurchaseFinished(IabResult result, Purchase info) {
-							Log.d("PEN", "purchase finished, result is " + result.isSuccess());
-							isPro = isPro || result.isSuccess();
-							proPref.setTitle(isPro ? "Thanks for buying PRO!" : "Get Freehand Pro!");
+							proPref.setTitle(FreehandIabHelper.getProStatus(PrefFragment.this.getActivity()) ? "Thanks for buying PRO!" : "Get Freehand Pro!");
 						}
 					};
 					
-					iabHelper.launchPurchaseFlow(getActivity(), FreehandIabHelper.SKU_PRO, 0, listener);
+					FreehandIabHelper.buyPro(PrefFragment.this.getActivity(), listener);
 				}
 				
 				return true;
 			}
 		});
+		
+//		// DEBUG, SHOULD BE COMMENTED OUT BEFORE DEPLOYING
+//		final Preference debug = this.findPreference("debug");
+//		debug.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+//			
+//			@Override
+//			public boolean onPreferenceClick(Preference preference) {
+//				consumeProForTesting();
+//				return true;
+//			}
+//		});
     }
     
-    private void consumeProForTesting (final Preference proPref) {
-    	Log.d("PEN", "consuming pro");
-		
-		final IabHelper.OnConsumeFinishedListener consumeListener = new IabHelper.OnConsumeFinishedListener() {
-			@Override
-			public void onConsumeFinished(Purchase purchase, IabResult result) {
-				if (result.isSuccess() == true) {
-					Log.d("PEN", "Pro consumed");
-					isPro = false;
-				}
-				proPref.setTitle(isPro ? "Thanks for buying PRO!" : "Get Freehand Pro!");
-			}
-		};
-		
-		IabHelper.QueryInventoryFinishedListener queryListener = new IabHelper.QueryInventoryFinishedListener() {
-			@Override
-			public void onQueryInventoryFinished(IabResult result, Inventory inv) {
-				if (result.isSuccess()) {
-					iabHelper.consumeAsync(inv.getPurchase(FreehandIabHelper.SKU_PRO), consumeListener);
-				}
-			}
-		};
-		
-		iabHelper.queryInventoryAsync(queryListener);
-    }
+//    private void consumeProForTesting () {
+//    	Log.d("PEN", "starting consuming pro");
+//		
+//    	final IabHelper iabHelper = new IabHelper(this.getActivity(), FreehandIabHelper.getKey());
+//    	
+//		final IabHelper.OnConsumeFinishedListener consumeListener = new IabHelper.OnConsumeFinishedListener() {
+//			@Override
+//			public void onConsumeFinished(Purchase purchase, IabResult result) {
+//				if (result.isSuccess() == true) {
+//					Log.d("PEN", "Pro consumed");
+//					FreehandIabHelper.updatePurchases(PrefFragment.this.getActivity());
+//				} else {
+//					Log.d("PEN", "Pro not consumed");
+//				}
+//				
+//				iabHelper.dispose();
+//			}
+//		};
+//		
+//		final IabHelper.QueryInventoryFinishedListener queryListener = new IabHelper.QueryInventoryFinishedListener() {
+//			@Override
+//			public void onQueryInventoryFinished(IabResult result, Inventory inv) {
+//				Log.d("PEN", "query for consumption done");
+//				if (result.isSuccess()) {
+//					Log.d("PEN", "query for consumption successful");
+//					iabHelper.consumeAsync(inv.getPurchase(FreehandIabHelper.SKU_PRO), consumeListener);
+//				}
+//			}
+//		};
+//		
+//		final IabHelper.OnIabSetupFinishedListener setupListener = new IabHelper.OnIabSetupFinishedListener() {
+//			@Override
+//			public void onIabSetupFinished(IabResult result) {
+//				Log.d("PEN", "setup for consumption done");
+//				iabHelper.queryInventoryAsync(queryListener);
+//			}
+//		};
+//		
+//		iabHelper.startSetup(setupListener);
+//    }
     
     @Override
     public void onActivityResult (final int requestCode, final int resultCode, final Intent data) {
-    	if (iabHelper == null || !iabHelper.handleActivityResult(requestCode, resultCode, data)) {
+    	if (!FreehandIabHelper.handleActivityResult(requestCode, resultCode, data)) {
     		super.onActivityResult(requestCode, resultCode, data);
-    	}
-    }
-    
-    @Override
-    public void onDestroy () {
-    	super.onDestroy();
-    	if (iabHelper != null) {
-    		iabHelper.dispose();
     	}
     }
 }
