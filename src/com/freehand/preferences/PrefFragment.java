@@ -6,15 +6,28 @@ import com.android.vending.billing.Purchase;
 import com.calhounroberthinshaw.freehand.R;
 import com.freehand.billing.FreehandIabHelper;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
+import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceFragment;
 import android.text.InputType;
 import android.widget.Toast;
 
 public class PrefFragment extends PreferenceFragment {
+	
+	static final String ABOUT_PRO = "Freehand's free trial has all of the functionality of the full version, " +
+			"but caps the number of notes you can have at five. The Pro license that uncaps the number of notes you can have is " +
+			"a one time purchase and will cover all features added locally* in the future - I will never use in app purchases to " +
+			"sell individual features and consumables.\n\nIf you have any questions or comments about Freehand or the Pro license " +
+			"please email me at calhinshaw@gmail.com.\n\n* In the future I might add features that run in the cloud, and if I do " +
+			"I'll likely charge for those, but there will never be any additional charges for features that run on the Android " +
+			"device itself.\n\n- Cal Hinshaw";
+	
     @Override
     public void onCreate (Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -45,7 +58,7 @@ public class PrefFragment extends PreferenceFragment {
 					final IabHelper.OnIabPurchaseFinishedListener listener = new IabHelper.OnIabPurchaseFinishedListener() {
 						@Override
 						public void onIabPurchaseFinished(IabResult result, Purchase info) {
-							proPref.setTitle(FreehandIabHelper.getProStatus(PrefFragment.this.getActivity()) ? "Thanks for buying PRO!" : "Get Freehand Pro!");
+							proPref.setTitle(FreehandIabHelper.getProStatus(PrefFragment.this.getActivity()) ? "Thanks for buying Pro!" : "Get Freehand Pro!");
 						}
 					};
 					
@@ -57,6 +70,26 @@ public class PrefFragment extends PreferenceFragment {
 				return true;
 			}
 		});
+		
+    	findPreference("about_pro").setOnPreferenceClickListener(new OnPreferenceClickListener () {
+			@Override
+			public boolean onPreferenceClick(Preference preference) {
+				final String title = FreehandIabHelper.getProStatus(PrefFragment.this.getActivity()) ? "Thanks for buying Pro!" : "Get Pro!";
+				
+				final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), AlertDialog.THEME_HOLO_LIGHT);
+				builder	.setTitle("About Freehand Pro")
+						.setMessage(ABOUT_PRO)
+						.setNegativeButton("Cancel", null)
+						.setPositiveButton(title, new OnClickListener () {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								proPref.getOnPreferenceClickListener().onPreferenceClick(proPref);
+							}
+						}).create().show();
+				
+				return true;
+			}
+    	});
 		
 //		// DEBUG, SHOULD BE COMMENTED OUT BEFORE DEPLOYING
 //		final Preference debug = this.findPreference("debug");
