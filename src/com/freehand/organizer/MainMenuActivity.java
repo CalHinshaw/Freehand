@@ -357,10 +357,10 @@ public class MainMenuActivity extends Activity {
 		
 		final AlertDialog.Builder b = new AlertDialog.Builder(this, AlertDialog.THEME_HOLO_LIGHT);
 		
-		b.setTitle("Get Freehand Pro!")
+		b.setTitle("Get Freehand Pro for 50% off!")
 		 .setMessage("You've exceded the free trial's cap on the number of notes you can have. If you want to make a new note please " +
 		 		"either delete one of your existing notes and try again or get Freehand Pro.\n\nFreehand pro removes the cap on the number " +
-		 		"of notes you have, and guarantees access to all on-device features added in the future without an further purchases." +
+		 		"of notes you have, and guarantees access to all on-device features added in the future without any further purchases." +
 		 		"\n\nIf you have any questions about Pro please email me at calhinshaw@gmail.com!")
 		  .setPositiveButton("Get Pro!", getProListener)
 		  .setNegativeButton("Cancel", null)
