@@ -292,6 +292,8 @@ public class MainMenuActivity extends Activity {
         final File rootDirectory = Environment.getExternalStoragePublicDirectory("Freehand");
         mBrowser.setRootDirectory(rootDirectory);
         mBrowser.setMainMenuActivity(this);
+        
+        showFreeTrialDialog();
     }
     
     @Override
@@ -370,8 +372,10 @@ public class MainMenuActivity extends Activity {
     	
     	// If we're not displaying the dialog return.
     	try {
-    		if (prefs.getBoolean("show_trial_info_dialog", true) == false) return;
-    	} catch (ClassCastException e) {
+    		if (prefs.getBoolean("show_trial_info_dialog_2", true) == false) return;
+    	} catch (ClassCastException e) { /* intentionally blank */ }
+    	
+    	if (FreehandIabHelper.getProStatus(this) == true) {
     		return;
     	}
     	
@@ -392,7 +396,7 @@ public class MainMenuActivity extends Activity {
 	            }
 	        }).setNegativeButton("Don't Show Again", new DialogInterface.OnClickListener() {
 	            public void onClick(DialogInterface dialog, int whichButton) {
-	                prefs.edit().putBoolean("show_trial_info_dialog", false).commit();
+	                prefs.edit().putBoolean("show_trial_info_dialog_2", false).commit();
 	            }
 	        }).show();
     }
