@@ -74,12 +74,13 @@ public class PrefFragment extends PreferenceFragment {
     	findPreference("about_pro").setOnPreferenceClickListener(new OnPreferenceClickListener () {
 			@Override
 			public boolean onPreferenceClick(Preference preference) {
-				final String title = FreehandIabHelper.getProStatus(PrefFragment.this.getActivity()) ? "Thanks for buying Pro!" : "Get Pro!";
+				final boolean isPro = FreehandIabHelper.getProStatus(PrefFragment.this.getActivity());
+				final String title = isPro ? "Thanks for buying Pro!" : "Get Pro for 50% off!";
 				
 				final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), AlertDialog.THEME_HOLO_LIGHT);
-				builder	.setTitle("About Freehand Pro")
+				builder	.setTitle(isPro ? "About Freehand Pro" : "On Sale For 50% Off!")
 						.setMessage(ABOUT_PRO)
-						.setNegativeButton("Cancel", null)
+						.setNegativeButton("Close", null)
 						.setPositiveButton(title, new OnClickListener () {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
